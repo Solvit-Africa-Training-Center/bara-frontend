@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ChevronDown, LogOut, Settings, Store, User } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ChevronDown, CreditCard, LogOut, Settings, Store, Users } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -17,6 +18,14 @@ import {
 import { Button } from "@/components/ui/button"
 
 export function UserNav() {
+  const router = useRouter()
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push("/login")
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -37,7 +46,7 @@ export function UserNav() {
             AR
           </AvatarFallback>
         </Avatar>
-        <div className="hidden sm:flex flex-col text-left leading-none">
+        <div className="hidden xl:flex flex-col text-left leading-none">
           <span className="text-xs font-semibold text-foreground truncate max-w-[100px]">
             Alex Rivera
           </span>
@@ -45,7 +54,7 @@ export function UserNav() {
             Manager
           </span>
         </div>
-        <ChevronDown className="size-3.5 text-muted-foreground" />
+        <ChevronDown className="size-3.5 text-muted-foreground hidden xl:block" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-56 rounded-xl border border-border bg-card shadow-lg"
@@ -59,10 +68,10 @@ export function UserNav() {
                 Alex Rivera
               </p>
               <p className="text-xs text-muted-foreground">
-                alex.rivera@barabistro.com
+                alex.rivera@barabistro.rw
               </p>
               <span className="mt-1 inline-block text-[10px] font-medium text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 rounded-md px-1.5 py-0.5 w-fit">
-                Bara Bistro & Grill
+                Bara Bistro &amp; Grill
               </span>
             </div>
           </DropdownMenuLabel>
@@ -70,21 +79,28 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem
-            render={<Link href="/settings" />}
+            render={<Link href="/settings?tab=general" />}
             className="gap-2 rounded-lg cursor-pointer"
           >
             <Store className="size-4" />
             <span>Switch Branch</span>
           </DropdownMenuItem>
           <DropdownMenuItem
-            render={<Link href="/settings" />}
+            render={<Link href="/settings?tab=users" />}
             className="gap-2 rounded-lg cursor-pointer"
           >
-            <User className="size-4" />
-            <span>Profile &amp; Roles</span>
+            <Users className="size-4" />
+            <span>Users &amp; Team Roles</span>
           </DropdownMenuItem>
           <DropdownMenuItem
-            render={<Link href="/settings" />}
+            render={<Link href="/settings?tab=billing" />}
+            className="gap-2 rounded-lg cursor-pointer"
+          >
+            <CreditCard className="size-4" />
+            <span>Billing &amp; Subscription</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={<Link href="/settings?tab=general" />}
             className="gap-2 rounded-lg cursor-pointer"
           >
             <Settings className="size-4" />
@@ -93,8 +109,8 @@ export function UserNav() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          render={<Link href="/login" />}
-          className="gap-2 rounded-lg cursor-pointer text-destructive focus:text-destructive"
+          onClick={handleLogout}
+          className="gap-2 rounded-lg cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
         >
           <LogOut className="size-4" />
           <span>Log out</span>

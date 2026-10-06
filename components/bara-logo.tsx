@@ -1,15 +1,33 @@
 import * as React from "react"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 export function BaraLogo({
   className,
   collapsed = false,
+  useSvgFile = false,
 }: {
   className?: string
   collapsed?: boolean
+  useSvgFile?: boolean
 }) {
+  if (useSvgFile) {
+    return (
+      <div className={cn("inline-flex items-center justify-center", className)}>
+        <Image
+          src="/bara-logo.svg"
+          alt="Bara"
+          width={154}
+          height={108}
+          priority
+          className="h-10 w-auto object-contain"
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className={cn("flex items-center gap-3", className)}>
+    <div className={cn("flex items-center gap-3", collapsed && "justify-center gap-0", className)}>
       <div className="shrink-0 flex items-center justify-center">
         <svg
           width="36"
@@ -35,9 +53,6 @@ export function BaraLogo({
         <div className="flex flex-col text-left leading-none">
           <span className="text-xl font-black tracking-tight text-[#3B2F2A] dark:text-[#FAF5EE]">
             Bara
-          </span>
-          <span className="mt-1 text-[9px] font-bold tracking-widest uppercase text-[#8C7D73] dark:text-[#A89A90]">
-            Restaurant Mgmt
           </span>
         </div>
       )}

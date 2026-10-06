@@ -6,6 +6,7 @@ import Image from "next/image"
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Calendar,
   ChefHat,
   Flame,
   Plus,
@@ -16,10 +17,13 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DateRangePickerModal } from "@/components/date-range-picker"
 import { cn } from "@/lib/utils"
 
 export default function DashboardPage() {
-  const [selectedPeriod, setSelectedPeriod] = React.useState<"today" | "yesterday" | "week">("today")
+  const [selectedPeriod, setSelectedPeriod] = React.useState<"today" | "yesterday" | "week" | "custom">("today")
+  const [customLabel, setCustomLabel] = React.useState("Custom")
+  const [showPickerModal, setShowPickerModal] = React.useState(false)
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,6 +84,18 @@ export default function DashboardPage() {
             >
               This Week
             </button>
+            <button
+              onClick={() => setShowPickerModal(true)}
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer",
+                selectedPeriod === "custom"
+                  ? "bg-[#C85A24] text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Calendar className="size-3.5" />
+              <span>{selectedPeriod === "custom" ? customLabel : "Custom"}</span>
+            </button>
           </div>
 
           <Button
@@ -93,13 +109,30 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <DateRangePickerModal
+        isOpen={showPickerModal}
+        onClose={() => setShowPickerModal(false)}
+        onApply={(_start, _end, label) => {
+          setSelectedPeriod("custom")
+          setCustomLabel(label)
+        }}
+      />
+
       {/* 3 Main KPI Metrics */}
       <div className="grid gap-4 md:grid-cols-3">
         {/* KPI 1: Today's Revenue */}
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-xs transition-shadow hover:shadow-md">
           <div className="absolute left-0 top-0 h-1.5 w-full bg-gradient-to-r from-[#E07A3E] to-[#C85A24]" />
           <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-            <span>Today&apos;s Revenue</span>
+            <span>
+              {selectedPeriod === "today"
+                ? "Today's Revenue"
+                : selectedPeriod === "yesterday"
+                ? "Yesterday's Revenue"
+                : selectedPeriod === "week"
+                ? "This Week's Revenue"
+                : `${customLabel} Revenue`}
+            </span>
             <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
               <ArrowUpRight className="size-3" />
               +12.5%
