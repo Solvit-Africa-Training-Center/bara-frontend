@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DateRangePickerModal } from "@/components/date-range-picker"
 import { cn } from "@/lib/utils"
 
 interface Transaction {
@@ -109,6 +110,8 @@ export default function DailyTransactionsPage() {
   const [paymentMethod, setPaymentMethod] = React.useState("MTN MoMo")
   const [isVerified, setIsVerified] = React.useState(true)
   const [successNotice, setSuccessNotice] = React.useState("")
+  const [dateLabel, setDateLabel] = React.useState("Today • Oct 5, 2026")
+  const [showPickerModal, setShowPickerModal] = React.useState(false)
 
   const filteredTransactions = transactions.filter((t) => {
     const matchesType = typeFilter === "all" || t.type === typeFilter
@@ -173,10 +176,20 @@ export default function DailyTransactionsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-xs">
+          <button
+            type="button"
+            onClick={() => setShowPickerModal(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-xs hover:border-primary/60 transition-all cursor-pointer"
+          >
             <Calendar className="size-3.5 text-primary" />
-            <span>Today • Oct 5, 2026</span>
-          </div>
+            <span>{dateLabel}</span>
+          </button>
+
+          <DateRangePickerModal
+            isOpen={showPickerModal}
+            onClose={() => setShowPickerModal(false)}
+            onApply={(_s, _e, label) => setDateLabel(label)}
+          />
 
           <Button
             size="sm"

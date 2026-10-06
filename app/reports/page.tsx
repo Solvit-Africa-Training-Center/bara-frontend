@@ -4,16 +4,20 @@ import * as React from "react"
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Calendar,
   Download,
   Printer,
   TrendingUp,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DateRangePickerModal } from "@/components/date-range-picker"
 import { cn } from "@/lib/utils"
 
 export default function ReportsPage() {
-  const [timeRange, setTimeRange] = React.useState<"week" | "month" | "quarter">("week")
+  const [timeRange, setTimeRange] = React.useState<"week" | "month" | "quarter" | "custom">("week")
+  const [customLabel, setCustomLabel] = React.useState("Custom")
+  const [showPickerModal, setShowPickerModal] = React.useState(false)
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,7 +68,28 @@ export default function ReportsPage() {
             >
               Q3 2026
             </button>
+            <button
+              onClick={() => setShowPickerModal(true)}
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer",
+                timeRange === "custom"
+                  ? "bg-primary text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Calendar className="size-3.5" />
+              <span>{timeRange === "custom" ? customLabel : "Custom"}</span>
+            </button>
           </div>
+
+          <DateRangePickerModal
+            isOpen={showPickerModal}
+            onClose={() => setShowPickerModal(false)}
+            onApply={(_s, _e, label) => {
+              setTimeRange("custom")
+              setCustomLabel(label)
+            }}
+          />
 
           <Button
             size="sm"

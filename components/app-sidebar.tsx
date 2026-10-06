@@ -66,17 +66,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>
       {/* Brand Header */}
-      <SidebarHeader className="p-3 pb-2 border-b border-sidebar-border/60">
+      <SidebarHeader className="p-3 pb-2 border-b border-sidebar-border/60 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-xl p-1 transition-colors hover:bg-sidebar-accent/60"
+          className="flex items-center gap-2 rounded-xl p-1 transition-colors hover:bg-sidebar-accent/60 group-data-[collapsible=icon]:justify-center"
         >
           <BaraLogo collapsed={isCollapsed} />
         </Link>
       </SidebarHeader>
 
       {/* Main Navigation */}
-      <SidebarContent className="p-3 py-4">
+      <SidebarContent className="p-3 py-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:px-1.5">
         <SidebarMenu className="gap-1.5">
           {navigationItems.map((item) => {
             const Icon = item.icon
@@ -91,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={isActive}
                   tooltip={item.title}
                   render={<Link href={item.url} />}
-                  className="relative font-medium"
+                  className="relative font-medium group-data-[collapsible=icon]:justify-center"
                 >
                   <Icon className="size-5 shrink-0" />
                   <span className="flex-1 truncate">{item.title}</span>
