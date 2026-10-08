@@ -72,8 +72,7 @@ export default function RegisterPage() {
     >
       <div className="rounded-[22px] border border-[#EFE4D6] dark:border-[#382C24] bg-[#FFF9F0] dark:bg-[#1E1815] p-6 sm:p-7 shadow-[0_8px_0_-4px_#EADFCE,0_22px_40px_-20px_rgba(59,47,42,0.3)] dark:shadow-none">
         {/* Step + sign-in link */}
-        <div className="mb-4 flex items-center justify-between text-xs">
-          <span className="font-bold text-[#C1440E]">Step 1 of 4</span>
+        <div className="mb-4 flex items-center justify-end text-xs">
           <span className="text-[#75665E] dark:text-[#BAACA1]">
             Already have an account?{" "}
             <Link
