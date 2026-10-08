@@ -8,6 +8,7 @@ import { ArrowRight, Check, Lock, Mail, Store } from "lucide-react"
 import { AuthShell, authInputClass } from "@/components/auth-shell"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { startDraft } from "@/lib/onboarding"
 import { cn } from "@/lib/utils"
 
 const highlights = [
@@ -30,6 +31,13 @@ export default function RegisterPage() {
     e.preventDefault()
     if (!agreed) return
     setLoading(true)
+    // Carry the account details into the setup step (password is intentionally not stored)
+    startDraft({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      restaurantName: restaurantName.trim(),
+    })
     setTimeout(() => {
       router.push("/setup")
     }, 600)
@@ -71,7 +79,7 @@ export default function RegisterPage() {
       }
     >
       <div className="rounded-[22px] border border-[#EFE4D6] dark:border-[#382C24] bg-[#FFF9F0] dark:bg-[#1E1815] p-6 sm:p-7 shadow-[0_8px_0_-4px_#EADFCE,0_22px_40px_-20px_rgba(59,47,42,0.3)] dark:shadow-none">
-        {/* Step + sign-in link */}
+        {/* Sign-in link */}
         <div className="mb-4 flex items-center justify-end text-xs">
           <span className="text-[#75665E] dark:text-[#BAACA1]">
             Already have an account?{" "}
