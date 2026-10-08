@@ -1,19 +1,19 @@
 "use client"
 
+import * as React from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
-  BadgeCheck,
-  Bell,
+  Check,
   ChevronsUpDown,
   CreditCard,
   LogOut,
-  Sparkles,
+  Settings,
+  Store,
+  Users,
 } from "lucide-react"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,17 +29,41 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useRestaurant } from "@/components/restaurant-provider"
+import { cn } from "@/lib/utils"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
+export interface NavUserProps {
+  user?: {
+    name?: string
+    email?: string
+    avatar?: string
+    role?: string
+    branch?: string
   }
-}) {
+}
+
+const DEFAULT_AVATAR =
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+
+export function NavUser({ user: override }: NavUserProps) {
+  const router = useRouter()
   const { isMobile } = useSidebar()
+  const { restaurant, user: current, switchBranch } = useRestaurant()
+
+  const user = {
+    name: override?.name || current.name || "Alex Rivera",
+    email: override?.email || current.email,
+    avatar: override?.avatar || current.avatar || DEFAULT_AVATAR,
+    role: override?.role || current.role || "General Manager",
+    branch: override?.branch || restaurant.activeBranch || restaurant.name,
+  }
+  const initials = current.initials || "AR"
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push("/login")
+  }
 
   return (
     <SidebarMenu>
@@ -49,66 +73,109 @@ export function NavUser({
             render={
               <SidebarMenuButton
                 size="lg"
-                className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
+                tooltip={user.name}
+                className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
               />
             }
           >
-            <Avatar className="h-8 w-8 rounded-lg">
+            <Avatar className="size-8 rounded-full border border-sidebar-border shrink-0">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold text-xs">
+                {initials}
+              </AvatarFallback>
             </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs">{user.email}</span>
+            <div className="grid flex-1 text-left text-sm leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
+              <span className="truncate font-semibold text-foreground text-xs">{user.name}</span>
+              <span className="truncate text-[11px] text-muted-foreground">{user.role}</span>
             </div>
-            <ChevronsUpDown className="ml-auto size-4" />
+            <ChevronsUpDown className="ml-auto size-3.5 text-muted-foreground shrink-0 group-data-[collapsible=icon]:hidden" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-64 rounded-xl border border-border bg-card shadow-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
-            sideOffset={4}
+            sideOffset={8}
           >
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
-                  </div>
+              <DropdownMenuLabel className="font-normal p-2.5">
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-sm font-semibold text-foreground">{user.name}</p>
+                  {user.email && (
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  )}
+                  {user.branch && (
+                    <span className="mt-1 inline-block text-[10px] font-medium text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 rounded-md px-1.5 py-0.5 w-fit truncate max-w-full">
+                      {user.branch}
+                    </span>
+                  )}
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
+              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Store className="size-3 text-primary" />
+                <span>Switch Branch</span>
+              </div>
+              {restaurant.branches.map((b) => (
+                <DropdownMenuItem
+                  key={b}
+                  onClick={() => switchBranch(b)}
+                  className="gap-2 rounded-lg cursor-pointer text-xs"
+                >
+                  <span
+                    className={cn(
+                      "size-2 rounded-full shrink-0",
+                      b === restaurant.activeBranch
+                        ? "bg-emerald-500"
+                        : "bg-muted-foreground/30"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "flex-1 truncate",
+                      b === restaurant.activeBranch && "font-bold text-foreground"
+                    )}
+                  >
+                    {b.replace(/^Bara\s+/i, "")}
+                  </span>
+                  {b === restaurant.activeBranch && (
+                    <Check className="size-3.5 text-emerald-600 shrink-0" />
+                  )}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem
+                render={<Link href="/users" />}
+                className="gap-2 rounded-lg cursor-pointer text-xs"
+              >
+                <Users className="size-4" />
+                <span>Users &amp; Team Roles</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
+              <DropdownMenuItem
+                render={<Link href="/settings?tab=billing" />}
+                className="gap-2 rounded-lg cursor-pointer text-xs"
+              >
+                <CreditCard className="size-4" />
+                <span>Billing &amp; Subscription</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+              <DropdownMenuItem
+                render={<Link href="/settings?tab=profile" />}
+                className="gap-2 rounded-lg cursor-pointer text-xs"
+              >
+                <Settings className="size-4" />
+                <span>Restaurant Profile &amp; Settings</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="gap-2 rounded-lg cursor-pointer text-xs text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <LogOut className="size-4" />
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

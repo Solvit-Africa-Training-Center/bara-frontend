@@ -533,10 +533,10 @@ Revenue up +12.5%. Beef tenderloin food cost surged to 42.1% (target: 32.0%). Ba
             <Button
               size="sm"
               variant="outline"
-              render={<Link href="/inventory" />}
+              render={<Link href="/menu" />}
               className="w-full text-xs font-semibold h-8 rounded-xl border-emerald-600/30 text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-950"
             >
-              Compare Suppliers
+              Audit Menu Recipes
             </Button>
           </div>
         </div>

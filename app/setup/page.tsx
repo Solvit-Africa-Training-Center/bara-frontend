@@ -13,18 +13,10 @@ import { initialData, type PlanId, type SetupData } from "./_lib/data"
 export default function SetupPage() {
   const router = useRouter()
   const [step, setStep] = React.useState(1) // 0 Account, 1 Restaurant, 2 Plan, 3 Payment
-  const [data, setData] = React.useState<SetupData>(initialData)
-  const [paying, setPaying] = React.useState(false)
-
-  const update = React.useCallback(
-    (patch: Partial<SetupData>) => setData((d) => ({ ...d, ...patch })),
-    []
-  )
-
-  // Load what register saved (and anything entered earlier)
-  React.useEffect(() => {
+  const [data, setData] = React.useState<SetupData>(() => {
+    if (typeof window === "undefined") return initialData
     const d = loadDraft()
-    setData({
+    return {
       ...initialData,
       firstName: d.firstName ?? "",
       lastName: d.lastName ?? "",
@@ -42,8 +34,14 @@ export default function SetupPage() {
       plan: d.plan ?? null,
       billing: d.billing ?? initialData.billing,
       momoPhone: d.phone ?? "",
-    })
-  }, [])
+    }
+  })
+  const [paying, setPaying] = React.useState(false)
+
+  const update = React.useCallback(
+    (patch: Partial<SetupData>) => setData((d) => ({ ...d, ...patch })),
+    []
+  )
 
   const goTo = (index: number) => {
     setStep(index)

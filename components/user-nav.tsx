@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ChevronDown, CreditCard, LogOut, Settings, Store, Users } from "lucide-react"
+import { useRestaurant } from "@/components/restaurant-provider"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -17,8 +18,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
+
+
 export function UserNav() {
   const router = useRouter()
+  const { restaurant, user } = useRestaurant()
+  const displayName = user.name || "Your account"
+  const initials = user.initials || "U"
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -40,15 +46,15 @@ export function UserNav() {
         <Avatar className="size-7 rounded-full border border-border">
           <AvatarImage
             src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-            alt="Alex Rivera"
+            alt={displayName}
           />
           <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold text-xs">
-            AR
+            {initials}
           </AvatarFallback>
         </Avatar>
         <div className="hidden xl:flex flex-col text-left leading-none">
           <span className="text-xs font-semibold text-foreground truncate max-w-[100px]">
-            Alex Rivera
+            {displayName}
           </span>
           <span className="text-[10px] text-muted-foreground truncate max-w-[100px]">
             Manager
@@ -65,13 +71,13 @@ export function UserNav() {
           <DropdownMenuLabel className="font-normal p-2">
             <div className="flex flex-col gap-0.5">
               <p className="text-sm font-semibold text-foreground">
-                Alex Rivera
+                {displayName}
               </p>
               <p className="text-xs text-muted-foreground">
-                alex.rivera@barabistro.rw
+                {user.email}
               </p>
               <span className="mt-1 inline-block text-[10px] font-medium text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 rounded-md px-1.5 py-0.5 w-fit">
-                Bara Bistro &amp; Grill
+                {restaurant.name}
               </span>
             </div>
           </DropdownMenuLabel>
@@ -86,7 +92,7 @@ export function UserNav() {
             <span>Switch Branch</span>
           </DropdownMenuItem>
           <DropdownMenuItem
-            render={<Link href="/settings?tab=users" />}
+            render={<Link href="/users" />}
             className="gap-2 rounded-lg cursor-pointer"
           >
             <Users className="size-4" />

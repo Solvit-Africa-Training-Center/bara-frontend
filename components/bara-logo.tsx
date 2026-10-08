@@ -41,11 +41,13 @@ export function BaraLogo({
   imageClassName,
   collapsed = false,
   useSvgFile = false,
+  subtitle,
 }: {
   className?: string
   imageClassName?: string
   collapsed?: boolean
   useSvgFile?: boolean
+  subtitle?: string
 }) {
   if (useSvgFile) {
     return (
@@ -92,10 +94,15 @@ export function BaraLogo({
         </svg>
       </div>
       {!collapsed && (
-        <div className="flex flex-col text-left leading-none">
+        <div className="flex min-w-0 flex-col text-left leading-tight">
           <span className="text-xl font-black tracking-tight text-[#3B2F2A] dark:text-[#FAF5EE]">
             Bara
           </span>
+          {subtitle && (
+            <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-[#3B2F2A]/70 dark:text-[#FAF5EE]/70">
+              {subtitle}
+            </span>
+          )}
         </div>
       )}
     </div>

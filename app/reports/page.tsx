@@ -11,6 +11,8 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardTitle } from "@/components/ui/card"
 import { DateRangePickerModal } from "@/components/date-range-picker"
 import { cn } from "@/lib/utils"
 
@@ -20,11 +22,11 @@ export default function ReportsPage() {
   const [showPickerModal, setShowPickerModal] = React.useState(false)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
+          <h1 className="text-xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
             Financial &amp; Operational Reports
           </h1>
           <p className="text-xs text-[#8C7D73] dark:text-[#A89A90] mt-0.5">
@@ -38,7 +40,7 @@ export default function ReportsPage() {
             <button
               onClick={() => setTimeRange("week")}
               className={cn(
-                "rounded-lg px-3 py-1 text-xs font-semibold transition-all",
+                "rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer",
                 timeRange === "week"
                   ? "bg-primary text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -49,7 +51,7 @@ export default function ReportsPage() {
             <button
               onClick={() => setTimeRange("month")}
               className={cn(
-                "rounded-lg px-3 py-1 text-xs font-semibold transition-all",
+                "rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer",
                 timeRange === "month"
                   ? "bg-primary text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -60,7 +62,7 @@ export default function ReportsPage() {
             <button
               onClick={() => setTimeRange("quarter")}
               className={cn(
-                "rounded-lg px-3 py-1 text-xs font-semibold transition-all",
+                "rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer",
                 timeRange === "quarter"
                   ? "bg-primary text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -134,7 +136,7 @@ export default function ReportsPage() {
 
       {/* 4 Summary KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs">
           <span className="text-xs font-medium text-muted-foreground">Total Revenue</span>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
@@ -146,9 +148,9 @@ export default function ReportsPage() {
             <ArrowUpRight className="size-3.5" />
             <span>+14.2% vs previous period</span>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs">
           <span className="text-xs font-medium text-muted-foreground">Cost of Goods (COGS)</span>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
@@ -160,9 +162,9 @@ export default function ReportsPage() {
             <span>Food cost ratio:</span>
             <span className="font-bold text-foreground">49.0% (Target: &le; 50%)</span>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs">
           <span className="text-xs font-medium text-muted-foreground">Gross Operating Profit</span>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
@@ -174,9 +176,9 @@ export default function ReportsPage() {
             <TrendingUp className="size-3.5" />
             <span>51.0% Gross Margin</span>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs">
           <span className="text-xs font-medium text-muted-foreground">Wastage &amp; Shrinkage</span>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
@@ -188,19 +190,19 @@ export default function ReportsPage() {
             <ArrowDownRight className="size-3.5" />
             <span>1.2% (Safely below 2.5% ceiling)</span>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Category Breakdown & Daily Audited Table */}
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Category Contribution */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs lg:col-span-5 flex flex-col justify-between">
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs lg:col-span-5 flex flex-col justify-between">
           <div>
             <div className="border-b border-border/60 pb-3">
-              <h2 className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE]">
+              <CardTitle className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE]">
                 Category Margin Breakdown
-              </h2>
-              <p className="text-xs text-muted-foreground">
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Revenue vs Food/Beverage Cost per department
               </p>
             </div>
@@ -232,9 +234,9 @@ export default function ReportsPage() {
                 <div key={cat.title} className="rounded-xl border border-border/60 p-3.5 bg-background/50">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-foreground">{cat.title}</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    <Badge variant="success" className="font-semibold text-xs py-0">
                       {cat.margin} Margin
-                    </span>
+                    </Badge>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>Revenue: {cat.sales}</span>
@@ -252,21 +254,23 @@ export default function ReportsPage() {
             <span>Highest Margin: <strong>Bar &amp; Cocktails (71.5%)</strong></span>
             <span>Target: &gt; 65%</span>
           </div>
-        </div>
+        </Card>
 
         {/* 7-Day Performance Table */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs lg:col-span-7 flex flex-col justify-between">
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs lg:col-span-7 flex flex-col justify-between">
           <div>
             <div className="border-b border-border/60 pb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE]">
+                <CardTitle className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE]">
                   Daily P&amp;L Log
-                </h2>
-                <p className="text-xs text-muted-foreground">
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Day-by-day revenue, cost and net operating profit
                 </p>
               </div>
-              <span className="text-xs font-semibold text-muted-foreground">Week 40</span>
+              <Badge variant="secondary" className="text-xs font-semibold">
+                Week 40
+              </Badge>
             </div>
 
             <div className="mt-4 overflow-x-auto">
@@ -309,7 +313,7 @@ export default function ReportsPage() {
             <span className="text-muted-foreground">Weekly Average Margin: <strong className="text-foreground">50.9%</strong></span>
             <span className="font-bold text-[#234D3A] dark:text-emerald-300">Audited by Bara Engine</span>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )
