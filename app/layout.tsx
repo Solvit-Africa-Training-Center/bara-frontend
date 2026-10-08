@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AppLayoutWrapper } from "@/components/app-layout-wrapper"
 import { cn } from "@/lib/utils"
+import { RestaurantProvider } from "@/components/restaurant-provider"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 
@@ -21,11 +22,18 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
+      className={cn(
+        "antialiased",
+        fontMono.variable,
+        "font-sans",
+        geist.variable
+      )}
     >
       <body className="min-h-svh bg-background text-foreground">
         <ThemeProvider>
-          <AppLayoutWrapper>{children}</AppLayoutWrapper>
+          <RestaurantProvider>
+            <AppLayoutWrapper>{children}</AppLayoutWrapper>
+          </RestaurantProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -6,7 +6,6 @@ import { Bell, Search } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { UserNav } from "@/components/user-nav"
 import { Button } from "@/components/ui/button"
 import {
   SidebarInset,
@@ -14,8 +13,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 
+import { useRestaurant } from "@/components/restaurant-provider"
+
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { restaurant } = useRestaurant()
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/register" ||
@@ -38,9 +40,16 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
           {/* Left: Trigger & Restaurant Name */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             <SidebarTrigger className="-ml-1 size-8 rounded-lg hover:bg-muted" />
-            <span className="text-sm font-bold tracking-tight text-foreground truncate max-w-[160px] sm:max-w-none">
-              Bara Bistro &amp; Grill
-            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-bold tracking-tight text-foreground truncate max-w-[150px] sm:max-w-none">
+                {restaurant.name}
+              </span>
+              {restaurant.activeBranch && (
+                <span className="hidden md:inline-flex items-center rounded-md bg-muted/80 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground border border-border/60 truncate max-w-[160px]">
+                  {restaurant.activeBranch.replace(/^Bara\s+/i, "")}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Central Search Bar - Compact & Responsive for Laptop Viewports */}
@@ -69,10 +78,6 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </Button>
 
             <ThemeToggle />
-
-            <div className="h-4 w-px bg-border/60 mx-0.5 hidden sm:block" />
-
-            <UserNav />
           </div>
         </header>
 

@@ -3,20 +3,19 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CheckCircle2 } from "lucide-react"
+import { ArrowRight, Check, Lock, Mail, Store } from "lucide-react"
 
-import { BaraLogo } from "@/components/bara-logo"
+import { AuthShell, authInputClass } from "@/components/auth-shell"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { startDraft } from "@/lib/onboarding"
+import { cn } from "@/lib/utils"
+
+const highlights = [
+  "Secure owner account",
+  "Local-first sync for daily operations",
+  "Your data stays yours",
+]
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -25,224 +24,233 @@ export default function RegisterPage() {
   const [restaurantName, setRestaurantName] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const [agreed, setAgreed] = React.useState(true)
   const [loading, setLoading] = React.useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!agreed) return
     setLoading(true)
+    // Carry the account details into the setup step (password is intentionally not stored)
+    startDraft({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      restaurantName: restaurantName.trim(),
+    })
     setTimeout(() => {
       router.push("/setup")
     }, 600)
   }
 
+  const labelClass = "text-xs font-bold text-[#3B2F2A] dark:text-[#FAF3E7]"
+  const plainInput =
+    "h-11 w-full rounded-lg border border-[#EADFCF] bg-[#FFFBF4] dark:bg-[#251E1A] dark:border-[#3D3028] px-3.5 text-sm text-[#3B2F2A] dark:text-[#FAF3E7] placeholder:text-[#A6978C] outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E] transition-all"
+  const iconClass =
+    "pointer-events-none absolute left-3.5 size-4 stroke-[1.6] text-[#8F8179]"
+
   return (
-    <div className="min-h-screen w-full grid lg:grid-cols-2">
-      {/* SECTION 1 (Left): Full-bleed brand welcome story matching Figma Frame 1 */}
-      <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-[#3B1705] via-[#2A1004] to-[#1A0A02] p-10 xl:p-14 text-white overflow-hidden">
-        {/* Subtle geometric pattern overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(#EA982C_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 size-96 rounded-full bg-[#EA982C]/10 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10">
-          {/* Logo badge */}
-          <div className="inline-flex items-center rounded-2xl bg-white p-3.5 shadow-md">
-            <BaraLogo useSvgFile />
-          </div>
-
-          <div className="mt-16 xl:mt-24 space-y-4 max-w-lg">
-            <span className="inline-block rounded-full bg-white/10 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-300 backdrop-blur-xs">
-              Get Started with Bara
-            </span>
-            <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight">
-              One account for clearer daily decisions.
-            </h2>
-            <p className="text-sm xl:text-base text-white/80 leading-relaxed">
-              Join independent restaurants and multi-unit operators streamlining kitchen inventory,
-              ledger reconciliation, and profit margins with automated operational intelligence.
-            </p>
-          </div>
+    <AuthShell
+      maxWidthClass="max-w-[520px]"
+      eyebrow="Start with your restaurant"
+      eyebrowClassName="text-[#EA982C]"
+      heading={
+        <>
+          One account for
+          <br />
+          clearer daily
+          <br />
+          decisions.
+        </>
+      }
+      description="Set up your owner access first. Next, we'll add your restaurant details and help you choose the right Bara plan."
+      extra={
+        <ul className="mt-6 space-y-2.5">
+          {highlights.map((item) => (
+            <li
+              key={item}
+              className="flex items-center gap-2.5 text-[13px] text-white/75"
+            >
+              <Check className="size-3.5 shrink-0 stroke-[2.5] text-[#EA982C]" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      }
+    >
+      <div className="rounded-[22px] border border-[#EFE4D6] dark:border-[#382C24] bg-[#FFF9F0] dark:bg-[#1E1815] p-6 sm:p-7 shadow-[0_8px_0_-4px_#EADFCE,0_22px_40px_-20px_rgba(59,47,42,0.3)] dark:shadow-none">
+        {/* Sign-in link */}
+        <div className="mb-4 flex items-center justify-end text-xs">
+          <span className="text-[#75665E] dark:text-[#BAACA1]">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-bold text-[#C1440E] underline-offset-4 hover:underline"
+            >
+              Sign in
+            </Link>
+          </span>
         </div>
 
-        <div className="relative z-10 mt-12 space-y-3.5 border-t border-white/15 pt-8 text-xs xl:text-sm text-white/85">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-            <span>Fast setup in under 5 minutes</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-            <span>No proprietary POS hardware lock-in</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-            <span>Real-time AI recommendations &amp; shift ledger</span>
-          </div>
-
-          <div className="pt-6 text-[11px] text-white/60">
-            &copy; 2026 Bara Technologies. All rights reserved.
-          </div>
+        <div className="mb-5 space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-[#3B2F2A] dark:text-[#FAF3E7] font-[family-name:var(--font-ubuntu)]">
+            Create your owner account
+          </h1>
+          <p className="text-sm text-[#75665E] dark:text-[#BAACA1]">
+            Use the details of the person responsible for the restaurant and
+            subscription.
+          </p>
         </div>
-      </div>
 
-      {/* SECTION 2 (Right): Warm sand background with floating shadcn signup-01 card */}
-      <div className="relative flex min-h-screen items-center justify-center bg-[#FAF7F2] dark:bg-[#151210] p-4 sm:p-8 lg:p-12">
-        {/* Subtle diamond tile background decoration */}
-        <div className="absolute inset-0 bg-[radial-gradient(#C85A24_0.75px,transparent_0.75px)] [background-size:20px_20px] opacity-10 pointer-events-none" />
-
-        {/* Floating shadcn signup-01 card */}
-        <div className="relative z-10 w-full max-w-md">
-          {/* Mobile logo header (shown on small screens only) */}
-          <div className="mb-6 flex justify-center lg:hidden">
-            <div className="rounded-2xl bg-white p-3 shadow-md">
-              <BaraLogo useSvgFile />
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          {/* Row 1: names */}
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="first-name" className={labelClass}>
+                First name
+              </Label>
+              <input
+                id="first-name"
+                required
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Aline"
+                className={plainInput}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="last-name" className={labelClass}>
+                Last name
+              </Label>
+              <input
+                id="last-name"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Mukamana"
+                className={plainInput}
+              />
             </div>
           </div>
 
-          <Card className="border-border/80 bg-card shadow-2xl rounded-3xl">
-            <CardHeader className="space-y-1.5 p-6 sm:p-8 pb-4 sm:pb-6">
-              <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-                Create an account
-              </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground">
-                Enter your details below to create your Bara restaurant workspace.
-              </CardDescription>
-            </CardHeader>
+          {/* Row 2: restaurant name */}
+          <div className="space-y-1.5">
+            <Label htmlFor="restaurant-name" className={labelClass}>
+              Restaurant name
+            </Label>
+            <div className="relative flex items-center">
+              <Store className={iconClass} />
+              <input
+                id="restaurant-name"
+                required
+                value={restaurantName}
+                onChange={(e) => setRestaurantName(e.target.value)}
+                placeholder="Ikaze Bistro"
+                className={cn(authInputClass, "pr-4")}
+              />
+            </div>
+          </div>
 
-            <CardContent className="p-6 sm:p-8 pt-0 space-y-4">
-              <form onSubmit={handleSubmit} className="space-y-3.5">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="first-name">First name</Label>
-                    <Input
-                      id="first-name"
-                      required
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Alex"
-                      className="h-9.5 rounded-xl bg-background"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="last-name">Last name</Label>
-                    <Input
-                      id="last-name"
-                      required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Rivera"
-                      className="h-9.5 rounded-xl bg-background"
-                    />
-                  </div>
-                </div>
+          {/* Row 3: work email */}
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className={labelClass}>
+              Work email
+            </Label>
+            <div className="relative flex items-center">
+              <Mail className={iconClass} />
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="aline@ikazebistro.rw"
+                className={cn(authInputClass, "pr-4")}
+              />
+            </div>
+          </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="restaurant-name">Restaurant or Bar Name</Label>
-                  <Input
-                    id="restaurant-name"
-                    required
-                    value={restaurantName}
-                    onChange={(e) => setRestaurantName(e.target.value)}
-                    placeholder="Bara Bistro & Grill"
-                    className="h-9.5 rounded-xl bg-background"
-                  />
-                </div>
+          {/* Row 4: password */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className={labelClass}>
+                Create password
+              </Label>
+              <span className="text-[11px] text-[#8F8179]">
+                At least 8 characters
+              </span>
+            </div>
+            <div className="relative flex items-center">
+              <Lock className={iconClass} />
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className={cn(authInputClass, "pr-4")}
+              />
+            </div>
+          </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Work Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="alex@barabistro.rw"
-                    className="h-9.5 rounded-xl bg-background"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create secure password"
-                    className="h-9.5 rounded-xl bg-background"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    required
-                    className="size-4 rounded accent-primary cursor-pointer"
-                  />
-                  <label
-                    htmlFor="terms"
-                    className="text-xs text-muted-foreground cursor-pointer select-none"
-                  >
-                    I agree to the{" "}
-                    <a href="#" className="text-primary hover:underline font-medium">
-                      Terms of Service
-                    </a>{" "}
-                    and{" "}
-                    <a href="#" className="text-primary hover:underline font-medium">
-                      Privacy Policy
-                    </a>
-                  </label>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-10.5 rounded-xl bg-[#C85A24] text-white hover:bg-[#B34D1C] font-bold text-xs shadow-md transition-all mt-2"
-                >
-                  {loading ? "Setting up workspace..." : "Create Account"}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push("/")}
-                  className="w-full h-9.5 rounded-xl text-xs font-semibold"
-                >
-                  <svg className="mr-2 size-4" viewBox="0 0 24 24">
-                    <path
-                      fill="currentColor"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                  Sign up with Google
-                </Button>
-              </form>
-            </CardContent>
-
-            <CardFooter className="flex justify-center p-6 sm:p-8 pt-0 text-xs text-muted-foreground border-t border-border/50">
-              <span>Already have an account?</span>
+          <label className="group inline-flex cursor-pointer select-none items-center gap-2.5 pt-0.5">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="sr-only"
+            />
+            <div
+              className={cn(
+                "flex size-4 items-center justify-center rounded border transition-all",
+                agreed
+                  ? "border-[#C1440E] bg-[#C1440E] text-white"
+                  : "border-[#D6CBC0] bg-transparent group-hover:border-[#C1440E] dark:border-[#4A3B31]"
+              )}
+            >
+              {agreed && <Check className="size-3 stroke-[3]" />}
+            </div>
+            <span className="text-[13px] text-[#3B2F2A] dark:text-[#E8DDD2]">
+              I agree to the Bara{" "}
               <Link
-                href="/login"
-                className="ml-1 font-bold text-primary hover:underline underline-offset-4"
+                href="#"
+                className="font-semibold text-[#C1440E] underline-offset-4 hover:underline"
               >
-                Sign in
+                terms
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="#"
+                className="font-semibold text-[#C1440E] underline-offset-4 hover:underline"
+              >
+                privacy policy
               </Link>
-            </CardFooter>
-          </Card>
-        </div>
+              .
+            </span>
+          </label>
+
+          <Button
+            type="submit"
+            disabled={loading || !agreed}
+            className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#C1440E] px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#A8380A] active:scale-[0.99] disabled:opacity-60"
+          >
+            {loading ? (
+              <span>Setting up workspace...</span>
+            ) : (
+              <>
+                <ArrowRight className="size-4 stroke-[2.2]" />
+                <span>Continue to restaurant setup</span>
+              </>
+            )}
+          </Button>
+
+          <p className="text-center text-xs text-[#75665E] dark:text-[#A6978C]">
+            Next: logo, business details and optional setup assistance.
+          </p>
+        </form>
       </div>
-    </div>
+    </AuthShell>
   )
 }

@@ -5,17 +5,19 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BarChart3,
-  Boxes,
   LayoutDashboard,
-  ReceiptText,
   Settings,
   Sparkles,
+  Users,
+  UtensilsCrossed,
 } from "lucide-react"
 
 import { BaraLogo } from "@/components/bara-logo"
+import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -23,6 +25,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useRestaurant } from "@/components/restaurant-provider"
 
 const navigationItems = [
   {
@@ -31,9 +34,9 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Daily Transactions",
-    url: "/transactions",
-    icon: ReceiptText,
+    title: "Menu",
+    url: "/menu",
+    icon: UtensilsCrossed,
   },
   {
     title: "Reports",
@@ -47,9 +50,9 @@ const navigationItems = [
     badge: "AI",
   },
   {
-    title: "Inventory",
-    url: "/inventory",
-    icon: Boxes,
+    title: "Users",
+    url: "/users",
+    icon: Users,
   },
   {
     title: "Settings",
@@ -62,6 +65,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const { state, isMobile } = useSidebar()
   const isCollapsed = state === "collapsed" && !isMobile
+  const { restaurant } = useRestaurant()
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>
@@ -69,9 +73,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="p-3 pb-2 border-b border-sidebar-border/60 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-xl p-1 transition-colors hover:bg-sidebar-accent/60 group-data-[collapsible=icon]:justify-center"
+          className="flex min-w-0 items-center gap-2 rounded-xl p-1 transition-colors hover:bg-sidebar-accent/60 group-data-[collapsible=icon]:justify-center"
         >
-          <BaraLogo collapsed={isCollapsed} />
+          <BaraLogo collapsed={isCollapsed} subtitle={restaurant.name || undefined} />
         </Link>
       </SidebarHeader>
 
@@ -106,6 +110,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           })}
         </SidebarMenu>
       </SidebarContent>
+
+      {/* Logged in User Avatar at Sidebar Bottom */}
+      <SidebarFooter className="p-2 border-t border-sidebar-border/60 group-data-[collapsible=icon]:p-1.5">
+        <NavUser />
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

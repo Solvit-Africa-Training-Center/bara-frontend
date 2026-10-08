@@ -20,8 +20,10 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useRestaurant } from "@/components/restaurant-provider"
 
 export default function AIInsightsPage() {
+  const { restaurant } = useRestaurant()
   const [actionDone1, setActionDone1] = React.useState(false)
   const [actionDone2, setActionDone2] = React.useState(false)
   const [dismissedSummary, setDismissedSummary] = React.useState(false)
@@ -38,10 +40,10 @@ export default function AIInsightsPage() {
   const handleExport = () => {
     const brief = `BARA AI OPERATIONAL BRIEF
 Date: Today, Oct 5, 2026
-Restaurant: Bara Bistro & Grill
+Restaurant: ${restaurant.name} (${restaurant.activeBranch})
 
 1. SUMMARY
-Revenue up +12.5%. Beef tenderloin food cost surged to 42.1% (target: 32.0%). Bar spend down 14.0%.
+Revenue up +12.5%. Beef tenderloin food cost surged to 42.1% (target: ${restaurant.kitchenTarget.toFixed(1)}%). Bar spend down 14.0%.
 
 2. ACTION ITEMS
 - Portion Control Audit: Beef Tenderloin (Food cost 42.1%, potential leakage: ~180,000 RWF/wk)
@@ -86,7 +88,7 @@ Revenue up +12.5%. Beef tenderloin food cost surged to 42.1% (target: 32.0%). Ba
             </span>
           </div>
           <p className="text-xs text-[#8C7D73] dark:text-[#A89A90] mt-0.5">
-            Daily operational intelligence and automated cost variance recommendations.
+            Daily operational intelligence and automated cost variance recommendations for {restaurant.name} ({restaurant.activeBranch}).
           </p>
         </div>
 
@@ -533,10 +535,10 @@ Revenue up +12.5%. Beef tenderloin food cost surged to 42.1% (target: 32.0%). Ba
             <Button
               size="sm"
               variant="outline"
-              render={<Link href="/inventory" />}
+              render={<Link href="/menu" />}
               className="w-full text-xs font-semibold h-8 rounded-xl border-emerald-600/30 text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-950"
             >
-              Compare Suppliers
+              Audit Menu Recipes
             </Button>
           </div>
         </div>
