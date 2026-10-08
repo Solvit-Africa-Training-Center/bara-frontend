@@ -2,12 +2,48 @@ import * as React from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
+export function BaraLogoBadge({
+  className,
+  widthClass = "w-32 xl:w-[165px]",
+}: {
+  className?: string
+  widthClass?: string
+}) {
+  return (
+    <div className={cn("inline-flex flex-col", className)}>
+      <div
+        className={cn(
+          "flex aspect-[3/2] items-center justify-center rounded-2xl bg-[#f7f7f7] p-3 shadow-md",
+          widthClass
+        )}
+      >
+        <Image
+          src="/bara-logo.svg"
+          alt="Bara"
+          width={154}
+          height={108}
+          priority
+          className="h-full w-full object-contain"
+        />
+      </div>
+      {/* Three colored lines below badge */}
+      <div className="mt-2 grid w-full grid-cols-3 gap-2">
+        <div className="h-1.5 rounded-[1px] bg-[#C1440E]" />
+        <div className="h-1.5 rounded-[1px] bg-[#E8A33D]" />
+        <div className="h-1.5 rounded-[1px] bg-[#C1440E]" />
+      </div>
+    </div>
+  )
+}
+
 export function BaraLogo({
   className,
+  imageClassName,
   collapsed = false,
   useSvgFile = false,
 }: {
   className?: string
+  imageClassName?: string
   collapsed?: boolean
   useSvgFile?: boolean
 }) {
@@ -20,15 +56,21 @@ export function BaraLogo({
           width={154}
           height={108}
           priority
-          className="h-10 w-auto object-contain"
+          className={cn("h-10 w-auto object-contain", imageClassName)}
         />
       </div>
     )
   }
 
   return (
-    <div className={cn("flex items-center gap-3", collapsed && "justify-center gap-0", className)}>
-      <div className="shrink-0 flex items-center justify-center">
+    <div
+      className={cn(
+        "flex items-center gap-3",
+        collapsed && "justify-center gap-0",
+        className
+      )}
+    >
+      <div className="flex shrink-0 items-center justify-center">
         <svg
           width="36"
           height="30"
