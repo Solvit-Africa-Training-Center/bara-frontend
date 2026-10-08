@@ -35,7 +35,6 @@ export interface CurrentUser {
 export interface RestaurantContextValue {
   restaurant: Restaurant
   user: CurrentUser
-  isLoaded: boolean
   updateRestaurant: (patch: Partial<Restaurant>) => void
   updateUser: (patch: Partial<CurrentUser>) => void
   switchBranch: (branchName: string) => void
@@ -93,7 +92,6 @@ function loadPersistedRestaurant(): Partial<Restaurant> {
     /* ignore storage errors */
   }
 
-  // Fallback to onboarding draft if present
   try {
     const d = loadDraft()
     const name = d.tradingName?.trim() || d.restaurantName?.trim()
@@ -146,59 +144,98 @@ function loadPersistedUser(): Partial<CurrentUser> {
   return {}
 }
 
+class RestaurantStore {
+  private restaurant: Restaurant = DEFAULT_RESTAURANT
+  private user: CurrentUser = DEFAULT_USER
+  private listeners = new Set<() => void>()
+  private initialized = false
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      this.init()
+    }
+  }
+
+  private init() {
+    if (this.initialized) return
+    this.initialized = true
+    const persistedRest = loadPersistedRestaurant()
+    const persistedUser = loadPersistedUser()
+    this.restaurant = { ...DEFAULT_RESTAURANT, ...persistedRest }
+    this.user = { ...DEFAULT_USER, ...persistedUser }
+
+    window.addEventListener("storage", () => {
+      this.refresh()
+    })
+  }
+
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
+  }
+
+  getRestaurantSnapshot = () => this.restaurant
+  getRestaurantServerSnapshot = () => DEFAULT_RESTAURANT
+
+  getUserSnapshot = () => this.user
+  getUserServerSnapshot = () => DEFAULT_USER
+
+  updateRestaurant = (patch: Partial<Restaurant>) => {
+    this.restaurant = { ...this.restaurant, ...patch }
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(RESTAURANT_STORAGE_KEY, JSON.stringify(this.restaurant))
+      }
+    } catch {
+      /* storage unavailable */
+    }
+    this.emit()
+  }
+
+  updateUser = (patch: Partial<CurrentUser>) => {
+    this.user = { ...this.user, ...patch }
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(this.user))
+      }
+    } catch {
+      /* storage unavailable */
+    }
+    this.emit()
+  }
+
+  refresh = () => {
+    const persistedRest = loadPersistedRestaurant()
+    const persistedUser = loadPersistedUser()
+    this.restaurant = { ...DEFAULT_RESTAURANT, ...persistedRest }
+    this.user = { ...DEFAULT_USER, ...persistedUser }
+    this.emit()
+  }
+
+  private emit() {
+    this.listeners.forEach((l) => l())
+  }
+}
+
+const store = new RestaurantStore()
 const RestaurantContext = React.createContext<RestaurantContextValue | null>(null)
 
 export function RestaurantProvider({ children }: { children: React.ReactNode }) {
-  const [restaurant, setRestaurant] = React.useState<Restaurant>(DEFAULT_RESTAURANT)
-  const [user, setUser] = React.useState<CurrentUser>(DEFAULT_USER)
-  const [isLoaded, setIsLoaded] = React.useState(false)
-
-  const refresh = React.useCallback(() => {
-    const persistedRest = loadPersistedRestaurant()
-    const persistedUser = loadPersistedUser()
-    setRestaurant((prev) => ({ ...prev, ...persistedRest }))
-    setUser((prev) => ({ ...prev, ...persistedUser }))
-  }, [])
-
-  React.useEffect(() => {
-    refresh()
-    setIsLoaded(true)
-  }, [refresh])
-
-  const updateRestaurant = React.useCallback((patch: Partial<Restaurant>) => {
-    setRestaurant((prev) => {
-      const next = { ...prev, ...patch }
-      try {
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(RESTAURANT_STORAGE_KEY, JSON.stringify(next))
-        }
-      } catch {
-        /* storage unavailable */
-      }
-      return next
-    })
-  }, [])
-
-  const updateUser = React.useCallback((patch: Partial<CurrentUser>) => {
-    setUser((prev) => {
-      const next = { ...prev, ...patch }
-      try {
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(next))
-        }
-      } catch {
-        /* storage unavailable */
-      }
-      return next
-    })
-  }, [])
-
-  const switchBranch = React.useCallback(
-    (branchName: string) => {
-      updateRestaurant({ activeBranch: branchName })
-    },
-    [updateRestaurant]
+  const restaurant = React.useSyncExternalStore(
+    store.subscribe,
+    store.getRestaurantSnapshot,
+    store.getRestaurantServerSnapshot
   )
+
+  const user = React.useSyncExternalStore(
+    store.subscribe,
+    store.getUserSnapshot,
+    store.getUserServerSnapshot
+  )
+
+  const switchBranch = React.useCallback((branchName: string) => {
+    store.updateRestaurant({ activeBranch: branchName })
+  }, [])
 
   const formatCurrency = React.useCallback(
     (amount: number): string => {
@@ -219,14 +256,13 @@ export function RestaurantProvider({ children }: { children: React.ReactNode }) 
     () => ({
       restaurant,
       user,
-      isLoaded,
-      updateRestaurant,
-      updateUser,
+      updateRestaurant: store.updateRestaurant,
+      updateUser: store.updateUser,
       switchBranch,
       formatCurrency,
-      refresh,
+      refresh: store.refresh,
     }),
-    [restaurant, user, isLoaded, updateRestaurant, updateUser, switchBranch, formatCurrency, refresh]
+    [restaurant, user, switchBranch, formatCurrency]
   )
 
   return (

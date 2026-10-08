@@ -50,7 +50,8 @@ export function saveDraft(patch: Partial<OnboardingDraft>) {
   } catch {
     // A large logo can exceed the storage quota, so retry without it
     try {
-      const { logoDataUrl: _logo, ...rest } = next
+      const rest = { ...next }
+      delete rest.logoDataUrl
       window.sessionStorage.setItem(KEY, JSON.stringify(rest))
     } catch {
       /* storage unavailable */

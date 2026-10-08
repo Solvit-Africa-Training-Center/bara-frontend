@@ -20,11 +20,174 @@ import { Card, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRestaurant } from "@/components/restaurant-provider"
 
+interface ProfileFormProps {
+  restaurant: ReturnType<typeof useRestaurant>["restaurant"]
+  onSave: (patch: Partial<ReturnType<typeof useRestaurant>["restaurant"]>) => void
+  onNotice: (msg: string) => void
+}
+
+function ProfileTabForm({ restaurant, onSave, onNotice }: ProfileFormProps) {
+  const [restaurantName, setRestaurantName] = React.useState(restaurant.name)
+  const [address, setAddress] = React.useState(restaurant.address)
+  const [currency, setCurrency] = React.useState(restaurant.currency)
+  const [kitchenTarget, setKitchenTarget] = React.useState(String(restaurant.kitchenTarget))
+  const [barTarget, setBarTarget] = React.useState(String(restaurant.barTarget))
+  const [aiAlerts, setAiAlerts] = React.useState(restaurant.aiAlerts)
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave({
+      name: restaurantName.trim() || restaurant.name,
+      address: address.trim(),
+      currency,
+      kitchenTarget: Number(kitchenTarget) || restaurant.kitchenTarget,
+      barTarget: Number(barTarget) || restaurant.barTarget,
+      aiAlerts,
+    })
+    onNotice("Settings saved and synced across system!")
+  }
+
+  return (
+    <form onSubmit={handleSave} className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          className="h-8.5 gap-1.5 rounded-xl bg-[#C85A24] text-white hover:bg-[#B34D1C] text-xs font-bold shadow-xs px-4"
+        >
+          <Save className="size-3.5" />
+          <span>Save Changes</span>
+        </Button>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Branch & General Profile */}
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+            <Store className="size-4 text-primary" />
+            <CardTitle className="text-sm font-bold text-foreground">
+              Branch &amp; Profile Details
+            </CardTitle>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-foreground">
+                Restaurant Branch Name
+              </label>
+              <input
+                type="text"
+                value={restaurantName}
+                onChange={(e) => setRestaurantName(e.target.value)}
+                className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground">Location &amp; Address</label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-foreground">Base Currency</label>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                >
+                  <option value="RWF">RWF (Rwandan Franc)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="KES">KES (Kenyan Shilling)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground">Time Zone</label>
+                <input
+                  type="text"
+                  disabled
+                  defaultValue="Africa/Kigali (GMT+2)"
+                  className="mt-1 h-9 w-full rounded-xl border border-border bg-muted/50 px-3 text-xs text-muted-foreground"
+                />
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Food Cost & Operational Margins */}
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+            <Percent className="size-4 text-emerald-600" />
+            <CardTitle className="text-sm font-bold text-foreground">
+              Food Cost &amp; Margin Targets
+            </CardTitle>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-foreground">
+                Kitchen Food Cost Target (% of sales)
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="number"
+                  value={kitchenTarget}
+                  onChange={(e) => setKitchenTarget(e.target.value)}
+                  className="h-9 w-24 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Benchmark: 28% – 34%
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground">
+                Bar &amp; Beverage Cost Target (% of sales)
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="number"
+                  value={barTarget}
+                  onChange={(e) => setBarTarget(e.target.value)}
+                  className="h-9 w-24 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Benchmark: 18% – 24%
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={aiAlerts}
+                  onChange={(e) => setAiAlerts(e.target.checked)}
+                  className="size-4 rounded accent-primary cursor-pointer"
+                />
+                <span className="text-xs font-medium text-foreground">
+                  Enable AI variance alerts when cost exceeds target by &gt; 5%
+                </span>
+              </label>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </form>
+  )
+}
+
 function SettingsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
-  const { restaurant, updateRestaurant, isLoaded } = useRestaurant()
+  const { restaurant, updateRestaurant } = useRestaurant()
 
   React.useEffect(() => {
     if (tabParam === "users") {
@@ -39,37 +202,10 @@ function SettingsContent() {
   }
 
   const [savedNotice, setSavedNotice] = React.useState("")
-  const [restaurantName, setRestaurantName] = React.useState(restaurant.name)
-  const [address, setAddress] = React.useState(restaurant.address)
-  const [currency, setCurrency] = React.useState(restaurant.currency)
-  const [kitchenTarget, setKitchenTarget] = React.useState(String(restaurant.kitchenTarget))
-  const [barTarget, setBarTarget] = React.useState(String(restaurant.barTarget))
-  const [aiAlerts, setAiAlerts] = React.useState(restaurant.aiAlerts)
-
-  React.useEffect(() => {
-    if (isLoaded) {
-      setRestaurantName(restaurant.name)
-      setAddress(restaurant.address)
-      setCurrency(restaurant.currency)
-      setKitchenTarget(String(restaurant.kitchenTarget))
-      setBarTarget(String(restaurant.barTarget))
-      setAiAlerts(restaurant.aiAlerts)
-    }
-  }, [isLoaded, restaurant])
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateRestaurant({
-      name: restaurantName.trim() || restaurant.name,
-      address: address.trim(),
-      currency,
-      kitchenTarget: Number(kitchenTarget) || restaurant.kitchenTarget,
-      barTarget: Number(barTarget) || restaurant.barTarget,
-      aiAlerts,
-    })
-    setSavedNotice("Settings saved and synced across system!")
+  const handleNotice = React.useCallback((msg: string) => {
+    setSavedNotice(msg)
     setTimeout(() => setSavedNotice(""), 3500)
-  }
+  }, [])
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
@@ -83,16 +219,6 @@ function SettingsContent() {
             Manage your restaurant profile, operational food cost margins, and Bara subscription plan.
           </p>
         </div>
-
-        {activeTab === "profile" && (
-          <Button
-            onClick={handleSave}
-            className="h-8.5 gap-1.5 rounded-xl bg-[#C85A24] text-white hover:bg-[#B34D1C] text-xs font-bold shadow-xs px-4"
-          >
-            <Save className="size-3.5" />
-            <span>Save Changes</span>
-          </Button>
-        )}
       </div>
 
       {savedNotice && (
@@ -126,126 +252,12 @@ function SettingsContent() {
 
         {/* TAB 1: Profile & Branch */}
         <TabsContent value="profile" className="mt-0">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Branch & General Profile */}
-            <Card className="rounded-2xl border-border bg-card p-5 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <Store className="size-4 text-primary" />
-                <CardTitle className="text-sm font-bold text-foreground">
-                  Branch &amp; Profile Details
-                </CardTitle>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Restaurant Branch Name
-                  </label>
-                  <input
-                    type="text"
-                    value={restaurantName}
-                    onChange={(e) => setRestaurantName(e.target.value)}
-                    className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-foreground">Location &amp; Address</label>
-                  <input
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-foreground">Base Currency</label>
-                    <select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                    >
-                      <option value="RWF">RWF (Rwandan Franc)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="KES">KES (Kenyan Shilling)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-foreground">Time Zone</label>
-                    <input
-                      type="text"
-                      disabled
-                      defaultValue="Africa/Kigali (GMT+2)"
-                      className="mt-1 h-9 w-full rounded-xl border border-border bg-muted/50 px-3 text-xs text-muted-foreground"
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Food Cost & Operational Margins */}
-            <Card className="rounded-2xl border-border bg-card p-5 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <Percent className="size-4 text-emerald-600" />
-                <CardTitle className="text-sm font-bold text-foreground">
-                  Food Cost &amp; Margin Targets
-                </CardTitle>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Kitchen Food Cost Target (% of sales)
-                  </label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={kitchenTarget}
-                      onChange={(e) => setKitchenTarget(e.target.value)}
-                      className="h-9 w-24 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      Benchmark: 28% – 34%
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-foreground">
-                    Bar &amp; Beverage Cost Target (% of sales)
-                  </label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={barTarget}
-                      onChange={(e) => setBarTarget(e.target.value)}
-                      className="h-9 w-24 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      Benchmark: 18% – 24%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <label className="flex items-center gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={aiAlerts}
-                      onChange={(e) => setAiAlerts(e.target.checked)}
-                      className="size-4 rounded accent-primary cursor-pointer"
-                    />
-                    <span className="text-xs font-medium text-foreground">
-                      Enable AI variance alerts when cost exceeds target by &gt; 5%
-                    </span>
-                  </label>
-                </div>
-              </div>
-            </Card>
-          </div>
+          <ProfileTabForm
+            key={restaurant.name + restaurant.currency + restaurant.activeBranch}
+            restaurant={restaurant}
+            onSave={updateRestaurant}
+            onNotice={handleNotice}
+          />
         </TabsContent>
 
         {/* TAB 2: Billing & Subscription */}

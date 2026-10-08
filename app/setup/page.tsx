@@ -50,18 +50,6 @@ export default function SetupPage() {
     window.scrollTo({ top: 0 })
   }
 
-  // ---- step handlers (save the draft, then move on) ----
-  const continueFromAccount = () => {
-    saveDraft({
-      firstName: data.firstName.trim(),
-      lastName: data.lastName.trim(),
-      email: data.email.trim(),
-      restaurantName: data.restaurantName.trim(),
-    })
-    if (!data.tradingName) update({ tradingName: data.restaurantName })
-    goTo(1)
-  }
-
   const continueFromRestaurant = () => {
     saveDraft({
       tradingName: data.tradingName,
