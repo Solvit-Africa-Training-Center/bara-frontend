@@ -74,13 +74,13 @@ export function NavUser({ user: override }: NavUserProps) {
               <SidebarMenuButton
                 size="lg"
                 tooltip={user.name}
-                className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+                className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:mx-auto"
               />
             }
           >
-            <Avatar className="size-8 rounded-full border border-sidebar-border shrink-0">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold text-xs">
+            <Avatar className="size-8 rounded-full border border-sidebar-border shrink-0 group-data-[collapsible=icon]:flex! overflow-hidden">
+              <AvatarImage src={user.avatar} alt={user.name} className="size-full object-cover rounded-full" />
+              <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold text-xs size-full flex items-center justify-center">
                 {initials}
               </AvatarFallback>
             </Avatar>
