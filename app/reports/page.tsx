@@ -9,22 +9,57 @@ import {
   Printer,
   TrendingUp,
 } from "lucide-react"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { DateRangePickerModal } from "@/components/date-range-picker"
 import { cn } from "@/lib/utils"
 import { useRestaurant } from "@/components/restaurant-provider"
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+
+const performanceData = [
+  { day: "Mon", fullDay: "Mon, Sep 28", revenue: 1390000, cogs: 650000, profit: 740000, margin: 53.2 },
+  { day: "Tue", fullDay: "Tue, Sep 29", revenue: 1080000, cogs: 545000, profit: 535000, margin: 49.5 },
+  { day: "Wed", fullDay: "Wed, Sep 30", revenue: 1140000, cogs: 560000, profit: 580000, margin: 50.9 },
+  { day: "Thu", fullDay: "Thu, Oct 1", revenue: 1210000, cogs: 595000, profit: 615000, margin: 50.8 },
+  { day: "Fri", fullDay: "Fri, Oct 2", revenue: 1750000, cogs: 860000, profit: 890000, margin: 50.9 },
+  { day: "Sat", fullDay: "Sat, Oct 3", revenue: 1820000, cogs: 890000, profit: 930000, margin: 51.1 },
+  { day: "Sun", fullDay: "Sun, Oct 4", revenue: 1450000, cogs: 720000, profit: 730000, margin: 50.3 },
+]
+
+const chartConfig = {
+  revenue: {
+    label: "Gross Revenue",
+    color: "#C85A24",
+  },
+  profit: {
+    label: "Gross Profit",
+    color: "#234D3A",
+  },
+  cogs: {
+    label: "Food & Bar COGS",
+    color: "#E8A33D",
+  },
+} satisfies ChartConfig
 
 export default function ReportsPage() {
   const { restaurant } = useRestaurant()
   const [timeRange, setTimeRange] = React.useState<"week" | "month" | "quarter" | "custom">("week")
   const [customLabel, setCustomLabel] = React.useState("Custom")
   const [showPickerModal, setShowPickerModal] = React.useState(false)
+  const [activeSeries, setActiveSeries] = React.useState<"all" | "revenue" | "profit">("all")
 
   return (
-    <div className="flex flex-col gap-5 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -195,6 +230,155 @@ export default function ReportsPage() {
         </Card>
       </div>
 
+      {/* shadcn: Area Chart - Linear */}
+      <Card className="rounded-3xl border-border bg-card shadow-xs overflow-hidden">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-border/50">
+          <div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-bold text-foreground">
+                Revenue &amp; Gross Margin Trajectory
+              </CardTitle>
+              <Badge variant="accent" className="font-bold text-[10px]">
+                Area Chart - Linear
+              </Badge>
+            </div>
+            <CardDescription className="text-xs mt-0.5">
+              Daily revenue versus gross profit performance across the active 7-day operational cycle.
+            </CardDescription>
+          </div>
+
+          <div className="flex items-center gap-1 rounded-xl border border-border bg-background p-1 self-start sm:self-auto shadow-2xs">
+            <button
+              onClick={() => setActiveSeries("all")}
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
+                activeSeries === "all"
+                  ? "bg-[#C85A24] text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              All Streams
+            </button>
+            <button
+              onClick={() => setActiveSeries("revenue")}
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
+                activeSeries === "revenue"
+                  ? "bg-[#C85A24] text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Revenue Only
+            </button>
+            <button
+              onClick={() => setActiveSeries("profit")}
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
+                activeSeries === "profit"
+                  ? "bg-[#234D3A] text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Profit Only
+            </button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-4 sm:p-6 pt-4">
+          <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
+            <AreaChart
+              accessibilityLayer
+              data={performanceData}
+              margin={{
+                left: 10,
+                right: 10,
+                top: 10,
+                bottom: 0,
+              }}
+            >
+              <defs>
+                <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#C85A24" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#C85A24" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="fillProfit" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#234D3A" stopOpacity={0.38} />
+                  <stop offset="95%" stopColor="#234D3A" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+
+              <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
+
+              <XAxis
+                dataKey="day"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => value}
+              />
+
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+              />
+
+              <ChartTooltip
+                cursor={{ strokeDasharray: "3 3", opacity: 0.5 }}
+                content={
+                  <ChartTooltipContent
+                    indicator="line"
+                    labelFormatter={(_label, payload) => {
+                      if (payload && payload[0]?.payload) {
+                        return payload[0].payload.fullDay
+                      }
+                      return _label
+                    }}
+                  />
+                }
+              />
+
+              {(activeSeries === "all" || activeSeries === "revenue") && (
+                <Area
+                  dataKey="revenue"
+                  type="linear"
+                  fill="url(#fillRevenue)"
+                  fillOpacity={0.4}
+                  stroke="#C85A24"
+                  strokeWidth={2.5}
+                  name="Gross Revenue"
+                />
+              )}
+
+              {(activeSeries === "all" || activeSeries === "profit") && (
+                <Area
+                  dataKey="profit"
+                  type="linear"
+                  fill="url(#fillProfit)"
+                  fillOpacity={0.4}
+                  stroke="#234D3A"
+                  strokeWidth={2.5}
+                  name="Gross Profit"
+                />
+              )}
+
+              <ChartLegend content={<ChartLegendContent />} />
+            </AreaChart>
+          </ChartContainer>
+        </CardContent>
+
+        <CardFooter className="border-t border-border/50 p-4 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-muted/20">
+          <div className="flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+            <TrendingUp className="size-4 shrink-0" />
+            <span>Trending up by 14.2% in net restaurant profitability this week</span>
+          </div>
+          <span className="text-muted-foreground text-[11px]">
+            Peak day: <strong>Saturday (1.82M {restaurant.currency})</strong> with 51.1% operating margin
+          </span>
+        </CardFooter>
+      </Card>
+
       {/* Category Breakdown & Daily Audited Table */}
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Category Contribution */}
@@ -299,10 +483,10 @@ export default function ReportsPage() {
                     <tr key={row.date} className="hover:bg-muted/30 transition-colors">
                       <td className="py-2.5 pl-1 font-semibold text-foreground">{row.date}</td>
                       <td className="py-2.5 text-muted-foreground">{row.orders}</td>
-                      <td className="py-2.5 font-bold text-foreground">{row.rev} RWF</td>
-                      <td className="py-2.5 text-muted-foreground">{row.cogs} RWF</td>
+                      <td className="py-2.5 font-bold text-foreground">{row.rev} {restaurant.currency}</td>
+                      <td className="py-2.5 text-muted-foreground">{row.cogs} {restaurant.currency}</td>
                       <td className="py-2.5 text-right pr-1 font-bold text-emerald-600 dark:text-emerald-400">
-                        +{row.profit} RWF ({row.margin})
+                        +{row.profit} {restaurant.currency} ({row.margin})
                       </td>
                     </tr>
                   ))}
