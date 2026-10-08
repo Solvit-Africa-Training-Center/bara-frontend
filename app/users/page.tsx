@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { useRestaurant } from "@/components/restaurant-provider"
 
 interface TeamMember {
   id: string
@@ -119,6 +120,7 @@ const rolePermissions = [
 ]
 
 export default function UsersPage() {
+  const { restaurant } = useRestaurant()
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>(initialTeamMembers)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [roleFilter, setRoleFilter] = React.useState<string>("All")
@@ -200,7 +202,7 @@ export default function UsersPage() {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage authorized staff roles, floor authorizations, and role-based permissions across Bara Bistro.
+            Manage authorized staff roles, floor authorizations, and role-based permissions across {restaurant.name} ({restaurant.activeBranch}).
           </p>
         </div>
 
@@ -418,7 +420,7 @@ export default function UsersPage() {
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
             <DialogDescription>
-              Grant access and assign role permissions to Bara Bistro &amp; Grill.
+              Grant access and assign role permissions to {restaurant.name} ({restaurant.activeBranch}).
             </DialogDescription>
           </DialogHeader>
 

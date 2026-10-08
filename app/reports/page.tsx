@@ -15,8 +15,10 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardTitle } from "@/components/ui/card"
 import { DateRangePickerModal } from "@/components/date-range-picker"
 import { cn } from "@/lib/utils"
+import { useRestaurant } from "@/components/restaurant-provider"
 
 export default function ReportsPage() {
+  const { restaurant } = useRestaurant()
   const [timeRange, setTimeRange] = React.useState<"week" | "month" | "quarter" | "custom">("week")
   const [customLabel, setCustomLabel] = React.useState("Custom")
   const [showPickerModal, setShowPickerModal] = React.useState(false)
@@ -30,7 +32,7 @@ export default function ReportsPage() {
             Financial &amp; Operational Reports
           </h1>
           <p className="text-xs text-[#8C7D73] dark:text-[#A89A90] mt-0.5">
-            Profit &amp; Loss statements, margin trends, and category performance audits.
+            Profit &amp; Loss statements, margin trends, and category performance audits for {restaurant.name} ({restaurant.activeBranch}).
           </p>
         </div>
 
@@ -109,7 +111,7 @@ export default function ReportsPage() {
               const csvContent =
                 "data:text/csv;charset=utf-8," +
                 [
-                  "Date,Orders,Gross Revenue (RWF),COGS (RWF),Gross Profit (RWF),Margin",
+                  `Date,Orders,Gross Revenue (${restaurant.currency}),COGS (${restaurant.currency}),Gross Profit (${restaurant.currency}),Margin`,
                   "Sun Oct 4,242,1450000,720000,730000,50.3%",
                   "Sat Oct 3,288,1820000,890000,930000,51.1%",
                   "Fri Oct 2,274,1750000,860000,890000,50.9%",
@@ -142,7 +144,7 @@ export default function ReportsPage() {
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
               9,840,000
             </span>
-            <span className="text-xs font-semibold text-muted-foreground">RWF</span>
+            <span className="text-xs font-semibold text-muted-foreground">{restaurant.currency}</span>
           </div>
           <div className="mt-2 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
             <ArrowUpRight className="size-3.5" />
@@ -156,7 +158,7 @@ export default function ReportsPage() {
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
               4,820,000
             </span>
-            <span className="text-xs font-semibold text-muted-foreground">RWF</span>
+            <span className="text-xs font-semibold text-muted-foreground">{restaurant.currency}</span>
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
             <span>Food cost ratio:</span>
@@ -170,7 +172,7 @@ export default function ReportsPage() {
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
               5,020,000
             </span>
-            <span className="text-xs font-semibold text-muted-foreground">RWF</span>
+            <span className="text-xs font-semibold text-muted-foreground">{restaurant.currency}</span>
           </div>
           <div className="mt-2 flex items-center gap-1 text-xs text-[#234D3A] dark:text-emerald-400 font-bold">
             <TrendingUp className="size-3.5" />
@@ -184,7 +186,7 @@ export default function ReportsPage() {
             <span className="text-2xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
               118,500
             </span>
-            <span className="text-xs font-semibold text-muted-foreground">RWF</span>
+            <span className="text-xs font-semibold text-muted-foreground">{restaurant.currency}</span>
           </div>
           <div className="mt-2 flex items-center gap-1 text-xs text-emerald-600 font-medium">
             <ArrowDownRight className="size-3.5" />

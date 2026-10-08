@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { useRestaurant } from "@/components/restaurant-provider"
 
 interface MenuItem {
   id: string
@@ -144,6 +145,7 @@ const initialMenuItems: MenuItem[] = [
 ]
 
 export default function MenuPage() {
+  const { restaurant, formatCurrency } = useRestaurant()
   const [menuItems, setMenuItems] = React.useState<MenuItem[]>(initialMenuItems)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [categoryFilter, setCategoryFilter] = React.useState<string>("All")
@@ -263,7 +265,7 @@ export default function MenuPage() {
       : "0"
 
   const exportCSV = () => {
-    const headers = "Name,Category,Price (RWF),COGS (RWF),Food Cost %,Orders Today,Status\n"
+    const headers = `Name,Category,Price (${restaurant.currency}),COGS (${restaurant.currency}),Food Cost %,Orders Today,Status\n`
     const rows = menuItems
       .map(
         (m) =>
@@ -295,7 +297,7 @@ export default function MenuPage() {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Select items to dispatch orders or audit live recipe portion food cost margins.
+            Select items to dispatch orders for {restaurant.name} ({restaurant.activeBranch}) or audit live recipe portion margins.
           </p>
         </div>
 
@@ -428,7 +430,7 @@ export default function MenuPage() {
                 <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between">
                   <div>
                     <span className="text-sm font-extrabold text-[#C85A24] dark:text-[#E07A3E]">
-                      {dish.price.toLocaleString()} RWF
+                      {formatCurrency(dish.price)}
                     </span>
                     <p className="text-[10px] text-muted-foreground">
                       Cost: {dish.portionCostPercent}%
@@ -495,7 +497,7 @@ export default function MenuPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-foreground truncate">{oi.item.name}</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {oi.item.price.toLocaleString()} RWF each
+                        {formatCurrency(oi.item.price)} each
                       </p>
                     </div>
 
@@ -518,9 +520,9 @@ export default function MenuPage() {
                       </button>
                     </div>
 
-                    <div className="text-right shrink-0 w-16">
+                    <div className="text-right shrink-0 w-20">
                       <span className="font-bold text-foreground">
-                        {(oi.item.price * oi.quantity).toLocaleString()} RWF
+                        {formatCurrency(oi.item.price * oi.quantity)}
                       </span>
                     </div>
                   </div>
@@ -540,16 +542,16 @@ export default function MenuPage() {
                 <div className="space-y-2 pt-3 border-t border-border/60 text-xs">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
-                    <span>{ticketSubtotal.toLocaleString()} RWF</span>
+                    <span>{formatCurrency(ticketSubtotal)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>VAT &amp; Service (18% incl.)</span>
-                    <span>{(ticketSubtotal * 0.18).toLocaleString(undefined, { maximumFractionDigits: 0 })} RWF</span>
+                    <span>{formatCurrency(Math.round(ticketSubtotal * 0.18))}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-extrabold text-foreground pt-1 border-t border-border/40">
                     <span>Total Amount</span>
                     <span className="text-[#C85A24] dark:text-[#E07A3E] text-base">
-                      {ticketSubtotal.toLocaleString()} RWF
+                      {formatCurrency(ticketSubtotal)}
                     </span>
                   </div>
 
@@ -613,7 +615,9 @@ export default function MenuPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-foreground">Selling Price (RWF)</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Selling Price ({restaurant.currency})
+                </label>
                 <input
                   type="number"
                   required
@@ -625,7 +629,9 @@ export default function MenuPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-foreground">Recipe COGS (RWF)</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Recipe COGS ({restaurant.currency})
+                </label>
                 <input
                   type="number"
                   required

@@ -9,9 +9,11 @@ import { PaymentStep } from "./_components/payment-step"
 import { PlanStep } from "./_components/plan-step"
 import { RestaurantStep } from "./_components/restaurant-step"
 import { initialData, type PlanId, type SetupData } from "./_lib/data"
+import { useRestaurant } from "@/components/restaurant-provider"
 
 export default function SetupPage() {
   const router = useRouter()
+  const { updateRestaurant, updateUser } = useRestaurant()
   const [step, setStep] = React.useState(1) // 0 Account, 1 Restaurant, 2 Plan, 3 Payment
   const [data, setData] = React.useState<SetupData>(() => {
     if (typeof window === "undefined") return initialData
@@ -85,6 +87,29 @@ export default function SetupPage() {
     if (!data.plan) return
     setPaying(true)
     saveDraft({ plan: data.plan, billing: data.billing })
+
+    const restName = data.tradingName.trim() || data.restaurantName.trim()
+    if (restName) {
+      updateRestaurant({
+        name: restName,
+        tradingName: restName,
+        city: data.city,
+        address: data.address,
+        phone: data.phone,
+        currency: data.currency,
+        plan: data.plan,
+        billing: data.billing,
+      })
+    }
+    const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`.trim()
+    if (fullName || data.email) {
+      updateUser({
+        name: fullName || "Alex Rivera",
+        email: data.email.trim(),
+        initials: `${data.firstName[0] ?? ""}${data.lastName[0] ?? ""}`.toUpperCase() || "AR",
+      })
+    }
+
     // TODO: start the mobile money payment with your payments API here
     setTimeout(() => router.push("/"), 800)
   }
