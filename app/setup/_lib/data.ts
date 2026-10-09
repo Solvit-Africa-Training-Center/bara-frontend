@@ -26,6 +26,8 @@ export type SetupData = {
   // payment
   provider: Provider
   momoPhone: string
+  paymentMethod?: "momo" | "card"
+  accountHolder?: string
 }
 
 export const brandColors = ["#C1440E", "#2F5233", "#E8A33D"]
@@ -48,6 +50,8 @@ export const initialData: SetupData = {
   billing: "monthly",
   provider: "mtn",
   momoPhone: "",
+  paymentMethod: "momo",
+  accountHolder: "Aline Mukamana",
 }
 
 export const currencies = [

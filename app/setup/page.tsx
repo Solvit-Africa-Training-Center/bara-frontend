@@ -38,6 +38,10 @@ export default function SetupPage() {
       plan: d.plan ?? null,
       billing: d.billing ?? initialData.billing,
       momoPhone: d.phone ?? "",
+      paymentMethod: "momo",
+      accountHolder:
+        (d.firstName && d.lastName ? `${d.firstName} ${d.lastName}` : "") ||
+        "Aline Mukamana",
     }
   })
   const [paying, setPaying] = React.useState(false)
