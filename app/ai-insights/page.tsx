@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRestaurant } from "@/components/restaurant-provider"
+import { PlanUpgradeGate } from "@/components/plan-upgrade-gate"
 
 export default function AIInsightsPage() {
   const { restaurant } = useRestaurant()
@@ -29,6 +30,35 @@ export default function AIInsightsPage() {
   const [dismissedSummary, setDismissedSummary] = React.useState(false)
   const [showRoster, setShowRoster] = React.useState(false)
   const [statusMessage, setStatusMessage] = React.useState("")
+
+  if (restaurant.plan !== "premium") {
+    return (
+      <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-10">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            AI Insights &amp; Operational Intelligence
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Automated food cost variance alerts, portion control audits, and supplier price spike monitoring.
+          </p>
+        </div>
+        <PlanUpgradeGate
+          requiredPlan="premium"
+          featureName="Bara AI Insights"
+          title="Unlock Practical Kitchen AI & Operational Intelligence"
+          description="Get automated portion leakage alerts, ingredient cost spike notifications, dynamic happy hour specials, and high-risk inventory watchlists for your kitchen and bar."
+          features={[
+            "Automated portion leakage detection & variance audits",
+            "Surging ingredient food cost notifications (e.g. Beef Tenderloin)",
+            "Dynamic Happy Hour promo suggestions with projected upside",
+            "Weekly operational briefs exportable for management",
+            "Restock and inventory depletion predictions",
+          ]}
+          priceRwf={49000}
+        />
+      </div>
+    )
+  }
 
   const handleApplyAll = () => {
     setActionDone1(true)

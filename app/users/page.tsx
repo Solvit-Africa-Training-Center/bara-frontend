@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { useRestaurant } from "@/components/restaurant-provider"
+import { PlanUpgradeGate } from "@/components/plan-upgrade-gate"
 
 interface TeamMember {
   id: string
@@ -136,6 +137,34 @@ export default function UsersPage() {
   // Edit modal state
   const [editingMember, setEditingMember] = React.useState<TeamMember | null>(null)
   const [editLevel, setEditLevel] = React.useState<TeamMember["level"]>("Kitchen & Inventory")
+
+  if (restaurant.plan === "basic") {
+    return (
+      <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-10">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-[#2C221E] dark:text-[#FAF5EE]">
+            Staff Accounts &amp; Access Control
+          </h1>
+          <p className="text-xs text-[#8C7D73] dark:text-[#A89A90] mt-0.5">
+            Role-based permission levels, shift PINs, and system access audits for {restaurant.name}.
+          </p>
+        </div>
+        <PlanUpgradeGate
+          requiredPlan="pro"
+          featureName="Team Roles & Permissions"
+          title="Collaborate with Role-Based Team Permissions"
+          description="Bara Basic is built for single-operator restaurants. To invite managers, kitchen leads, bar staff, cashiers, and auditors with tailored security permissions, upgrade to Bara Pro."
+          features={[
+            "Role-based access control (Manager, Kitchen, Bar, Cashier, Auditor)",
+            "Staff login activity and audit trail logs",
+            "Shift accountability & cashier ticket safety",
+            "Unlimited team member invitations",
+          ]}
+          priceRwf={32000}
+        />
+      </div>
+    )
+  }
 
   const filteredMembers = teamMembers.filter((m) => {
     const matchesSearch =

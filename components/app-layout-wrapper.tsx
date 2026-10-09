@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Bell, Search } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -14,20 +14,42 @@ import {
 } from "@/components/ui/sidebar"
 
 import { useRestaurant } from "@/components/restaurant-provider"
+import { useAuth } from "@/components/auth-provider"
 
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const { restaurant } = useRestaurant()
+  const { isAuthenticated, isLoading } = useAuth()
+
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/setup" ||
-    pathname === "/onboarding"
+    pathname === "/onboarding" ||
+    pathname.startsWith("/errors")
+
+  React.useEffect(() => {
+    if (!isLoading && !isAuthenticated && !isAuthPage) {
+      router.push("/login")
+    }
+  }, [isLoading, isAuthenticated, isAuthPage, router])
 
   if (isAuthPage) {
     return (
       <div className="min-h-screen w-full bg-background text-foreground">
         {children}
+      </div>
+    )
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <span className="text-xs text-muted-foreground font-medium">Loading workspace...</span>
+        </div>
       </div>
     )
   }

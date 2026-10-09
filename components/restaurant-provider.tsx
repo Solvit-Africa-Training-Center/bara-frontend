@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { loadDraft } from "@/lib/onboarding"
+import { useAuth } from "@/components/auth-provider"
 
 export interface Restaurant {
   id: string
@@ -221,6 +222,27 @@ const store = new RestaurantStore()
 const RestaurantContext = React.createContext<RestaurantContextValue | null>(null)
 
 export function RestaurantProvider({ children }: { children: React.ReactNode }) {
+  const { user: authUser } = useAuth()
+
+  React.useEffect(() => {
+    if (authUser) {
+      store.updateUser({
+        id: authUser.id,
+        name: authUser.name,
+        email: authUser.email,
+        initials: authUser.initials,
+        role: authUser.role,
+        avatar: authUser.avatar,
+      })
+      if (authUser.restaurantName) {
+        store.updateRestaurant({
+          name: authUser.restaurantName,
+          tradingName: authUser.restaurantName,
+        })
+      }
+    }
+  }, [authUser])
+
   const restaurant = React.useSyncExternalStore(
     store.subscribe,
     store.getRestaurantSnapshot,

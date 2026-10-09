@@ -9,6 +9,7 @@ import { AuthShell, authInputClass } from "@/components/auth-shell"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { startDraft } from "@/lib/onboarding"
+import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 
 const highlights = [
@@ -19,6 +20,7 @@ const highlights = [
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { register } = useAuth()
   const [firstName, setFirstName] = React.useState("")
   const [lastName, setLastName] = React.useState("")
   const [restaurantName, setRestaurantName] = React.useState("")
@@ -27,11 +29,18 @@ export default function RegisterPage() {
   const [agreed, setAgreed] = React.useState(true)
   const [loading, setLoading] = React.useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!agreed) return
     setLoading(true)
-    // Carry the account details into the setup step (password is intentionally not stored)
+    await register({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      password: password.trim(),
+      restaurantName: restaurantName.trim(),
+    })
+    // Carry the account details into the setup step
     startDraft({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -40,7 +49,7 @@ export default function RegisterPage() {
     })
     setTimeout(() => {
       router.push("/setup")
-    }, 600)
+    }, 400)
   }
 
   const labelClass = "text-xs font-bold text-[#3B2F2A] dark:text-[#FAF3E7]"

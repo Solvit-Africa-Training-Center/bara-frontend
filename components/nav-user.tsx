@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import {
   Check,
   ChevronsUpDown,
@@ -30,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useRestaurant } from "@/components/restaurant-provider"
+import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 
 export interface NavUserProps {
@@ -46,23 +46,23 @@ const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
 
 export function NavUser({ user: override }: NavUserProps) {
-  const router = useRouter()
   const { isMobile } = useSidebar()
   const { restaurant, user: current, switchBranch } = useRestaurant()
+  const { user: authUser, logout } = useAuth()
 
   const user = {
-    name: override?.name || current.name || "Alex Rivera",
-    email: override?.email || current.email,
-    avatar: override?.avatar || current.avatar || DEFAULT_AVATAR,
-    role: override?.role || current.role || "General Manager",
+    name: override?.name || authUser?.name || current.name || "Alex Rivera",
+    email: override?.email || authUser?.email || current.email,
+    avatar: override?.avatar || authUser?.avatar || current.avatar || DEFAULT_AVATAR,
+    role: override?.role || authUser?.role || current.role || "General Manager",
     branch: override?.branch || restaurant.activeBranch || restaurant.name,
   }
-  const initials = current.initials || "AR"
+  const initials = authUser?.initials || current.initials || "AR"
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    router.push("/login")
+    logout()
   }
 
   return (
@@ -103,11 +103,16 @@ export function NavUser({ user: override }: NavUserProps) {
                   {user.email && (
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   )}
-                  {user.branch && (
-                    <span className="mt-1 inline-block text-[10px] font-medium text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 rounded-md px-1.5 py-0.5 w-fit truncate max-w-full">
-                      {user.branch}
+                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                    {user.branch && (
+                      <span className="inline-block text-[10px] font-medium text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 rounded-md px-1.5 py-0.5 truncate max-w-full">
+                        {user.branch}
+                      </span>
+                    )}
+                    <span className="inline-block text-[10px] font-bold capitalize text-amber-700 bg-amber-500/10 dark:text-amber-400 rounded-md px-1.5 py-0.5">
+                      {restaurant.plan || "pro"} plan
                     </span>
-                  )}
+                  </div>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
