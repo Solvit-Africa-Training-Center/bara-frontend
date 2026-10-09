@@ -123,12 +123,28 @@ function MenuPageContent() {
     )
   }
 
+  const handleDuplicateItem = (item: MenuItemWithRecipe) => {
+    const newItem: MenuItemWithRecipe = {
+      ...item,
+      id: `item-${Date.now()}`,
+      name: `${item.name} (Copy)`,
+      lastSavedText: "Draft duplicate",
+    }
+    setItems((prev) => [newItem, ...prev])
+  }
+
+  const handleDeleteItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id))
+  }
+
   return (
     <MenuCatalog
       items={items}
       onEditItem={handleSelectFromCatalog}
       onNewItem={handleNewItem}
       onToggleAvailable={handleToggleAvailable}
+      onDuplicateItem={handleDuplicateItem}
+      onDeleteItem={handleDeleteItem}
       currency={restaurant.currency || "RWF"}
     />
   )
