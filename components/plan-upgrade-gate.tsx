@@ -6,6 +6,7 @@ import { Check, Lock, Sparkles, ArrowRight, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useRestaurant } from "@/components/restaurant-provider"
+import { subscriptionApi } from "@/lib/api-client"
 
 export interface PlanUpgradeGateProps {
   requiredPlan: "pro" | "premium"
@@ -31,13 +32,16 @@ export function PlanUpgradeGate({
   const currentPlan = restaurant.plan || "pro"
   const planLabel = requiredPlan === "premium" ? "Bara Premium" : "Bara Pro"
 
-  const handleInstantUpgrade = () => {
+  const handleInstantUpgrade = async () => {
     setUpgrading(true)
-    setTimeout(() => {
-      updateRestaurant({ plan: requiredPlan })
-      setUpgrading(false)
-      setSuccessNotice(true)
-    }, 500)
+    try {
+      await subscriptionApi.selectPlan(requiredPlan)
+    } catch {
+      // Offline fallback
+    }
+    updateRestaurant({ plan: requiredPlan })
+    setUpgrading(false)
+    setSuccessNotice(true)
   }
 
   if (successNotice) {

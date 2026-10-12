@@ -10,6 +10,7 @@ import {
 } from "./_lib/menu-data"
 import { MenuEditor } from "./_components/menu-editor"
 import { MenuCatalog } from "./_components/menu-catalog"
+import { MenuSkeleton } from "./_components/menu-skeleton"
 
 function MenuPageContent() {
   const router = useRouter()
@@ -152,8 +153,9 @@ function MenuPageContent() {
 
 export default function MenuPage() {
   return (
-    <React.Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading menu management...</div>}>
+    <React.Suspense fallback={<MenuSkeleton />}>
       <MenuPageContent />
     </React.Suspense>
   )
 }
+

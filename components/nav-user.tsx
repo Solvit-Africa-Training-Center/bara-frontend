@@ -47,7 +47,7 @@ const DEFAULT_AVATAR =
 
 export function NavUser({ user: override }: NavUserProps) {
   const { isMobile } = useSidebar()
-  const { restaurant, user: current, switchBranch } = useRestaurant()
+  const { restaurant, user: current } = useRestaurant()
   const { user: authUser, logout } = useAuth()
 
   const user = {
@@ -118,40 +118,6 @@ export function NavUser({ user: override }: NavUserProps) {
                   </div>
                 </div>
               </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Store className="size-3 text-primary" />
-                <span>Switch Branch</span>
-              </div>
-              {restaurant.branches.map((b) => (
-                <DropdownMenuItem
-                  key={b}
-                  onClick={() => switchBranch(b)}
-                  className="gap-2 rounded-lg cursor-pointer text-xs"
-                >
-                  <span
-                    className={cn(
-                      "size-2 rounded-full shrink-0",
-                      b === restaurant.activeBranch
-                        ? "bg-emerald-500"
-                        : "bg-muted-foreground/30"
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "flex-1 truncate",
-                      b === restaurant.activeBranch && "font-bold text-foreground"
-                    )}
-                  >
-                    {b.replace(/^Bara\s+/i, "")}
-                  </span>
-                  {b === restaurant.activeBranch && (
-                    <Check className="size-3.5 text-emerald-600 shrink-0" />
-                  )}
-                </DropdownMenuItem>
-              ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

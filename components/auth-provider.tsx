@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import { authApi, getCookie, setCookie, removeCookie } from "@/lib/api-client"
 
 export interface AuthUser {
   id: string
@@ -38,8 +39,8 @@ export interface AuthContextValue {
   updateUser: (patch: Partial<AuthUser>) => void
 }
 
-const AUTH_STORAGE_KEY = "bara:auth_session"
-const LOGGED_OUT_KEY = "bara:auth_logged_out"
+const USER_COOKIE_KEY = "bara_auth_user"
+const LOGGED_OUT_COOKIE_KEY = "bara_auth_logged_out"
 
 export const DEMO_USERS: Record<string, AuthUser> = {
   "alex@barabistro.rw": {
@@ -75,15 +76,12 @@ function getInitials(name: string): string {
 }
 
 function getPersistedUser(): AuthUser | null {
-  if (typeof window === "undefined") return DEFAULT_AUTH_USER
+  if (typeof document === "undefined") return DEFAULT_AUTH_USER
   try {
-    const isLoggedOut = window.localStorage.getItem(LOGGED_OUT_KEY) === "true"
+    const isLoggedOut = getCookie(LOGGED_OUT_COOKIE_KEY) === "true"
     if (isLoggedOut) return null
 
-    const stored =
-      window.localStorage.getItem(AUTH_STORAGE_KEY) ||
-      window.sessionStorage.getItem(AUTH_STORAGE_KEY)
-
+    const stored = getCookie(USER_COOKIE_KEY)
     if (stored) return JSON.parse(stored)
     return DEFAULT_AUTH_USER
   } catch {
@@ -96,40 +94,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(DEFAULT_AUTH_USER)
   const [isLoading, setIsLoading] = React.useState(false)
 
-  // Hydrate persisted session after initial render to avoid SSR mismatch
+  // Hydrate persisted session from cookies after initial render
   React.useEffect(() => {
+    // Clean up any legacy localStorage session
+    try {
+      window.localStorage.removeItem("bara:auth_session")
+      window.localStorage.removeItem("bara:auth_logged_out")
+    } catch {}
+
     const persisted = getPersistedUser()
     if (persisted && persisted.id !== DEFAULT_AUTH_USER.id) {
       setUser(persisted)
     } else if (persisted === null) {
       setUser(null)
     }
-
-    const onStorage = () => {
-      setUser(getPersistedUser())
-    }
-    window.addEventListener("storage", onStorage)
-    return () => window.removeEventListener("storage", onStorage)
   }, [])
 
   const persistSession = (authUser: AuthUser | null, keepSignedIn = true) => {
-    if (typeof window === "undefined") return
+    if (typeof document === "undefined") return
     try {
       if (authUser) {
-        window.localStorage.removeItem(LOGGED_OUT_KEY)
+        removeCookie(LOGGED_OUT_COOKIE_KEY)
         const json = JSON.stringify(authUser)
-        if (keepSignedIn) {
-          window.localStorage.setItem(AUTH_STORAGE_KEY, json)
-          window.sessionStorage.removeItem(AUTH_STORAGE_KEY)
-        } else {
-          window.sessionStorage.setItem(AUTH_STORAGE_KEY, json)
-          window.localStorage.removeItem(AUTH_STORAGE_KEY)
-        }
+        setCookie(USER_COOKIE_KEY, json, keepSignedIn ? 14 : 1)
       } else {
-        window.localStorage.removeItem(AUTH_STORAGE_KEY)
-        window.sessionStorage.removeItem(AUTH_STORAGE_KEY)
-        window.localStorage.setItem(LOGGED_OUT_KEY, "true")
+        removeCookie(USER_COOKIE_KEY)
+        setCookie(LOGGED_OUT_COOKIE_KEY, "true", 14)
       }
+      // Ensure legacy localStorage is clean
+      try {
+        window.localStorage.removeItem("bara:auth_session")
+        window.localStorage.removeItem("bara:auth_logged_out")
+      } catch {}
     } catch {
       /* storage error ignore */
     }
@@ -144,55 +140,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: "Please enter your email address." }
     }
 
-    // Match demo accounts or generate dynamically for any custom email
-    let authenticatedUser: AuthUser
-    if (DEMO_USERS[emailKey]) {
-      authenticatedUser = DEMO_USERS[emailKey]
-    } else {
-      const derivedName = emailKey.split("@")[0].replace(/[._-]/g, " ")
-      const formattedName = derivedName
-        .split(" ")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ")
-
-      authenticatedUser = {
-        id: `usr-${Date.now().toString(36)}`,
-        name: formattedName || "Restaurant Staff",
-        email: credentials.email.trim(),
-        initials: getInitials(formattedName || "RS"),
-        role: "Restaurant Manager",
-        avatar:
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-        restaurantName: "Bara Bistro & Grill",
+    // 1. Attempt live API login if credentials are provided
+    if (credentials.password) {
+      try {
+        const apiRes = await authApi.login({
+          email: credentials.email.trim(),
+          password: credentials.password,
+        })
+        if (apiRes.user) {
+          const fullName =
+            `${apiRes.user.first_name || ""} ${apiRes.user.last_name || ""}`.trim() ||
+            apiRes.user.email
+          const authenticatedUser: AuthUser = {
+            id: apiRes.user.id,
+            name: fullName,
+            email: apiRes.user.email,
+            initials: getInitials(fullName),
+            role: "Restaurant Owner",
+            avatar: DEFAULT_AUTH_USER.avatar,
+            restaurantName:
+              apiRes.user.restaurant?.name || "Bara Bistro & Grill",
+          }
+          setUser(authenticatedUser)
+          persistSession(authenticatedUser, credentials.keepSignedIn ?? true)
+          return { success: true }
+        }
+      } catch (err: unknown) {
+        // If not a preconfigured demo account, surface the live API error
+        if (!DEMO_USERS[emailKey]) {
+          const errMsg = err instanceof Error ? err.message : "Invalid credentials."
+          return { success: false, error: errMsg }
+        }
       }
     }
 
-    setUser(authenticatedUser)
-    persistSession(authenticatedUser, credentials.keepSignedIn ?? true)
-    return { success: true }
+    // 2. Predefined demo account fallback
+    if (DEMO_USERS[emailKey]) {
+      const authenticatedUser = DEMO_USERS[emailKey]
+      setUser(authenticatedUser)
+      persistSession(authenticatedUser, credentials.keepSignedIn ?? true)
+      return { success: true }
+    }
+
+    return {
+      success: false,
+      error: "Unable to sign in. Please verify your credentials.",
+    }
   }
 
   const register = async (
     data: RegisterData
   ): Promise<{ success: boolean; error?: string }> => {
-    const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`.trim()
-    const newUser: AuthUser = {
-      id: `usr-${Date.now().toString(36)}`,
-      name: fullName || "Owner",
-      email: data.email.trim(),
-      initials: getInitials(fullName || "OW"),
-      role: "Restaurant Owner",
-      avatar:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-      restaurantName: data.restaurantName.trim() || "My Restaurant",
+    if (!data.password) {
+      return { success: false, error: "Password is required." }
     }
 
-    setUser(newUser)
-    persistSession(newUser, true)
-    return { success: true }
+    try {
+      const signupRes = await authApi.signup({
+        first_name: data.firstName.trim(),
+        last_name: data.lastName.trim(),
+        restaurant_name: data.restaurantName.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        accept_terms: true,
+      })
+
+      const fullName =
+        `${signupRes.user.first_name || ""} ${signupRes.user.last_name || ""}`.trim() ||
+        signupRes.user.email
+      const newUser: AuthUser = {
+        id: signupRes.user.id,
+        name: fullName,
+        email: signupRes.user.email,
+        initials: getInitials(fullName),
+        role: "Restaurant Owner",
+        avatar: DEFAULT_AUTH_USER.avatar,
+        restaurantName:
+          signupRes.user.restaurant?.name || data.restaurantName.trim() || "My Restaurant",
+      }
+
+      // Automatically sign in to get tokens
+      try {
+        await authApi.login({ email: data.email.trim(), password: data.password })
+      } catch {}
+
+      setUser(newUser)
+      persistSession(newUser, true)
+      return { success: true }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Registration failed. Please check your details."
+      return { success: false, error: message }
+    }
   }
 
   const logout = () => {
+    authApi.logout().catch(() => {})
     setUser(null)
     persistSession(null)
     router.push("/login")

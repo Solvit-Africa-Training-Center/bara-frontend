@@ -14,6 +14,7 @@ export interface DashboardOperationsBarProps {
   onSelectPeriod: (p: "today" | "yesterday" | "week" | "custom") => void
   customLabel: string
   onOpenDatePicker: () => void
+  onNewMenu?: () => void
   onNewOrder?: () => void
 }
 
@@ -110,7 +111,7 @@ export function DashboardOperationsBar({
           className="h-8.5 gap-1.5 rounded-xl bg-[#234D3A] text-white hover:bg-[#1A3B2C] text-xs font-bold px-3.5 shadow-xs"
         >
           <Plus className="size-3.5" />
-          <span>New Order</span>
+          <span>New Menu</span>
         </Button>
       </div>
     </div>
