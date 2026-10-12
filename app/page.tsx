@@ -13,6 +13,7 @@ import {
   ConsumablesSpendCard,
   CriticalIngredientsAlert,
   TransactionsModal,
+  DashboardSkeleton,
   DEFAULT_KPI_DATA,
   DEFAULT_RECENT_TRANSACTIONS,
   ALL_MODAL_TRANSACTIONS,
@@ -32,6 +33,23 @@ export default function DashboardPage() {
   >("today")
   const [customLabel, setCustomLabel] = React.useState("Custom")
   const [showPickerModal, setShowPickerModal] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
+  const handlePeriodChange = (period: "today" | "yesterday" | "week" | "custom") => {
+    setSelectedPeriod(period)
+    setIsLoading(true)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      setIsLoading(false)
+    }, 280)
+  }
 
   // Transaction modal state
   const [showTransactionsModal, setShowTransactionsModal] = React.useState(false)
@@ -83,7 +101,7 @@ export default function DashboardPage() {
         restaurantName={restaurant.name}
         activeBranch={restaurant.activeBranch}
         selectedPeriod={selectedPeriod}
-        onSelectPeriod={setSelectedPeriod}
+        onSelectPeriod={handlePeriodChange}
         customLabel={customLabel}
         onOpenDatePicker={() => setShowPickerModal(true)}
       />
@@ -92,43 +110,49 @@ export default function DashboardPage() {
         isOpen={showPickerModal}
         onClose={() => setShowPickerModal(false)}
         onApply={(_start, _end, label) => {
-          setSelectedPeriod("custom")
+          handlePeriodChange("custom")
           setCustomLabel(label)
           showToast(`Dashboard filtered for ${label}`)
         }}
       />
 
-      {/* 2. Top Three Metric KPI Cards */}
-      <DashboardKpiCards data={DEFAULT_KPI_DATA} />
+      {isLoading ? (
+        <DashboardSkeleton hideOperationsBar={true} />
+      ) : (
+        <>
+          {/* 2. Critical Ingredients Below Threshold Alert */}
+          <CriticalIngredientsAlert
+            message={DEFAULT_CRITICAL_ALERT.message}
+            badgeLabel={DEFAULT_CRITICAL_ALERT.titleBadge}
+          />
 
-      {/* 3. Recent Transaction Feed */}
-      <RecentTransactionsFeed
-        transactions={DEFAULT_RECENT_TRANSACTIONS}
-        onViewAll={() => setShowTransactionsModal(true)}
-      />
+          {/* 3. Top Three Metric KPI Cards */}
+          <DashboardKpiCards data={DEFAULT_KPI_DATA} />
 
-      {/* 4. Top Menu Performers */}
-      <TopMenuPerformers performers={DEFAULT_TOP_PERFORMERS} />
+          {/* 4. Recent Transaction Feed */}
+          <RecentTransactionsFeed
+            transactions={DEFAULT_RECENT_TRANSACTIONS}
+            onViewAll={() => setShowTransactionsModal(true)}
+          />
 
-      {/* 5. Middle Grid: Kitchen Waste Alerts + Consumables Spend */}
-      <div className="grid gap-5 lg:grid-cols-2 items-stretch">
-        <KitchenWasteAlerts
-          alerts={DEFAULT_WASTE_ALERTS}
-          onActionClick={handleWasteAction}
-          completedActions={completedActions}
-        />
-        <ConsumablesSpendCard
-          categories={DEFAULT_CONSUMABLES_CATEGORIES}
-          totalSpendFormatted="3,180,000 RWF COGS"
-          sourcingEfficiency="88.4% Rwandan Farm Sourced"
-        />
-      </div>
+          {/* 5. Top Menu Performers */}
+          <TopMenuPerformers performers={DEFAULT_TOP_PERFORMERS} />
 
-      {/* 6. Critical Ingredients Below Threshold Alert */}
-      <CriticalIngredientsAlert
-        message={DEFAULT_CRITICAL_ALERT.message}
-        badgeLabel={DEFAULT_CRITICAL_ALERT.titleBadge}
-      />
+          {/* 6. Middle Grid: Kitchen Waste Alerts + Consumables Spend */}
+          <div className="grid gap-5 lg:grid-cols-2 items-stretch">
+            <KitchenWasteAlerts
+              alerts={DEFAULT_WASTE_ALERTS}
+              onActionClick={handleWasteAction}
+              completedActions={completedActions}
+            />
+            <ConsumablesSpendCard
+              categories={DEFAULT_CONSUMABLES_CATEGORIES}
+              totalSpendFormatted="3,180,000 RWF COGS"
+              sourcingEfficiency="88.4% Rwandan Farm Sourced"
+            />
+          </div>
+        </>
+      )}
 
       {/* 7. Transactions Drilldown Modal */}
       <TransactionsModal
