@@ -48,7 +48,10 @@ export function UserNav() {
             src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
             alt={displayName}
           />
-          <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold text-xs">
+          <AvatarFallback
+            suppressHydrationWarning
+            className="rounded-full bg-primary/10 text-primary font-semibold text-xs"
+          >
             {initials}
           </AvatarFallback>
         </Avatar>

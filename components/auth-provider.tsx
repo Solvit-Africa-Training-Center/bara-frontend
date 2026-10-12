@@ -93,11 +93,18 @@ function getPersistedUser(): AuthUser | null {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [user, setUser] = React.useState<AuthUser | null>(getPersistedUser)
-  const [isLoading] = React.useState(false)
+  const [user, setUser] = React.useState<AuthUser | null>(DEFAULT_AUTH_USER)
+  const [isLoading, setIsLoading] = React.useState(false)
 
-  // Sync multi-tab session changes
+  // Hydrate persisted session after initial render to avoid SSR mismatch
   React.useEffect(() => {
+    const persisted = getPersistedUser()
+    if (persisted && persisted.id !== DEFAULT_AUTH_USER.id) {
+      setUser(persisted)
+    } else if (persisted === null) {
+      setUser(null)
+    }
+
     const onStorage = () => {
       setUser(getPersistedUser())
     }

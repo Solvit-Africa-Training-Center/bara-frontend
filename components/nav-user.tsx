@@ -80,7 +80,10 @@ export function NavUser({ user: override }: NavUserProps) {
           >
             <Avatar className="size-8 rounded-full border border-sidebar-border shrink-0 group-data-[collapsible=icon]:flex! overflow-hidden">
               <AvatarImage src={user.avatar} alt={user.name} className="size-full object-cover rounded-full" />
-              <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold text-xs size-full flex items-center justify-center">
+              <AvatarFallback
+                suppressHydrationWarning
+                className="rounded-full bg-primary/10 text-primary font-semibold text-xs size-full flex items-center justify-center"
+              >
                 {initials}
               </AvatarFallback>
             </Avatar>
