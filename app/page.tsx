@@ -23,6 +23,7 @@ import {
   DEFAULT_CRITICAL_ALERT,
   WasteAlertItem,
 } from "./_components"
+import { ingredientsApi } from "@/lib/api-client"
 
 export default function DashboardPage() {
   const { restaurant } = useRestaurant()
@@ -34,7 +35,35 @@ export default function DashboardPage() {
   const [customLabel, setCustomLabel] = React.useState("Custom")
   const [showPickerModal, setShowPickerModal] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [lowStockAlert, setLowStockAlert] = React.useState<{ message: string; count: number }>({
+    message: DEFAULT_CRITICAL_ALERT.message,
+    count: 3,
+  })
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  React.useEffect(() => {
+    ingredientsApi.list().then((list) => {
+      if (!list || list.length === 0) return
+      const critical = list.filter((i) => {
+        const q = parseFloat(String(i.current_quantity ?? 0))
+        const th = parseFloat(String(i.low_stock_threshold ?? 0))
+        return q <= th
+      })
+      if (critical.length > 0) {
+        const names = critical.slice(0, 3).map((i) => i.name).join(", ")
+        const more = critical.length > 3 ? ` and ${critical.length - 3} more` : ""
+        setLowStockAlert({
+          count: critical.length,
+          message: `${critical.length} Critical Ingredient${critical.length > 1 ? "s" : ""} Below Threshold: ${names}${more}`,
+        })
+      } else {
+        setLowStockAlert({
+          count: 0,
+          message: "All kitchen ingredients are currently at healthy stock levels.",
+        })
+      }
+    })
+  }, [])
 
   React.useEffect(() => {
     return () => {
@@ -122,8 +151,10 @@ export default function DashboardPage() {
         <>
           {/* 2. Critical Ingredients Below Threshold Alert */}
           <CriticalIngredientsAlert
-            message={DEFAULT_CRITICAL_ALERT.message}
-            badgeLabel={DEFAULT_CRITICAL_ALERT.titleBadge}
+            message={lowStockAlert.message}
+            badgeLabel={lowStockAlert.count > 0 ? "STOCK ALERT" : "OPTIMAL"}
+            href="/inventory"
+            actionLabel="Manage Inventory"
           />
 
           {/* 3. Top Three Metric KPI Cards */}

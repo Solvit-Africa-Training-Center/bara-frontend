@@ -22,6 +22,8 @@ export interface Restaurant {
   aiAlerts: boolean
   plan: "basic" | "pro" | "premium"
   billing: "monthly" | "annual"
+  status?: "active" | "grace" | "restricted" | "locked" | "archived"
+  graceDaysLeft?: number
 }
 
 export interface CurrentUser {
@@ -67,6 +69,7 @@ export const DEFAULT_RESTAURANT: Restaurant = {
   aiAlerts: true,
   plan: "premium",
   billing: "monthly",
+  status: "active",
 }
 
 export const DEFAULT_USER: CurrentUser = {

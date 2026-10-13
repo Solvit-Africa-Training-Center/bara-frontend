@@ -1,8 +1,19 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Bell, Search } from "lucide-react"
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bell,
+  CheckCircle2,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+} from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -15,6 +26,52 @@ import {
 
 import { useRestaurant } from "@/components/restaurant-provider"
 import { useAuth } from "@/components/auth-provider"
+import { offlineStore, SyncState } from "@/lib/offline-store"
+import { cn } from "@/lib/utils"
+
+function SyncStatusBadge() {
+  const [status, setStatus] = React.useState<SyncState>("synced")
+
+  React.useEffect(() => {
+    return offlineStore.subscribe((newStatus) => {
+      setStatus(newStatus)
+    })
+  }, [])
+
+  if (status === "syncing") {
+    return (
+      <div
+        title="Syncing pending transactions with cloud backend..."
+        className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 text-[11px] font-bold text-blue-600 dark:text-blue-400"
+      >
+        <RefreshCw className="size-3 animate-spin text-blue-500" />
+        <span>Syncing...</span>
+      </div>
+    )
+  }
+
+  if (status === "offline") {
+    return (
+      <div
+        title="Working offline. Local writes queued and will sync when internet restores."
+        className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-400"
+      >
+        <CloudOff className="size-3 text-amber-600 dark:text-amber-400" />
+        <span>Offline (Queued)</span>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      title="Connected to Bara Cloud (Render API). Real-time sync active."
+      className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-bold text-[#2F5233] dark:text-emerald-400"
+    >
+      <span className="size-1.5 rounded-full bg-emerald-500" />
+      <span>Live Sync</span>
+    </div>
+  )
+}
 
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -25,6 +82,8 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
     pathname === "/setup" ||
     pathname === "/onboarding" ||
     pathname.startsWith("/errors")
@@ -54,10 +113,14 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const isGraceState = restaurant.status === "grace"
+  const isRestrictedState = restaurant.status === "restricted"
+
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="bg-transparent md:peer-data-[variant=floating]:m-3 md:peer-data-[variant=floating]:ml-0">
+        {/* Top Header */}
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/60 bg-background/90 px-3 md:px-5 backdrop-blur-md">
           {/* Left: Trigger & Restaurant Name */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
@@ -74,7 +137,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Central Search Bar - Compact & Responsive for Laptop Viewports */}
+          {/* Central Search Bar */}
           <div className="hidden sm:flex flex-1 max-w-[220px] md:max-w-xs lg:max-w-sm mx-2">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -86,8 +149,10 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Right Actions: Streamlined for all screen sizes */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          {/* Right Actions: Persistent Sync Indicator (Section 1.4 & 5.7) & Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <SyncStatusBadge />
+
             <Button
               variant="ghost"
               size="icon"
@@ -105,6 +170,43 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
 
         {/* Brand Multi-color Accent Bar */}
         <div className="h-[2px] w-full bg-gradient-to-r from-[#C1440E] via-[#E56A1C] via-[#EA982C] via-[#EBA529] to-[#2F5233] opacity-80" />
+
+        {/* Section 4.3 Account States Non-Payment Banners */}
+        {isGraceState && (
+          <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="size-4 text-amber-600 shrink-0" />
+              <span>
+                <strong>Subscription Overdue (Grace Period Active):</strong> Full access continues for {restaurant.graceDaysLeft || 5} days. Please submit renewal payment.
+              </span>
+            </div>
+            <Link
+              href="/settings?tab=billing"
+              className="font-bold underline hover:no-underline text-amber-800 dark:text-amber-100 flex items-center gap-1"
+            >
+              <span>Renew Now</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          </div>
+        )}
+
+        {isRestrictedState && (
+          <div className="bg-[#A83232]/15 border-b border-[#A83232]/30 px-4 py-2 flex items-center justify-between text-xs text-[#A83232] dark:text-red-200">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="size-4 text-[#A83232] shrink-0" />
+              <span>
+                <strong>Account Restricted (Read-Only):</strong> Modifying menu items and stock is locked due to overdue payment. Reports remain accessible.
+              </span>
+            </div>
+            <Link
+              href="/settings?tab=billing"
+              className="font-bold underline hover:no-underline text-[#A83232] dark:text-red-100 flex items-center gap-1"
+            >
+              <span>Submit Payment</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          </div>
+        )}
 
         <main className="flex-1 p-3 md:p-5 lg:p-6">{children}</main>
       </SidebarInset>

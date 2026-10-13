@@ -18,6 +18,7 @@ import {
   SalesTrendCard,
   StaffPerformanceCard,
   getReportDataForPeriod,
+  LogConsumableModal,
 } from "./_components"
 import { PlanUpgradeGate } from "@/components/plan-upgrade-gate"
 
@@ -32,7 +33,14 @@ export default function ReportsPage() {
   const [showDatePicker, setShowDatePicker] = React.useState(false)
   const [showHelpModal, setShowHelpModal] = React.useState(false)
   const [showAuditModal, setShowAuditModal] = React.useState(false)
+  const [showConsumableModal, setShowConsumableModal] = React.useState(false)
+  const [notice, setNotice] = React.useState<string | null>(null)
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (msg: string) => {
+    setNotice(msg)
+    setTimeout(() => setNotice(null), 3500)
+  }
 
   React.useEffect(() => {
     return () => {
@@ -205,6 +213,7 @@ export default function ReportsPage() {
               percentageOfSales={data.consumablesPct}
               comparisonSalesFormatted={data.kpis.totalSalesFormatted}
               footnoteRange={data.dateLabel.split(" ")[0]}
+              onLogPurchase={() => setShowConsumableModal(true)}
             />
           </div>
 
@@ -264,6 +273,18 @@ export default function ReportsPage() {
         refundedOrdersCount={data.refundedCount}
         refundedAmountFormatted={data.refundedAmountFormatted}
       />
+
+      <LogConsumableModal
+        isOpen={showConsumableModal}
+        onClose={() => setShowConsumableModal(false)}
+        onSuccess={showToast}
+      />
+
+      {notice && (
+        <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-top-3 duration-200">
+          <span>{notice}</span>
+        </div>
+      )}
     </div>
   )
 }

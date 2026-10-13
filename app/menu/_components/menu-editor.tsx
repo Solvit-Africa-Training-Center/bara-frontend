@@ -25,6 +25,7 @@ import {
   type MenuItemWithRecipe,
   type RecipeIngredient,
 } from "../_lib/menu-data"
+import { ingredientsApi } from "@/lib/api-client"
 
 export interface MenuEditorProps {
   item: MenuItemWithRecipe
@@ -50,7 +51,29 @@ export function MenuEditor({
   const [showAddMenu, setShowAddMenu] = React.useState(false)
   const [showHelpDialog, setShowHelpDialog] = React.useState(false)
   const [savedToast, setSavedToast] = React.useState(false)
+  const [availableLibrary, setAvailableLibrary] = React.useState(INVENTORY_INGREDIENTS_LIBRARY)
   const idCounterRef = React.useRef(1)
+
+  React.useEffect(() => {
+    ingredientsApi.list().then((live) => {
+      if (!live || live.length === 0) return
+      const mapped = live.map((ing) => ({
+        id: ing.id,
+        name: ing.name,
+        stock: `${ing.current_quantity ?? 0} ${ing.unit} in stock`,
+        unit: ing.unit,
+        costPerUnit: parseFloat(ing.cost_per_unit) || 10,
+        defaultWaste: 0,
+      }))
+      const merged = [...mapped]
+      INVENTORY_INGREDIENTS_LIBRARY.forEach((seed) => {
+        if (!merged.some((m) => m.name.toLowerCase() === seed.name.toLowerCase())) {
+          merged.push(seed)
+        }
+      })
+      setAvailableLibrary(merged)
+    })
+  }, [])
 
   // Calculations
   const costPerServing = Math.round(
@@ -134,7 +157,7 @@ export function MenuEditor({
     setTimeout(() => setSavedToast(false), 3000)
   }
 
-  const filteredLibrary = INVENTORY_INGREDIENTS_LIBRARY.filter((inv) =>
+  const filteredLibrary = availableLibrary.filter((inv) =>
     inv.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 

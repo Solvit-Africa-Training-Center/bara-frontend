@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BarChart3,
+  Boxes,
   LayoutDashboard,
   Settings,
   Sparkles,
@@ -32,6 +33,11 @@ const navigationItems = [
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Inventory & Stock",
+    url: "/inventory",
+    icon: Boxes,
   },
   {
     title: "Menu",

@@ -8,12 +8,16 @@ import { Button } from "@/components/ui/button"
 export interface CriticalIngredientsAlertProps {
   message?: string
   badgeLabel?: string
+  actionLabel?: string
+  href?: string
   onActionClick?: () => void
 }
 
 export function CriticalIngredientsAlert({
   message = "3 Critical Ingredients Below Threshold: Cassava Flour, Cooking Oil, Goat Meat",
   badgeLabel = "ALERT",
+  actionLabel = "Restock in Inventory",
+  href = "/inventory",
   onActionClick,
 }: CriticalIngredientsAlertProps) {
   return (
@@ -37,10 +41,10 @@ export function CriticalIngredientsAlert({
         <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
           <Button
             size="sm"
-            render={<Link href="/ai-insights" />}
+            render={<Link href={href} />}
             className="h-8 rounded-xl bg-[#C53030] hover:bg-[#A82828] text-white text-xs font-bold px-3.5 gap-1.5 shadow-xs"
           >
-            <span>Review Predictions</span>
+            <span>{actionLabel}</span>
             <ArrowRight className="size-3.5" />
           </Button>
         </div>

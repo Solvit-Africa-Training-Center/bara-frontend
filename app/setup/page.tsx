@@ -11,6 +11,7 @@ import { RestaurantStep } from "./_components/restaurant-step"
 import { initialData, type PlanId, type SetupData } from "./_lib/data"
 import { useRestaurant } from "@/components/restaurant-provider"
 import { useAuth } from "@/components/auth-provider"
+import { subscriptionApi, paymentConfirmationsApi } from "@/lib/api-client"
 
 export default function SetupPage() {
   const router = useRouter()
@@ -109,8 +110,25 @@ export default function SetupPage() {
       })
     }
 
-    // TODO: start the mobile money payment with your payments API here
-    setTimeout(() => router.push("/"), 800)
+    // Submit subscription and payment confirmation to Bara API
+    try {
+      subscriptionApi.selectPlan(data.plan).then((subRes) => {
+        if (subRes?.subscription?.id && (data.momoPhone || data.phone)) {
+          paymentConfirmationsApi.submit({
+            subscription: subRes.subscription.id,
+            payer_name:
+              data.accountHolder ||
+              `${data.firstName} ${data.lastName}`.trim() ||
+              "Restaurant Owner",
+            payer_phone: data.momoPhone || data.phone,
+          })
+        }
+      })
+    } catch {
+      /* offline fallback */
+    }
+
+    setTimeout(() => router.push("/"), 900)
   }
 
   return (

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
+import { validateData, loginSchema } from "@/lib/validations"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -25,8 +26,16 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
+
+    // Joi schema validation
+    const validation = validateData(loginSchema, { email, password })
+    if (!validation.isValid) {
+      setError(validation.error || "Please check your login details.")
+      return
+    }
+
+    setLoading(true)
     const res = await login({ email, password, keepSignedIn })
     if (res.success) {
       router.push("/")
@@ -153,7 +162,7 @@ export default function LoginPage() {
                 Password
               </Label>
               <Link
-                href="#"
+                href="/forgot-password"
                 className="text-xs font-bold text-[#C1440E] transition-colors hover:text-[#A8380A] hover:underline"
               >
                 Forgot password?
