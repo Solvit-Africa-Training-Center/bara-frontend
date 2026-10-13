@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Ingredient, MovementTypeEnum, StockMovementCreate } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { validateData, stockMovementSchema } from "@/lib/validations"
 
 interface AdjustStockModalProps {
   isOpen: boolean
@@ -56,18 +57,28 @@ export function AdjustStockModal({
     setQuantity((prev) => Math.max(0.1, parseFloat((prev + delta).toFixed(2))))
   }
 
+  const [validationError, setValidationError] = React.useState<string | null>(null)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedIngredientId || quantity <= 0) return
+    setValidationError(null)
+
+    const payload: StockMovementCreate = {
+      ingredient: selectedIngredientId,
+      movement_type: movementType,
+      quantity: quantity,
+      note: note.trim() || undefined,
+    }
+
+    const validation = validateData(stockMovementSchema, payload)
+    if (!validation.isValid) {
+      setValidationError(validation.error || "Please check your movement input.")
+      return
+    }
 
     setIsSubmitting(true)
     try {
-      await onSubmit({
-        ingredient: selectedIngredientId,
-        movement_type: movementType,
-        quantity: quantity,
-        note: note.trim() || undefined,
-      })
+      await onSubmit(payload)
       setQuantity(1)
       setNote("")
       onClose()
@@ -89,6 +100,13 @@ export function AdjustStockModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {validationError && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+              <AlertTriangle className="size-4 shrink-0 stroke-[2] text-red-600 dark:text-red-400 mt-0.5" />
+              <span>{validationError}</span>
+            </div>
+          )}
+
           {/* 1. Ingredient Selector */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground">
