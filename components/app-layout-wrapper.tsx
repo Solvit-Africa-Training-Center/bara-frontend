@@ -79,22 +79,47 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { restaurant } = useRestaurant()
   const { isAuthenticated, isLoading } = useAuth()
 
-  const isAuthPage =
+  const isGuestAuthPage =
     pathname === "/login" ||
+    pathname.startsWith("/login/") ||
     pathname === "/register" ||
+    pathname.startsWith("/register/") ||
     pathname === "/forgot-password" ||
+    pathname.startsWith("/forgot-password/") ||
     pathname === "/reset-password" ||
+    pathname.startsWith("/reset-password/")
+
+  const isPublicOrFlowPage =
+    isGuestAuthPage ||
     pathname === "/setup" ||
+    pathname.startsWith("/setup/") ||
     pathname === "/onboarding" ||
+    pathname.startsWith("/onboarding/") ||
     pathname.startsWith("/errors")
 
   React.useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isAuthPage) {
-      router.push("/login")
-    }
-  }, [isLoading, isAuthenticated, isAuthPage, router])
+    if (isLoading) return
 
-  if (isAuthPage) {
+    if (!isAuthenticated && !isPublicOrFlowPage) {
+      router.replace("/login")
+    } else if (isAuthenticated && isGuestAuthPage) {
+      router.replace("/")
+    }
+  }, [isLoading, isAuthenticated, isPublicOrFlowPage, isGuestAuthPage, router])
+
+  // Prevent logged-in users from viewing/interacting with auth pages before clicking logout
+  if (isAuthenticated && isGuestAuthPage) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <span className="text-xs text-muted-foreground font-medium">Redirecting to workspace...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (isPublicOrFlowPage) {
     return (
       <div className="min-h-screen w-full bg-background text-foreground">
         {children}
@@ -119,14 +144,14 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="bg-transparent md:peer-data-[variant=floating]:m-3 md:peer-data-[variant=floating]:ml-0">
+      <SidebarInset className="bg-transparent md:peer-data-[variant=floating]:m-3 md:peer-data-[variant=floating]:ml-0 min-w-0 w-full max-w-full overflow-x-hidden">
         {/* Top Header */}
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/60 bg-background/90 px-3 md:px-5 backdrop-blur-md">
           {/* Left: Trigger & Restaurant Name */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             <SidebarTrigger className="-ml-1 size-8 rounded-lg hover:bg-muted" />
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-bold tracking-tight text-foreground truncate max-w-[150px] sm:max-w-none">
+              <span className="text-sm font-bold tracking-tight text-foreground truncate max-w-[130px] sm:max-w-none">
                 {restaurant.name}
               </span>
               {restaurant.activeBranch && (
@@ -173,7 +198,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
 
         {/* Section 4.3 Account States Non-Payment Banners */}
         {isGraceState && (
-          <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+          <div className="bg-amber-500/15 border-b border-amber-500/30 px-3 sm:px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-amber-900 dark:text-amber-200">
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 text-amber-600 shrink-0" />
               <span>
@@ -182,7 +207,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </div>
             <Link
               href="/settings?tab=billing"
-              className="font-bold underline hover:no-underline text-amber-800 dark:text-amber-100 flex items-center gap-1"
+              className="font-bold underline hover:no-underline text-amber-800 dark:text-amber-100 flex items-center gap-1 shrink-0 self-end sm:self-auto"
             >
               <span>Renew Now</span>
               <ArrowRight className="size-3" />
@@ -191,7 +216,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
         )}
 
         {isRestrictedState && (
-          <div className="bg-[#A83232]/15 border-b border-[#A83232]/30 px-4 py-2 flex items-center justify-between text-xs text-[#A83232] dark:text-red-200">
+          <div className="bg-[#A83232]/15 border-b border-[#A83232]/30 px-3 sm:px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-[#A83232] dark:text-red-200">
             <div className="flex items-center gap-2">
               <ShieldAlert className="size-4 text-[#A83232] shrink-0" />
               <span>
@@ -200,7 +225,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </div>
             <Link
               href="/settings?tab=billing"
-              className="font-bold underline hover:no-underline text-[#A83232] dark:text-red-100 flex items-center gap-1"
+              className="font-bold underline hover:no-underline text-[#A83232] dark:text-red-100 flex items-center gap-1 shrink-0 self-end sm:self-auto"
             >
               <span>Submit Payment</span>
               <ArrowRight className="size-3" />
@@ -208,7 +233,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <main className="flex-1 p-3 md:p-5 lg:p-6">{children}</main>
+        <div className="flex-1 p-3 sm:p-4 md:p-5 lg:p-6 min-w-0 w-full max-w-full overflow-x-hidden">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   )

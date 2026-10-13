@@ -57,6 +57,17 @@ export const loginSchema = Joi.object({
   }),
 })
 
+export const passwordComplexitySchema = Joi.string()
+  .min(8)
+  .pattern(/[A-Z]/, "uppercase letter")
+  .pattern(/[0-9]/, "number")
+  .required()
+  .messages({
+    "string.empty": "Password is required.",
+    "string.min": "Password must be at least 8 characters long.",
+    "string.pattern.name": "Password must contain at least one {#name}.",
+  })
+
 export const signupSchema = Joi.object({
   first_name: Joi.string().trim().min(1).max(150).required().messages({
     "string.empty": "First name is required.",
@@ -74,10 +85,7 @@ export const signupSchema = Joi.object({
       "string.empty": "Email is required.",
       "string.email": "Please provide a valid email address.",
     }),
-  password: Joi.string().min(8).required().messages({
-    "string.empty": "Password is required.",
-    "string.min": "Password must be at least 8 characters long.",
-  }),
+  password: passwordComplexitySchema,
   accept_terms: Joi.boolean().valid(true).required().messages({
     "any.only": "You must accept the terms of service to continue.",
   }),
@@ -104,9 +112,10 @@ export const resetPasswordSchema = Joi.object({
   token: Joi.string().trim().required().messages({
     "string.empty": "Verification token is required.",
   }),
-  new_password: Joi.string().min(8).required().messages({
+  new_password: passwordComplexitySchema.messages({
     "string.empty": "New password is required.",
     "string.min": "New password must be at least 8 characters long.",
+    "string.pattern.name": "Password must contain at least one {#name}.",
   }),
   confirm_password: Joi.string()
     .valid(Joi.ref("new_password"))

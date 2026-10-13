@@ -73,13 +73,12 @@ export const DEFAULT_RESTAURANT: Restaurant = {
 }
 
 export const DEFAULT_USER: CurrentUser = {
-  id: "usr-001",
-  name: "Alex Rivera",
-  email: "alex@barabistro.rw",
-  initials: "AR",
-  role: "General Manager",
-  avatar:
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+  id: "",
+  name: "",
+  email: "",
+  initials: "",
+  role: "Staff",
+  avatar: "",
 }
 
 const RESTAURANT_STORAGE_KEY = "bara:restaurant_profile"

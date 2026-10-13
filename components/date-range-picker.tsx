@@ -118,24 +118,24 @@ function DateRangePickerContent({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in-50 duration-150">
-      <div className="relative w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in-50 duration-150">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <div className="flex items-center justify-between border-b border-border/60 pb-3 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <CalendarIcon className="size-4" />
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-foreground">Select Custom Date Range</h2>
-              <p className="text-[11px] text-muted-foreground">
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-foreground truncate">Select Custom Date Range</h2>
+              <p className="text-[11px] text-muted-foreground truncate">
                 Filter metrics, ledger shifts, and operational analytics
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer shrink-0"
           >
             <X className="size-4" />
           </button>
@@ -169,7 +169,7 @@ function DateRangePickerContent({
         </div>
 
         {/* Custom Date Pickers with Strict Bounds */}
-        <div className="grid grid-cols-2 gap-3 pt-1 border-t border-border/50">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-border/50">
           <div className="space-y-1.5">
             <Label htmlFor="start-date" className="text-xs">
               From Date

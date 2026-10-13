@@ -2,20 +2,34 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, CheckCircle2, KeyRound, Mail, Shield, AlertCircle } from "lucide-react"
 
 import { AuthShell, authInputClass } from "@/components/auth-shell"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { useAuth } from "@/components/auth-provider"
 import { authApi } from "@/lib/api-client"
 import { validateData, forgotPasswordSchema } from "@/lib/validations"
 
 export default function ForgotPasswordPage() {
+  const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
   const [email, setEmail] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [submitted, setSubmitted] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [message, setMessage] = React.useState<string>("")
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/")
+    }
+  }, [isLoading, isAuthenticated, router])
+
+  if (!isLoading && isAuthenticated) {
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,16 +44,16 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     try {
-      const res = await authApi.forgotPassword(email.trim())
+      const res = await authApi.forgotPassword(email.trim(), { timeoutMs: 8000 })
       setMessage(
         res.message ||
           "Password reset instructions have been sent to your email address."
       )
       setSubmitted(true)
-    } catch (err: unknown) {
-      // In offline / server error mode, provide graceful confirmation with test link
+    } catch {
+      // If server SMTP is delayed or unhandled, transition smoothly to instruction screen
       setMessage(
-        "If an account exists with this email, a reset token has been dispatched."
+        "If an account exists with this email, password reset instructions will be sent."
       )
       setSubmitted(true)
     } finally {

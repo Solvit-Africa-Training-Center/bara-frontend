@@ -110,15 +110,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 max-w-7xl mx-auto pb-10">
+    <div className="flex flex-col gap-4 sm:gap-5 max-w-7xl mx-auto pb-10 w-full min-w-0">
       {/* Toast Feedback */}
       {notification && (
-        <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-top-3 duration-200">
-          <CheckCircle2 className="size-4 shrink-0 text-white" />
-          <span>{notification}</span>
+        <div className="fixed top-16 sm:top-20 right-3 sm:right-6 left-3 sm:left-auto z-50 flex items-center justify-between sm:justify-start gap-2.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className="flex items-center gap-2 min-w-0">
+            <CheckCircle2 className="size-4 shrink-0 text-white" />
+            <span className="truncate">{notification}</span>
+          </div>
           <button
             onClick={() => setNotification(null)}
-            className="ml-2 text-white/80 hover:text-white"
+            className="ml-2 text-white/80 hover:text-white shrink-0 cursor-pointer"
           >
             <X className="size-3.5" />
           </button>

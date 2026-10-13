@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Check, Lock, Mail, Store } from "lucide-react"
+import { ArrowRight, Check, Lock, Mail, Store, AlertCircle } from "lucide-react"
 
 import { AuthShell, authInputClass } from "@/components/auth-shell"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { startDraft } from "@/lib/onboarding"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
+import { validateData, signupSchema } from "@/lib/validations"
 
 const highlights = [
   "Secure owner account",
@@ -20,7 +21,7 @@ const highlights = [
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { register } = useAuth()
+  const { register, isAuthenticated, isLoading } = useAuth()
   const [firstName, setFirstName] = React.useState("")
   const [lastName, setLastName] = React.useState("")
   const [restaurantName, setRestaurantName] = React.useState("")
@@ -28,18 +29,55 @@ export default function RegisterPage() {
   const [password, setPassword] = React.useState("")
   const [agreed, setAgreed] = React.useState(true)
   const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/")
+    }
+  }, [isLoading, isAuthenticated, router])
+
+  if (!isLoading && isAuthenticated) {
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!agreed) return
+    setError(null)
+    if (!agreed) {
+      setError("Please accept the terms of service to continue.")
+      return
+    }
+
+    const validation = validateData(signupSchema, {
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      restaurant_name: restaurantName.trim(),
+      email: email.trim(),
+      password: password,
+      accept_terms: agreed,
+    })
+
+    if (!validation.isValid) {
+      setError(validation.error || "Please check your registration details.")
+      return
+    }
+
     setLoading(true)
-    await register({
+    const res = await register({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.trim(),
-      password: password.trim(),
+      password: password,
       restaurantName: restaurantName.trim(),
     })
+
+    if (!res.success) {
+      setError(res.error || "Registration failed. Please check your details.")
+      setLoading(false)
+      return
+    }
+
     // Carry the account details into the setup step
     startDraft({
       firstName: firstName.trim(),
@@ -111,6 +149,13 @@ export default function RegisterPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+            <AlertCircle className="size-4 shrink-0 stroke-[2] text-red-600 dark:text-red-400 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {/* Row 1: names */}
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
@@ -173,7 +218,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="aline@ikazebistro.rw"
+                placeholder="owner@restaurant.rw"
                 className={cn(authInputClass, "pr-4")}
               />
             </div>
@@ -186,7 +231,7 @@ export default function RegisterPage() {
                 Create password
               </Label>
               <span className="text-[11px] text-[#8F8179]">
-                At least 8 characters
+                8+ chars, uppercase &amp; number
               </span>
             </div>
             <div className="relative flex items-center">

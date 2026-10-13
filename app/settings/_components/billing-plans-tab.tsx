@@ -138,37 +138,6 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
     )
   }
 
-  const handleStatusChange = (newStatus: "active" | "grace" | "restricted") => {
-    updateRestaurant({
-      status: newStatus,
-      graceDaysLeft: newStatus === "grace" ? 5 : undefined,
-    })
-    const label =
-      newStatus === "active"
-        ? "Active (Good Standing)"
-        : newStatus === "grace"
-        ? "Grace Period (1–7 days overdue)"
-        : "Restricted (8–14 days overdue - Read-Only)"
-    onSavedNotice(`Account State updated to: ${label} (Section 4.3 spec test).`)
-  }
-
-  const handleApproveConfirmation = async (id: string) => {
-    const startsAt = new Date().toISOString()
-    const endsAt = new Date(Date.now() + 864e5 * 30).toISOString()
-    await paymentConfirmationsApi.approve(id, { starts_at: startsAt, ends_at: endsAt })
-    updateRestaurant({ status: "active" })
-    await loadConfirmations()
-    onSavedNotice("Payment verified & subscription activated!")
-  }
-
-  const handleRejectConfirmation = async (id: string) => {
-    await paymentConfirmationsApi.reject(id, {
-      rejection_reason: "Transaction reference not found in mobile money statements.",
-    })
-    await loadConfirmations()
-    onSavedNotice("Payment rejected: invalid reference.")
-  }
-
   return (
     <div className="space-y-6">
       {/* 1. Current Active Plan & Account Status Card */}
@@ -256,49 +225,33 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
           </div>
         </div>
 
-        {/* Section 4.3 Account Status Switcher (for testing & state verification) */}
-        <div className="mt-4 pt-3.5 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="text-muted-foreground font-medium">
-            Section 4.3 Account Non-Payment State:
-          </span>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleStatusChange("active")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer",
-                accountStatus === "active"
-                  ? "bg-emerald-500/15 border-emerald-500/40 text-[#2F5233] dark:text-emerald-400"
-                  : "bg-muted border-border/60 text-muted-foreground"
-              )}
-            >
-              Active
-            </button>
-            <button
-              type="button"
-              onClick={() => handleStatusChange("grace")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer",
-                accountStatus === "grace"
-                  ? "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400"
-                  : "bg-muted border-border/60 text-muted-foreground"
-              )}
-            >
-              Grace (1–7d)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleStatusChange("restricted")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer",
-                accountStatus === "restricted"
-                  ? "bg-[#A83232]/15 border-[#A83232]/40 text-[#A83232]"
-                  : "bg-muted border-border/60 text-muted-foreground"
-              )}
-            >
-              Restricted (8–14d)
-            </button>
+        {/* Section 4.3 Account Status Information */}
+        <div className="mt-4 pt-3.5 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            {accountStatus === "active" ? (
+              <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
+                <ShieldCheck className="size-4" />
+                <span>Account in good standing. All subscribed tier features are fully active.</span>
+              </span>
+            ) : accountStatus === "grace" ? (
+              <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-medium">
+                <AlertTriangle className="size-4" />
+                <span>
+                  Grace period active ({restaurant.graceDaysLeft || 5} days remaining). Full access continues; submit payment to avoid service restrictions.
+                </span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-[#A83232] font-medium">
+                <ShieldAlert className="size-4" />
+                <span>
+                  Account restricted (read-only mode). Data viewing is preserved; submit payment to restore editing.
+                </span>
+              </span>
+            )}
           </div>
+          <span className="text-[11px] text-muted-foreground font-mono">
+            Tenant: {restaurant.name}
+          </span>
         </div>
       </Card>
 
@@ -479,37 +432,25 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
                         <span>Approved &amp; Active</span>
                       </span>
                     ) : isRejected ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-[#A83232]/10 text-[#A83232] px-2.5 py-0.5 text-[11px] font-bold">
-                        <XCircle className="size-3" />
-                        <span>Rejected</span>
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-[#A83232]/10 text-[#A83232] px-2.5 py-0.5 text-[11px] font-bold">
+                          <XCircle className="size-3" />
+                          <span>Rejected</span>
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setShowConfirmModal(true)}
+                          className="h-6 px-2 text-[10px] font-bold border-[#A83232]/30 text-[#A83232] hover:bg-[#A83232]/10"
+                        >
+                          Resubmit
+                        </Button>
+                      </div>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 px-2.5 py-0.5 text-[11px] font-bold">
                         <Clock className="size-3" />
                         <span>Pending Verification</span>
                       </span>
-                    )}
-
-                    {/* Admin simulation test action buttons */}
-                    {!isPaid && !isRejected && (
-                      <div className="flex items-center gap-1 ml-2">
-                        <button
-                          type="button"
-                          onClick={() => handleApproveConfirmation(conf.id)}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                          title="Simulate Super Admin Approval"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRejectConfirmation(conf.id)}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#A83232] hover:bg-[#8D2828] text-white cursor-pointer"
-                          title="Simulate Super Admin Rejection"
-                        >
-                          Reject
-                        </button>
-                      </div>
                     )}
                   </div>
                 </div>

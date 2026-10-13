@@ -12,11 +12,11 @@ export function DashboardSkeleton({ hideOperationsBar = false }: DashboardSkelet
     <div className="flex flex-col gap-5 max-w-7xl mx-auto pb-10 w-full animate-in fade-in duration-200">
       {/* 1. Operations Bar Skeleton */}
       {!hideOperationsBar && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-10 rounded-xl" />
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3.5 sm:p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between w-full min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <Skeleton className="size-10 rounded-xl shrink-0" />
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Skeleton className="h-5 w-44 rounded-md" />
                 <Skeleton className="h-5 w-28 rounded-full" />
               </div>
@@ -24,84 +24,72 @@ export function DashboardSkeleton({ hideOperationsBar = false }: DashboardSkelet
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
-            <div className="flex items-center gap-1 rounded-xl border border-border bg-background p-1 shadow-2xs">
-              <Skeleton className="h-6 w-14 rounded-lg" />
-              <Skeleton className="h-6 w-16 rounded-lg" />
-              <Skeleton className="h-6 w-18 rounded-lg" />
-              <Skeleton className="h-6 w-16 rounded-lg" />
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-1 rounded-xl border border-border bg-background p-1 shadow-2xs overflow-x-auto max-w-full">
+              <Skeleton className="h-6 w-14 rounded-lg shrink-0" />
+              <Skeleton className="h-6 w-16 rounded-lg shrink-0" />
+              <Skeleton className="h-6 w-18 rounded-lg shrink-0" />
+              <Skeleton className="h-6 w-16 rounded-lg shrink-0" />
             </div>
-            <Skeleton className="h-8.5 w-28 rounded-xl" />
+            <Skeleton className="h-8.5 w-28 rounded-xl shrink-0" />
           </div>
         </div>
       )}
 
       {/* 2. Critical Ingredients Alert Skeleton */}
-      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3.5">
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3.5 w-full min-w-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-8 rounded-lg bg-amber-500/20" />
-            <div className="space-y-1.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <Skeleton className="size-8 rounded-lg bg-amber-500/20 shrink-0" />
+            <div className="space-y-1.5 min-w-0 flex-1">
               <Skeleton className="h-4 w-52 bg-amber-500/20" />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Skeleton className="h-4 w-28 rounded-md bg-amber-500/10" />
                 <Skeleton className="h-4 w-32 rounded-md bg-amber-500/10" />
                 <Skeleton className="h-4 w-24 rounded-md bg-amber-500/10" />
               </div>
             </div>
           </div>
-          <Skeleton className="h-8 w-44 rounded-xl self-end sm:self-auto bg-amber-500/20" />
+          <Skeleton className="h-8 w-full sm:w-44 rounded-xl shrink-0 bg-amber-500/20" />
         </div>
       </div>
 
-      {/* 3. 4 Top KPI Cards Skeleton */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Highlight Forest Green Card */}
-        <div className="rounded-2xl bg-[#234D3A] p-4 text-white shadow-xs flex flex-col justify-between min-h-[125px]">
+      {/* 3. 3 Top KPI Cards Skeleton */}
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Highlight Card 1 */}
+        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between min-h-[125px] min-w-0">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-28 bg-white/20" />
-            <Skeleton className="h-5 w-16 rounded-full bg-white/20" />
-          </div>
-          <div className="my-2">
-            <Skeleton className="h-8 w-40 bg-white/30" />
-          </div>
-          <Skeleton className="h-3 w-48 bg-white/20" />
-        </div>
-
-        {/* Card 2 */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between min-h-[125px]">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-5 w-20 rounded-full" />
-          </div>
-          <div className="my-2">
-            <Skeleton className="h-8 w-24" />
-          </div>
-          <Skeleton className="h-3 w-44" />
-        </div>
-
-        {/* Card 3 */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between min-h-[125px]">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-36" />
-            <Skeleton className="h-5 w-20 rounded-full" />
-          </div>
-          <div className="my-2">
-            <Skeleton className="h-8 w-24" />
-          </div>
-          <Skeleton className="h-3 w-44" />
-        </div>
-
-        {/* Card 4 */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between min-h-[125px]">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-28" />
             <Skeleton className="h-5 w-16 rounded-full" />
           </div>
           <div className="my-2">
             <Skeleton className="h-8 w-36" />
           </div>
-          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+
+        {/* Card 2 */}
+        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between min-h-[125px] min-w-0">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+          <div className="my-2">
+            <Skeleton className="h-8 w-32" />
+          </div>
+          <Skeleton className="h-3 w-44" />
+        </div>
+
+        {/* Card 3 */}
+        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between min-h-[125px] min-w-0 sm:col-span-2 lg:col-span-1">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+          <div className="my-2">
+            <Skeleton className="h-8 w-28" />
+          </div>
+          <Skeleton className="h-3 w-44" />
         </div>
       </div>
 

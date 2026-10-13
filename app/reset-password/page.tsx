@@ -20,7 +20,8 @@ import {
 import { AuthShell, authInputClass } from "@/components/auth-shell"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { authApi } from "@/lib/api-client"
+import { authApi, ApiError } from "@/lib/api-client"
+import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 import { validateData, resetPasswordSchema } from "@/lib/validations"
 
@@ -42,6 +43,8 @@ function ResetPasswordForm() {
   const [success, setSuccess] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({})
+
   // Sync searchParams if they arrive after mount
   React.useEffect(() => {
     if (initialEmail && !email) setEmail(initialEmail)
@@ -49,11 +52,15 @@ function ResetPasswordForm() {
   }, [initialEmail, initialToken, email, token])
 
   const isMinLength = newPassword.length >= 8
+  const hasUppercase = /[A-Z]/.test(newPassword)
+  const hasNumber = /[0-9]/.test(newPassword)
   const isMatching = newPassword.length > 0 && newPassword === confirmPassword
+  const isPasswordValid = isMinLength && hasUppercase && hasNumber && isMatching
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setFieldErrors({})
 
     const validation = validateData(resetPasswordSchema, {
       email: email.trim(),
@@ -64,6 +71,9 @@ function ResetPasswordForm() {
 
     if (!validation.isValid) {
       setError(validation.error || "Please verify your input details.")
+      if (validation.errors) {
+        setFieldErrors(validation.errors)
+      }
       return
     }
 
@@ -78,13 +88,20 @@ function ResetPasswordForm() {
       })
       setSuccess(true)
     } catch (err: unknown) {
-      // In offline / server test mode, handle gracefully
-      const msg =
-        err instanceof Error ? err.message : "Failed to reset password."
-      // If server returned 500 or offline, simulate successful reset so user is unblocked
-      if (msg.includes("500") || msg.includes("Network")) {
-        setSuccess(true)
+      if (err instanceof ApiError) {
+        setError(err.message)
+        if (err.fieldErrors) {
+          const mapped: Record<string, string> = {}
+          for (const [key, msgs] of Object.entries(err.fieldErrors)) {
+            mapped[key] = msgs.join(" ")
+          }
+          setFieldErrors(mapped)
+        }
       } else {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Failed to reset password. Please check your token and try again."
         setError(msg)
       }
     } finally {
@@ -155,11 +172,24 @@ function ResetPasswordForm() {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                if (fieldErrors.email) {
+                  setFieldErrors((prev) => ({ ...prev, email: "" }))
+                }
+              }}
               placeholder="manager@yourrestaurant.rw"
-              className={authInputClass}
+              className={cn(
+                authInputClass,
+                fieldErrors.email && "border-red-500 focus:border-red-500 focus:ring-red-500"
+              )}
             />
           </div>
+          {fieldErrors.email && (
+            <p className="text-[11px] font-semibold text-red-600 dark:text-red-400">
+              {fieldErrors.email}
+            </p>
+          )}
         </div>
 
         {/* Reset Token */}
@@ -185,11 +215,24 @@ function ResetPasswordForm() {
               type="text"
               required
               value={token}
-              onChange={(e) => setToken(e.target.value)}
+              onChange={(e) => {
+                setToken(e.target.value)
+                if (fieldErrors.token) {
+                  setFieldErrors((prev) => ({ ...prev, token: "" }))
+                }
+              }}
               placeholder="Paste the token sent to your email"
-              className={authInputClass}
+              className={cn(
+                authInputClass,
+                fieldErrors.token && "border-red-500 focus:border-red-500 focus:ring-red-500"
+              )}
             />
           </div>
+          {fieldErrors.token && (
+            <p className="text-[11px] font-semibold text-red-600 dark:text-red-400">
+              {fieldErrors.token}
+            </p>
+          )}
         </div>
 
         {/* New Password */}
@@ -208,9 +251,18 @@ function ResetPasswordForm() {
               required
               minLength={8}
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 8 characters"
-              className={cn(authInputClass, "pr-11")}
+              onChange={(e) => {
+                setNewPassword(e.target.value)
+                if (fieldErrors.new_password) {
+                  setFieldErrors((prev) => ({ ...prev, new_password: "" }))
+                }
+              }}
+              placeholder="At least 8 characters (uppercase & number)"
+              className={cn(
+                authInputClass,
+                "pr-11",
+                fieldErrors.new_password && "border-red-500 focus:border-red-500 focus:ring-red-500"
+              )}
             />
             <button
               type="button"
@@ -224,6 +276,11 @@ function ResetPasswordForm() {
               )}
             </button>
           </div>
+          {fieldErrors.new_password && (
+            <p className="text-[11px] font-semibold text-red-600 dark:text-red-400">
+              {fieldErrors.new_password}
+            </p>
+          )}
         </div>
 
         {/* Confirm Password */}
@@ -242,9 +299,18 @@ function ResetPasswordForm() {
               required
               minLength={8}
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value)
+                if (fieldErrors.confirm_password) {
+                  setFieldErrors((prev) => ({ ...prev, confirm_password: "" }))
+                }
+              }}
               placeholder="Re-enter your new password"
-              className={cn(authInputClass, "pr-11")}
+              className={cn(
+                authInputClass,
+                "pr-11",
+                fieldErrors.confirm_password && "border-red-500 focus:border-red-500 focus:ring-red-500"
+              )}
             />
             <button
               type="button"
@@ -258,10 +324,19 @@ function ResetPasswordForm() {
               )}
             </button>
           </div>
+          {fieldErrors.confirm_password && (
+            <p className="text-[11px] font-semibold text-red-600 dark:text-red-400">
+              {fieldErrors.confirm_password}
+            </p>
+          )}
         </div>
 
         {/* Password Requirements Checklist */}
-        <div className="rounded-xl border border-border/80 bg-background/50 p-3 space-y-1 text-xs">
+        <div className="rounded-xl border border-border/80 bg-background/50 p-3 space-y-1.5 text-xs">
+          <p className="font-bold text-[#3B2F2A] dark:text-[#FAF5EE] text-[11px]">
+            Password requirements:
+          </p>
+
           <div className="flex items-center gap-2">
             <span
               className={cn(
@@ -278,7 +353,47 @@ function ResetPasswordForm() {
                 isMinLength ? "text-foreground font-semibold" : "text-muted-foreground"
               )}
             >
-              Minimum 8 characters
+              At least 8 characters
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "flex size-3.5 items-center justify-center rounded-full text-[9px] font-bold",
+                hasUppercase
+                  ? "bg-emerald-500 text-white"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {hasUppercase ? "✓" : "•"}
+            </span>
+            <span
+              className={cn(
+                hasUppercase ? "text-foreground font-semibold" : "text-muted-foreground"
+              )}
+            >
+              At least one uppercase letter (A-Z)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "flex size-3.5 items-center justify-center rounded-full text-[9px] font-bold",
+                hasNumber
+                  ? "bg-emerald-500 text-white"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {hasNumber ? "✓" : "•"}
+            </span>
+            <span
+              className={cn(
+                hasNumber ? "text-foreground font-semibold" : "text-muted-foreground"
+              )}
+            >
+              At least one number (0-9)
             </span>
           </div>
 
@@ -306,7 +421,7 @@ function ResetPasswordForm() {
         <div className="pt-2">
           <Button
             type="submit"
-            disabled={loading || !isMinLength || !isMatching}
+            disabled={loading || !isPasswordValid || !token.trim() || !email.trim()}
             className="w-full h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#C1440E] px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#A8380A] active:scale-[0.99] disabled:opacity-60"
           >
             {loading ? (
@@ -335,6 +450,19 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/")
+    }
+  }, [isLoading, isAuthenticated, router])
+
+  if (!isLoading && isAuthenticated) {
+    return null
+  }
+
   return (
     <AuthShell
       maxWidthClass="max-w-[480px]"
