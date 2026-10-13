@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import {
   Check,
   ChevronsUpDown,
@@ -30,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useRestaurant } from "@/components/restaurant-provider"
+import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 
 export interface NavUserProps {
@@ -46,23 +46,23 @@ const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
 
 export function NavUser({ user: override }: NavUserProps) {
-  const router = useRouter()
   const { isMobile } = useSidebar()
-  const { restaurant, user: current, switchBranch } = useRestaurant()
+  const { restaurant, user: current } = useRestaurant()
+  const { user: authUser, logout } = useAuth()
 
   const user = {
-    name: override?.name || current.name || "Alex Rivera",
-    email: override?.email || current.email,
-    avatar: override?.avatar || current.avatar || DEFAULT_AVATAR,
-    role: override?.role || current.role || "General Manager",
+    name: override?.name || authUser?.name || current.name || "Alex Rivera",
+    email: override?.email || authUser?.email || current.email,
+    avatar: override?.avatar || authUser?.avatar || current.avatar || DEFAULT_AVATAR,
+    role: override?.role || authUser?.role || current.role || "General Manager",
     branch: override?.branch || restaurant.activeBranch || restaurant.name,
   }
-  const initials = current.initials || "AR"
+  const initials = authUser?.initials || current.initials || "AR"
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    router.push("/login")
+    logout()
   }
 
   return (
@@ -80,7 +80,10 @@ export function NavUser({ user: override }: NavUserProps) {
           >
             <Avatar className="size-8 rounded-full border border-sidebar-border shrink-0 group-data-[collapsible=icon]:flex! overflow-hidden">
               <AvatarImage src={user.avatar} alt={user.name} className="size-full object-cover rounded-full" />
-              <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold text-xs size-full flex items-center justify-center">
+              <AvatarFallback
+                suppressHydrationWarning
+                className="rounded-full bg-primary/10 text-primary font-semibold text-xs size-full flex items-center justify-center"
+              >
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -103,47 +106,18 @@ export function NavUser({ user: override }: NavUserProps) {
                   {user.email && (
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   )}
-                  {user.branch && (
-                    <span className="mt-1 inline-block text-[10px] font-medium text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 rounded-md px-1.5 py-0.5 w-fit truncate max-w-full">
-                      {user.branch}
+                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                    {user.branch && (
+                      <span className="inline-block text-[10px] font-medium text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 rounded-md px-1.5 py-0.5 truncate max-w-full">
+                        {user.branch}
+                      </span>
+                    )}
+                    <span className="inline-block text-[10px] font-bold capitalize text-amber-700 bg-amber-500/10 dark:text-amber-400 rounded-md px-1.5 py-0.5">
+                      {restaurant.plan || "pro"} plan
                     </span>
-                  )}
+                  </div>
                 </div>
               </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Store className="size-3 text-primary" />
-                <span>Switch Branch</span>
-              </div>
-              {restaurant.branches.map((b) => (
-                <DropdownMenuItem
-                  key={b}
-                  onClick={() => switchBranch(b)}
-                  className="gap-2 rounded-lg cursor-pointer text-xs"
-                >
-                  <span
-                    className={cn(
-                      "size-2 rounded-full shrink-0",
-                      b === restaurant.activeBranch
-                        ? "bg-emerald-500"
-                        : "bg-muted-foreground/30"
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "flex-1 truncate",
-                      b === restaurant.activeBranch && "font-bold text-foreground"
-                    )}
-                  >
-                    {b.replace(/^Bara\s+/i, "")}
-                  </span>
-                  {b === restaurant.activeBranch && (
-                    <Check className="size-3.5 text-emerald-600 shrink-0" />
-                  )}
-                </DropdownMenuItem>
-              ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

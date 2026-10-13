@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { loadDraft } from "@/lib/onboarding"
+import { useAuth } from "@/components/auth-provider"
 
 export interface Restaurant {
   id: string
@@ -64,7 +65,7 @@ export const DEFAULT_RESTAURANT: Restaurant = {
   kitchenTarget: 32,
   barTarget: 22,
   aiAlerts: true,
-  plan: "pro",
+  plan: "premium",
   billing: "monthly",
 }
 
@@ -151,22 +152,23 @@ class RestaurantStore {
   private initialized = false
 
   constructor() {
-    if (typeof window !== "undefined") {
-      this.init()
-    }
+    // Initialization deferred to useEffect in RestaurantProvider to match SSR snapshot
   }
 
-  private init() {
+  init() {
     if (this.initialized) return
     this.initialized = true
     const persistedRest = loadPersistedRestaurant()
     const persistedUser = loadPersistedUser()
     this.restaurant = { ...DEFAULT_RESTAURANT, ...persistedRest }
     this.user = { ...DEFAULT_USER, ...persistedUser }
+    this.emit()
 
-    window.addEventListener("storage", () => {
-      this.refresh()
-    })
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", () => {
+        this.refresh()
+      })
+    }
   }
 
   subscribe = (listener: () => void) => {
@@ -221,6 +223,31 @@ const store = new RestaurantStore()
 const RestaurantContext = React.createContext<RestaurantContextValue | null>(null)
 
 export function RestaurantProvider({ children }: { children: React.ReactNode }) {
+  const { user: authUser } = useAuth()
+
+  React.useEffect(() => {
+    store.init()
+  }, [])
+
+  React.useEffect(() => {
+    if (authUser) {
+      store.updateUser({
+        id: authUser.id,
+        name: authUser.name,
+        email: authUser.email,
+        initials: authUser.initials,
+        role: authUser.role,
+        avatar: authUser.avatar,
+      })
+      if (authUser.restaurantName) {
+        store.updateRestaurant({
+          name: authUser.restaurantName,
+          tradingName: authUser.restaurantName,
+        })
+      }
+    }
+  }, [authUser])
+
   const restaurant = React.useSyncExternalStore(
     store.subscribe,
     store.getRestaurantSnapshot,

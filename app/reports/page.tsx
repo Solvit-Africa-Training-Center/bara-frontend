@@ -19,6 +19,7 @@ import {
   StaffPerformanceCard,
   getReportDataForPeriod,
 } from "./_components"
+import { PlanUpgradeGate } from "@/components/plan-upgrade-gate"
 
 export default function ReportsPage() {
   const { restaurant } = useRestaurant()
@@ -69,6 +70,35 @@ export default function ReportsPage() {
     },
     [dateLabel]
   )
+
+  if (restaurant.plan === "basic") {
+    return (
+      <div className="flex flex-col gap-5 max-w-[1400px] mx-auto pb-10">
+        <ReportsHeader
+          onExport={() => {}}
+          onOpenHelp={() => setShowHelpModal(true)}
+        />
+        <PlanUpgradeGate
+          requiredPlan="pro"
+          featureName="Financial & Operational Reports"
+          title="Unlock Daily Sales Trends & Consumables Breakdown"
+          description="Track daily revenue trajectories, monthly consumables spending, top/bottom menu items, and audited void/refund logs with Bara Pro."
+          features={[
+            "Daily completed sales linear area chart & trajectory analysis",
+            "Monthly consumables breakdown (Gas, Packaging, Supplies)",
+            "Top 5 & Bottom 5 menu item sales performance",
+            "Staff completed orders & revenue attribution",
+            "Full audited voids and refunds compliance trail",
+          ]}
+          priceRwf={32000}
+        />
+        <ReportsHelpModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+        />
+      </div>
+    )
+  }
 
   const handleExportCSV = () => {
     const csvContent =

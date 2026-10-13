@@ -10,10 +10,12 @@ import { PlanStep } from "./_components/plan-step"
 import { RestaurantStep } from "./_components/restaurant-step"
 import { initialData, type PlanId, type SetupData } from "./_lib/data"
 import { useRestaurant } from "@/components/restaurant-provider"
+import { useAuth } from "@/components/auth-provider"
 
 export default function SetupPage() {
   const router = useRouter()
   const { updateRestaurant, updateUser } = useRestaurant()
+  const { updateUser: updateAuthUser } = useAuth()
   const [step, setStep] = React.useState(1) // 0 Account, 1 Restaurant, 2 Plan, 3 Payment
   const [data, setData] = React.useState<SetupData>(() => {
     if (typeof window === "undefined") return initialData
@@ -36,6 +38,10 @@ export default function SetupPage() {
       plan: d.plan ?? null,
       billing: d.billing ?? initialData.billing,
       momoPhone: d.phone ?? "",
+      paymentMethod: "momo",
+      accountHolder:
+        (d.firstName && d.lastName ? `${d.firstName} ${d.lastName}` : "") ||
+        "Aline Mukamana",
     }
   })
   const [paying, setPaying] = React.useState(false)
@@ -95,6 +101,11 @@ export default function SetupPage() {
         name: fullName || "Alex Rivera",
         email: data.email.trim(),
         initials: `${data.firstName[0] ?? ""}${data.lastName[0] ?? ""}`.toUpperCase() || "AR",
+      })
+      updateAuthUser({
+        name: fullName || "Alex Rivera",
+        email: data.email.trim(),
+        restaurantName: restName,
       })
     }
 
