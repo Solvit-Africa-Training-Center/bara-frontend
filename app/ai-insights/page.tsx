@@ -77,7 +77,7 @@ Total Estimated: RWF 400,000`
     }
   }
 
-  if (restaurant.plan === "basic") {
+  if (!restaurant.features?.canAccessAiInsights && restaurant.plan !== "premium") {
     return (
       <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-10">
         <div>

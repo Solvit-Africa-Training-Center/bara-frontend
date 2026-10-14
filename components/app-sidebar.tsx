@@ -27,6 +27,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useRestaurant } from "@/components/restaurant-provider"
+import { cn } from "@/lib/utils"
 
 const navigationItems = [
   {
@@ -87,7 +88,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           href="/"
           className="flex min-w-0 items-center gap-2 rounded-xl p-1 transition-colors hover:bg-sidebar-accent/60 group-data-[collapsible=icon]:justify-center"
         >
-          <BaraLogo collapsed={isCollapsed} subtitle={restaurant.name || undefined} />
+          <BaraLogo
+            collapsed={isCollapsed}
+            subtitle={restaurant.name || undefined}
+            logoUrl={restaurant.logo}
+            accentColor={restaurant.brandColor}
+          />
         </Link>
       </SidebarHeader>
 
@@ -101,19 +107,45 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 ? pathname === "/"
                 : pathname.startsWith(item.url)
 
+            // Dynamic tier gating badges based on runtime restaurant configuration
+            let dynamicBadge: string | undefined = item.badge
+            let isTierGated = false
+            if (item.url === "/reports" && restaurant.plan === "basic") {
+              dynamicBadge = "PRO"
+              isTierGated = true
+            } else if (item.url === "/ai-insights") {
+              if (restaurant.plan !== "premium") {
+                dynamicBadge = "PREMIUM"
+                isTierGated = true
+              } else {
+                dynamicBadge = "AI"
+              }
+            }
+
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   isActive={isActive}
-                  tooltip={item.title}
+                  tooltip={
+                    isTierGated
+                      ? `${item.title} (${dynamicBadge} Plan Required)`
+                      : item.title
+                  }
                   render={<Link href={item.url} />}
                   className="relative font-medium group-data-[collapsible=icon]:justify-center"
                 >
                   <Icon className="size-5 shrink-0" />
                   <span className="flex-1 truncate">{item.title}</span>
-                  {item.badge && !isCollapsed && (
-                    <span className="rounded-md bg-[#234D3A] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white dark:bg-emerald-800">
-                      {item.badge}
+                  {dynamicBadge && !isCollapsed && (
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase shadow-2xs",
+                        isTierGated
+                          ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30"
+                          : "bg-primary text-primary-foreground"
+                      )}
+                    >
+                      {dynamicBadge}
                     </span>
                   )}
                 </SidebarMenuButton>

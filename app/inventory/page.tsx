@@ -144,10 +144,6 @@ export default function InventoryPage() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               Restaurant Operations
             </span>
-            <span className="size-1 rounded-full bg-border" />
-            <span className="text-[11px] font-semibold text-primary">
-              Section 5.1 &amp; Section 8 Spec
-            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B2F2A] dark:text-[#FAF5EE] tracking-tight mt-1">
             Ingredient &amp; Inventory Tracking

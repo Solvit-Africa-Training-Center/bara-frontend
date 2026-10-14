@@ -42,13 +42,47 @@ export function BaraLogo({
   collapsed = false,
   useSvgFile = false,
   subtitle,
+  logoUrl,
+  accentColor,
 }: {
   className?: string
   imageClassName?: string
   collapsed?: boolean
   useSvgFile?: boolean
   subtitle?: string
+  logoUrl?: string
+  accentColor?: string
 }) {
+  if (logoUrl) {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-2.5",
+          collapsed && "justify-center gap-0",
+          className
+        )}
+      >
+        <div className="relative size-8.5 shrink-0 overflow-hidden rounded-xl border border-border/80 bg-card p-1 shadow-xs flex items-center justify-center">
+          <img
+            src={logoUrl}
+            alt={subtitle || "Restaurant Logo"}
+            className={cn("h-full w-full object-contain rounded-lg", imageClassName)}
+          />
+        </div>
+        {!collapsed && (
+          <div className="flex min-w-0 flex-col text-left leading-tight">
+            <span className="text-sm font-black tracking-tight text-foreground truncate max-w-[150px]">
+              {subtitle || "Bara"}
+            </span>
+            <span className="text-[10px] font-bold tracking-wider text-primary uppercase">
+              Bara Workspace
+            </span>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (useSvgFile) {
     return (
       <div className={cn("inline-flex items-center justify-center", className)}>
@@ -81,7 +115,7 @@ export function BaraLogo({
           xmlns="http://www.w3.org/2000/svg"
           className="size-8 transition-transform hover:scale-105"
         >
-          <rect y="29.5" width="12" height="15" rx="4" fill="#C1440E" />
+          <rect y="29.5" width="12" height="15" rx="4" fill={accentColor || "var(--brand-accent, #C1440E)"} />
           <rect x="16" y="19" width="14" height="25" rx="4" fill="#E56A1C" />
           <rect x="34" y="10" width="14" height="35" rx="4" fill="#EA982C" />
           <rect x="52" width="14" height="45" rx="4" fill="#EBA529" />

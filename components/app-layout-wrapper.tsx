@@ -28,6 +28,8 @@ import { useRestaurant } from "@/components/restaurant-provider"
 import { useAuth } from "@/components/auth-provider"
 import { offlineStore, SyncState } from "@/lib/offline-store"
 import { cn } from "@/lib/utils"
+import { GlobalSearchDialog } from "@/components/global-search-dialog"
+import { NotificationsSheet } from "@/components/notifications-sheet"
 
 function SyncStatusBadge() {
   const [status, setStatus] = React.useState<SyncState>("synced")
@@ -78,6 +80,19 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { restaurant } = useRestaurant()
   const { isAuthenticated, isLoading } = useAuth()
+  const [searchOpen, setSearchOpen] = React.useState(false)
+
+  // Listen for Cmd+K / Ctrl+K keyboard shortcut to open global search
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setSearchOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
 
   const isGuestAuthPage =
     pathname === "/login" ||
@@ -151,6 +166,20 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             <SidebarTrigger className="-ml-1 size-8 rounded-lg hover:bg-muted" />
             <div className="flex items-center gap-2 min-w-0">
+              {restaurant.logo ? (
+                <div className="size-6.5 rounded-lg overflow-hidden border border-border/80 bg-card p-0.5 shrink-0 flex items-center justify-center">
+                  <img
+                    src={restaurant.logo}
+                    alt={restaurant.name}
+                    className="h-full w-full object-contain rounded-sm"
+                  />
+                </div>
+              ) : (
+                <span
+                  className="size-2 rounded-full shrink-0 transition-colors"
+                  style={{ backgroundColor: restaurant.brandColor || "var(--primary)" }}
+                />
+              )}
               <span className="text-sm font-bold tracking-tight text-foreground truncate max-w-[130px] sm:max-w-none">
                 {restaurant.name}
               </span>
@@ -162,39 +191,54 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Central Search Bar */}
+          {/* Central Search Bar (interactive trigger with shortcut badge) */}
           <div className="hidden sm:flex flex-1 max-w-[220px] md:max-w-xs lg:max-w-sm mx-2">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search ledger, inventory, menu..."
-                className="h-8.5 w-full rounded-full border border-border bg-card pl-8.5 pr-3 text-xs text-foreground placeholder:text-muted-foreground shadow-2xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="group relative flex h-8.5 w-full items-center justify-between rounded-full border border-border bg-card px-3 text-xs text-muted-foreground shadow-2xs hover:border-primary/50 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary transition-all text-left cursor-pointer"
+              title="Search menu, inventory, staff, and actions (Ctrl+K / ⌘K)"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Search className="size-3.5 shrink-0 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <span className="truncate">Search inventory, menu, staff...</span>
+              </div>
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border/80 bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground/90 shrink-0">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
           </div>
 
-          {/* Right Actions: Persistent Sync Indicator (Section 1.4 & 5.7) & Controls */}
+          {/* Right Actions: Search (mobile), Sync Indicator & Notifications Sheet */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <SyncStatusBadge />
-
+            {/* Mobile Search Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="relative size-8 rounded-lg text-muted-foreground hover:text-foreground"
-              title="Notifications"
+              onClick={() => setSearchOpen(true)}
+              className="sm:hidden size-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Search"
             >
-              <Bell className="size-4" />
-              <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
-              <span className="sr-only">Notifications</span>
+              <Search className="size-4" />
+              <span className="sr-only">Search</span>
             </Button>
+
+            <SyncStatusBadge />
+
+            {/* Notifications slide-out drawer with real-time operational alerts */}
+            <NotificationsSheet />
 
             <ThemeToggle />
           </div>
         </header>
 
-        {/* Brand Multi-color Accent Bar */}
-        <div className="h-[2px] w-full bg-gradient-to-r from-[#C1440E] via-[#E56A1C] via-[#EA982C] via-[#EBA529] to-[#2F5233] opacity-80" />
+        {/* Brand Multi-color Accent Bar - Dynamically themes with restaurant.brandColor */}
+        <div
+          className="h-[2px] w-full opacity-85 transition-colors duration-300"
+          style={{
+            background: `linear-gradient(to right, ${restaurant.brandColor || "#C85A24"}, #E56A1C, #EA982C, #EBA529, #2F5233)`,
+          }}
+        />
 
         {/* Section 4.3 Account States Non-Payment Banners */}
         {isGraceState && (
@@ -234,6 +278,9 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
         )}
 
         <div className="flex-1 p-3 sm:p-4 md:p-5 lg:p-6 min-w-0 w-full max-w-full overflow-x-hidden">{children}</div>
+
+        {/* Global Spotlight Search Dialog (Cmd+K / Ctrl+K) */}
+        <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
       </SidebarInset>
     </SidebarProvider>
   )

@@ -3,20 +3,23 @@
 import * as React from "react"
 import {
   Check,
+  Copy,
   Crown,
   HelpCircle,
   Info,
   KeyRound,
   Laptop,
   Lock,
-  Mail,
   MoreHorizontal,
   Plus,
+  RefreshCw,
   Search,
+  ShieldAlert,
   ShieldCheck,
   Smartphone,
-  Trash2,
+  UserCheck,
   UserCog,
+  UserX,
   X,
   ChevronDown,
 } from "lucide-react"
@@ -39,148 +42,77 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { useRestaurant } from "@/components/restaurant-provider"
-import { PlanUpgradeGate } from "@/components/plan-upgrade-gate"
-
-export type StaffRole = "Owner" | "Manager" | "Cashier / Waiter" | "Kitchen / Stock"
-export type StaffStatus = "Active" | "Invited"
-export type PlatformAccess = "App + Web" | "App only"
-
-export interface TeamMember {
-  id: string
-  name: string
-  role: StaffRole
-  status: StaffStatus
-  platformAccess: PlatformAccess
-  avatarInitials: string
-  isOwner?: boolean
-  email?: string
-  phone?: string
-  shiftPin?: string
-}
-
-const INITIAL_TEAM_MEMBERS: TeamMember[] = [
-  {
-    id: "u-1",
-    name: "Aline Mukamana",
-    role: "Owner",
-    status: "Active",
-    platformAccess: "App + Web",
-    avatarInitials: "AM",
-    isOwner: true,
-    email: "aline@kigaliheightsbistro.rw",
-    phone: "+250 788 100 001",
-    shiftPin: "1100",
-  },
-  {
-    id: "u-2",
-    name: "Patrick Mugisha",
-    role: "Manager",
-    status: "Active",
-    platformAccess: "App + Web",
-    avatarInitials: "PM",
-    email: "patrick@kigaliheightsbistro.rw",
-    phone: "+250 788 200 002",
-    shiftPin: "2201",
-  },
-  {
-    id: "u-3",
-    name: "Jean Niyonzima",
-    role: "Cashier / Waiter",
-    status: "Active",
-    platformAccess: "App only",
-    avatarInitials: "JN",
-    email: "jean@kigaliheightsbistro.rw",
-    phone: "+250 788 300 003",
-    shiftPin: "3302",
-  },
-  {
-    id: "u-4",
-    name: "Grace Uwase",
-    role: "Cashier / Waiter",
-    status: "Active",
-    platformAccess: "App only",
-    avatarInitials: "GU",
-    email: "grace@kigaliheightsbistro.rw",
-    phone: "+250 788 400 004",
-    shiftPin: "4403",
-  },
-  {
-    id: "u-5",
-    name: "Eric Habimana",
-    role: "Cashier / Waiter",
-    status: "Active",
-    platformAccess: "App only",
-    avatarInitials: "EH",
-    email: "eric@kigaliheightsbistro.rw",
-    phone: "+250 788 500 005",
-    shiftPin: "5504",
-  },
-  {
-    id: "u-6",
-    name: "Diane Keza",
-    role: "Cashier / Waiter",
-    status: "Active",
-    platformAccess: "App only",
-    avatarInitials: "DK",
-    email: "diane@kigaliheightsbistro.rw",
-    phone: "+250 788 600 006",
-    shiftPin: "6605",
-  },
-  {
-    id: "u-7",
-    name: "Chantal Uwamahoro",
-    role: "Kitchen / Stock",
-    status: "Active",
-    platformAccess: "App only",
-    avatarInitials: "CU",
-    email: "chantal@kigaliheightsbistro.rw",
-    phone: "+250 788 700 007",
-    shiftPin: "7706",
-  },
-  {
-    id: "u-8",
-    name: "Emmanuel Ishimwe",
-    role: "Kitchen / Stock",
-    status: "Invited",
-    platformAccess: "App only",
-    avatarInitials: "EI",
-    email: "emmanuel@kigaliheightsbistro.rw",
-    phone: "+250 788 800 008",
-    shiftPin: "8807",
-  },
-]
+import { useAuth } from "@/components/auth-provider"
+import {
+  StaffMember,
+  StaffRole,
+  StaffStatus,
+  PlatformAccess,
+  loadStaffMembers,
+  saveStaffMembers,
+  generateUniquePin,
+} from "@/lib/staff-store"
 
 export default function UsersPage() {
   const { restaurant } = useRestaurant()
+  const { user: authUser } = useAuth()
 
-  // Team state
-  const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>(INITIAL_TEAM_MEMBERS)
+  // Staff members state with local persistence
+  const [staffMembers, setStaffMembers] = React.useState<StaffMember[]>([])
+  const [isInitialized, setIsInitialized] = React.useState(false)
+
+  // Filters & search
   const [searchQuery, setSearchQuery] = React.useState("")
   const [roleFilter, setRoleFilter] = React.useState<string>("All")
+  const [statusFilter, setStatusFilter] = React.useState<string>("All")
   const [toastNotice, setToastNotice] = React.useState<string | null>(null)
 
-  // Add User modal state
+  // Modal 1: Add staff member
   const [showAddModal, setShowAddModal] = React.useState(false)
   const [addName, setAddName] = React.useState("")
-  const [addRole, setAddRole] = React.useState<"Manager" | "Cashier / Waiter" | "Kitchen / Stock">("Cashier / Waiter")
+  const [addRole, setAddRole] = React.useState<StaffRole>("Cashier / Waiter")
   const [addEmail, setAddEmail] = React.useState("")
   const [addPhone, setAddPhone] = React.useState("")
-  const [addPin, setAddPin] = React.useState("1234")
-  const [addSendInvite, setAddSendInvite] = React.useState(true)
 
-  // Change Role modal state
-  const [editingMember, setEditingMember] = React.useState<TeamMember | null>(null)
-  const [selectedRole, setSelectedRole] = React.useState<"Manager" | "Cashier / Waiter" | "Kitchen / Stock">("Cashier / Waiter")
+  // Modal 2: PIN Generated - Shown Once
+  const [revealedPinMember, setRevealedPinMember] = React.useState<{
+    member: StaffMember
+    pin: string
+    isReset?: boolean
+  } | null>(null)
+  const [hasCopiedPin, setHasCopiedPin] = React.useState(false)
 
-  // Reset PIN modal state
-  const [pinModalMember, setPinModalMember] = React.useState<TeamMember | null>(null)
-  const [newPin, setNewPin] = React.useState("")
+  // Modal 3: Change Role
+  const [roleChangeMember, setRoleChangeMember] = React.useState<StaffMember | null>(null)
+  const [newSelectedRole, setNewSelectedRole] = React.useState<StaffRole>("Cashier / Waiter")
 
-  // Delete Member confirmation modal state
-  const [deleteMember, setDeleteMember] = React.useState<TeamMember | null>(null)
+  // Modal 4: Reset PIN confirmation
+  const [resetPinCandidate, setResetPinCandidate] = React.useState<StaffMember | null>(null)
 
-  // Help modal state
+  // Modal 5: Deactivate / Reactivate
+  const [statusToggleMember, setStatusToggleMember] = React.useState<StaffMember | null>(null)
+
+  // Modal 6: Help / Role guide
   const [showHelpModal, setShowHelpModal] = React.useState(false)
+
+  // Load from store on mount
+  React.useEffect(() => {
+    const list = loadStaffMembers({
+      name: authUser?.name,
+      email: authUser?.email,
+    })
+    setStaffMembers(list)
+    setIsInitialized(true)
+  }, [authUser])
+
+  // Sync to store on change
+  const updateStaffList = (updater: (prev: StaffMember[]) => StaffMember[]) => {
+    setStaffMembers((prev) => {
+      const next = updater(prev)
+      saveStaffMembers(next)
+      return next
+    })
+  }
 
   const showToast = (message: string) => {
     setToastNotice(message)
@@ -190,33 +122,36 @@ export default function UsersPage() {
   }
 
   // Summary Metrics
-  const totalMembers = teamMembers.length
-  const activeStaff = teamMembers.filter((m) => m.status === "Active").length
-  const invitedStaff = teamMembers.filter((m) => m.status === "Invited").length
-  const appAndWebStaff = teamMembers.filter((m) => m.platformAccess === "App + Web").length
-  const appOnlyStaff = teamMembers.filter((m) => m.platformAccess === "App only").length
-  const appOnlyActiveStaff = teamMembers.filter(
-    (m) => m.platformAccess === "App only" && m.status === "Active"
+  const totalStaff = staffMembers.length
+  const activeStaff = staffMembers.filter((m) => m.status === "Active").length
+  const deactivatedStaff = staffMembers.filter((m) => m.status === "Deactivated").length
+  const managersAndOwners = staffMembers.filter(
+    (m) => m.status === "Active" && (m.role === "Owner" || m.role === "Manager")
   ).length
-  const appOnlyInvitedStaff = teamMembers.filter(
-    (m) => m.platformAccess === "App only" && m.status === "Invited"
+  const posStaff = staffMembers.filter(
+    (m) => m.status === "Active" && (m.role === "Cashier / Waiter" || m.role === "Kitchen / Stock")
   ).length
 
   // Filtered members list
   const filteredMembers = React.useMemo(() => {
-    return teamMembers.filter((m) => {
+    return staffMembers.filter((m) => {
       const matchesSearch =
         m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (m.email && m.email.toLowerCase().includes(searchQuery.toLowerCase()))
+        (m.email && m.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (m.phone && m.phone.includes(searchQuery))
       const matchesRole = roleFilter === "All" || m.role === roleFilter
-      return matchesSearch && matchesRole
+      const matchesStatus = statusFilter === "All" || m.status === statusFilter
+      return matchesSearch && matchesRole && matchesStatus
     })
-  }, [teamMembers, searchQuery, roleFilter])
+  }, [staffMembers, searchQuery, roleFilter, statusFilter])
 
   // Handlers
-  const handleAddUserSubmit = (e: React.FormEvent) => {
+  const handleAddStaffSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!addName.trim()) return
+
+    const existingPins = staffMembers.map((m) => m.shiftPin)
+    const generatedPin = generateUniquePin(existingPins)
 
     const platformAccess: PlatformAccess = addRole === "Manager" ? "App + Web" : "App only"
     const initials = addName
@@ -225,95 +160,118 @@ export default function UsersPage() {
       .map((part) => part[0])
       .join("")
       .slice(0, 2)
-      .toUpperCase()
+      .toUpperCase() || "ST"
 
-    const newMember: TeamMember = {
-      id: `u-${Date.now()}`,
+    const newStaff: StaffMember = {
+      id: `staff-${Date.now()}`,
       name: addName.trim(),
       role: addRole,
-      status: addSendInvite ? "Invited" : "Active",
+      status: "Active",
       platformAccess,
-      avatarInitials: initials || "ST",
+      avatarInitials: initials,
       email: addEmail.trim() || undefined,
       phone: addPhone.trim() || undefined,
-      shiftPin: addPin.trim() || "1234",
+      shiftPin: generatedPin,
+      lastLogin: "Never logged in",
+      failedPinAttempts: 0,
+      createdAt: new Date().toISOString(),
     }
 
-    setTeamMembers((prev) => [...prev, newMember])
+    updateStaffList((prev) => [...prev, newStaff])
     setShowAddModal(false)
     setAddName("")
     setAddEmail("")
     setAddPhone("")
-    setAddPin("1234")
-    showToast(`Added ${newMember.name} to the team!`)
+    setAddRole("Cashier / Waiter")
+
+    // Show the PIN once
+    setHasCopiedPin(false)
+    setRevealedPinMember({ member: newStaff, pin: generatedPin, isReset: false })
+    showToast(`Staff member ${newStaff.name} created!`)
   }
 
-  const handleUpdateRoleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingMember) return
+  const handleConfirmRoleChange = () => {
+    if (!roleChangeMember) return
+    if (roleChangeMember.isOwner) {
+      showToast("The Owner role cannot be changed.")
+      setRoleChangeMember(null)
+      return
+    }
 
-    const platformAccess: PlatformAccess = selectedRole === "Manager" ? "App + Web" : "App only"
-    setTeamMembers((prev) =>
+    const platformAccess: PlatformAccess = newSelectedRole === "Manager" ? "App + Web" : "App only"
+    updateStaffList((prev) =>
       prev.map((m) =>
-        m.id === editingMember.id
-          ? { ...m, role: selectedRole, platformAccess }
+        m.id === roleChangeMember.id
+          ? { ...m, role: newSelectedRole, platformAccess }
           : m
       )
     )
-    showToast(`Updated role for ${editingMember.name} to ${selectedRole}.`)
-    setEditingMember(null)
+    showToast(`Updated role for ${roleChangeMember.name} to ${newSelectedRole}.`)
+    setRoleChangeMember(null)
   }
 
-  const handleResetPinSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!pinModalMember || !newPin.trim()) return
+  const handleConfirmResetPin = () => {
+    if (!resetPinCandidate) return
 
-    setTeamMembers((prev) =>
-      prev.map((m) => (m.id === pinModalMember.id ? { ...m, shiftPin: newPin.trim() } : m))
+    const otherPins = staffMembers
+      .filter((m) => m.id !== resetPinCandidate.id)
+      .map((m) => m.shiftPin)
+    const newUniquePin = generateUniquePin(otherPins)
+
+    updateStaffList((prev) =>
+      prev.map((m) =>
+        m.id === resetPinCandidate.id
+          ? { ...m, shiftPin: newUniquePin, failedPinAttempts: 0 }
+          : m
+      )
     )
-    showToast(`Reset shift PIN for ${pinModalMember.name}.`)
-    setPinModalMember(null)
-    setNewPin("")
+
+    const memberCopy = { ...resetPinCandidate, shiftPin: newUniquePin }
+    setResetPinCandidate(null)
+    setHasCopiedPin(false)
+    setRevealedPinMember({ member: memberCopy, pin: newUniquePin, isReset: true })
+    showToast(`Generated a new PIN for ${memberCopy.name}.`)
   }
 
-  const handleDeleteMember = () => {
-    if (!deleteMember) return
-    setTeamMembers((prev) => prev.filter((m) => m.id !== deleteMember.id))
-    showToast(`Removed ${deleteMember.name} from the team.`)
-    setDeleteMember(null)
-  }
+  const handleConfirmToggleStatus = () => {
+    if (!statusToggleMember) return
+    if (statusToggleMember.isOwner) {
+      showToast("The restaurant must always have at least one active Owner.")
+      setStatusToggleMember(null)
+      return
+    }
 
-  const handleResendInvite = (member: TeamMember) => {
-    showToast(`Invitation resent to ${member.name} (${member.email || "email"}).`)
-  }
+    const isCurrentlyActive = statusToggleMember.status === "Active"
+    const nextStatus: StaffStatus = isCurrentlyActive ? "Deactivated" : "Active"
 
-  // Plan gating for Basic plan
-  if (restaurant.plan === "basic") {
-    return (
-      <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-10">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1C1917] dark:text-[#FAF5EE]">
-            Users
-          </h1>
-          <p className="text-xs text-[#78716C] dark:text-[#A89A90] mt-0.5">
-            Manage your team and their access to Bara.
-          </p>
-        </div>
-        <PlanUpgradeGate
-          requiredPlan="pro"
-          featureName="Team Roles & Permissions"
-          title="Collaborate with Role-Based Team Permissions"
-          description="Bara Basic is built for single-operator restaurants. To invite managers, cashiers, waitstaff, and kitchen leads with tailored security permissions, upgrade to Bara Pro."
-          features={[
-            "Role-based access control (Manager, Cashier, Waiter, Kitchen)",
-            "Staff login activity and audit trail logs",
-            "Shift accountability & cashier ticket safety",
-            "Unlimited team member invitations",
-          ]}
-          priceRwf={32000}
-        />
-      </div>
+    updateStaffList((prev) =>
+      prev.map((m) =>
+        m.id === statusToggleMember.id
+          ? {
+              ...m,
+              status: nextStatus,
+              deactivatedAt: isCurrentlyActive ? new Date().toISOString() : undefined,
+            }
+          : m
+      )
     )
+
+    if (isCurrentlyActive) {
+      showToast(
+        `${statusToggleMember.name} has been deactivated. Past audit trails remain preserved.`
+      )
+    } else {
+      showToast(`${statusToggleMember.name} is now reactivated with POS access.`)
+    }
+    setStatusToggleMember(null)
+  }
+
+  const handleCopyPin = (pin: string) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(pin)
+      setHasCopiedPin(true)
+      setTimeout(() => setHasCopiedPin(false), 2500)
+    }
   }
 
   const restaurantDisplayName =
@@ -328,7 +286,7 @@ export default function UsersPage() {
           <span className="text-xs font-medium">{toastNotice}</span>
           <button
             onClick={() => setToastNotice(null)}
-            className="ml-2 text-white/70 hover:text-white"
+            className="ml-2 text-white/70 hover:text-white cursor-pointer"
           >
             <X className="size-3.5" />
           </button>
@@ -338,42 +296,40 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1C1917] dark:text-[#FAF5EE]">
-            Users
-          </h1>
-          <p className="text-xs text-[#78716C] dark:text-[#A89A90] mt-0.5">
-            Manage your team and their access to Bara.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-[#1C1917] dark:text-[#FAF5EE]">
+              Users &amp; Staff
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EBF2EC] text-[#284E3A] dark:bg-emerald-950/40 dark:text-emerald-400 border border-[#D5E3D7] dark:border-emerald-900/60 text-[11px] font-semibold">
+              <ShieldCheck className="size-3 text-[#284E3A] dark:text-emerald-400" />
+              <span>Owner only</span>
+            </span>
+          </div>
+          <p className="text-xs text-[#78716C] dark:text-[#A89A90] mt-1">
+            Manage your restaurant team, assign operational roles, and issue unique tablet login PINs.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Status pill */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-xs font-medium">
-            <span className="size-2 rounded-full bg-[#10B981]" />
-            <span>Online · Synced now</span>
-          </div>
-
-          {/* Add user action */}
+          {/* Add Staff Button */}
           <Button
             onClick={() => {
               setAddName("")
               setAddEmail("")
               setAddPhone("")
-              setAddPin("1234")
               setAddRole("Cashier / Waiter")
-              setAddSendInvite(true)
               setShowAddModal(true)
             }}
-            className="h-9 px-4 rounded-xl bg-[#B43403] hover:bg-[#9A2C02] text-white text-xs font-semibold gap-1.5 shadow-xs"
+            className="h-9.5 px-4 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold gap-1.5 shadow-xs cursor-pointer"
           >
-            <Plus className="size-3.5" />
-            <span>Add user</span>
+            <Plus className="size-4 stroke-[2.5]" />
+            <span>Add staff</span>
           </Button>
 
           {/* Help question button */}
           <button
             onClick={() => setShowHelpModal(true)}
-            className="size-9 rounded-xl border border-[#E5E0D5] dark:border-border/60 bg-white dark:bg-card flex items-center justify-center text-[#78716C] hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+            className="size-9.5 rounded-xl border border-[#E5E0D5] dark:border-border/60 bg-white dark:bg-card flex items-center justify-center text-[#78716C] hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
             title="Help & access roles"
           >
             <HelpCircle className="size-4" />
@@ -381,14 +337,14 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* 4 Summary KPI Cards */}
+      {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Card 1: Team members (Dark Forest Green) */}
         <div className="rounded-2xl bg-[#284E3A] text-white p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
-          <span className="text-xs text-[#A8C5B3] font-medium">Team members</span>
+          <span className="text-xs text-[#A8C5B3] font-medium">Total Staff Enrolled</span>
           <div className="my-1">
             <span className="text-3xl lg:text-4xl font-bold tracking-tight text-white">
-              {totalMembers}
+              {totalStaff}
             </span>
           </div>
           <span className="text-xs text-[#A8C5B3] truncate">
@@ -399,65 +355,64 @@ export default function UsersPage() {
         {/* Card 2: Active staff */}
         <div className="rounded-2xl bg-white dark:bg-card border border-[#EBE7DF] dark:border-border p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
           <span className="text-xs text-[#78716C] dark:text-muted-foreground font-medium">
-            Active staff
+            Active Staff
           </span>
           <div className="my-1">
             <span className="text-3xl lg:text-4xl font-bold tracking-tight text-[#1C1917] dark:text-foreground">
               {activeStaff}
             </span>
           </div>
-          <span className="text-xs text-[#78716C] dark:text-muted-foreground">
-            {invitedStaff} invitation awaiting acceptance
+          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+            Authorized to log in to POS &amp; Web
           </span>
         </div>
 
-        {/* Card 3: App + Web access */}
+        {/* Card 3: Deactivated staff */}
         <div className="rounded-2xl bg-white dark:bg-card border border-[#EBE7DF] dark:border-border p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
           <span className="text-xs text-[#78716C] dark:text-muted-foreground font-medium">
-            App + Web access
+            Deactivated Staff
           </span>
           <div className="my-1">
-            <span className="text-3xl lg:text-4xl font-bold tracking-tight text-[#1C1917] dark:text-foreground">
-              {appAndWebStaff}
+            <span className="text-3xl lg:text-4xl font-bold tracking-tight text-[#78716C] dark:text-muted-foreground">
+              {deactivatedStaff}
             </span>
           </div>
           <span className="text-xs text-[#78716C] dark:text-muted-foreground">
-            Owner and manager only
+            Audit history &amp; order logs preserved
           </span>
         </div>
 
-        {/* Card 4: App-only staff */}
+        {/* Card 4: Web + App Managers */}
         <div className="rounded-2xl bg-white dark:bg-card border border-[#EBE7DF] dark:border-border p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
           <span className="text-xs text-[#78716C] dark:text-muted-foreground font-medium">
-            App-only staff
+            Web &amp; Management Access
           </span>
           <div className="my-1">
             <span className="text-3xl lg:text-4xl font-bold tracking-tight text-[#1C1917] dark:text-foreground">
-              {appOnlyStaff}
+              {managersAndOwners}
             </span>
           </div>
           <span className="text-xs text-[#78716C] dark:text-muted-foreground">
-            {appOnlyActiveStaff} active · {appOnlyInvitedStaff} invited
+            {posStaff} POS tablet-only staff
           </span>
         </div>
       </div>
 
-      {/* "Your team" Table Card */}
+      {/* Staff Table Card */}
       <div className="rounded-2xl bg-white dark:bg-card border border-[#EBE7DF] dark:border-border shadow-xs overflow-hidden">
         {/* Top toolbar */}
         <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#F0ECE1] dark:border-border/60">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-[#1C1917] dark:text-foreground">
-                Your team
+                Staff Roster
               </h2>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EBF2EC] text-[#284E3A] dark:bg-emerald-950/40 dark:text-emerald-400 border border-[#D5E3D7] dark:border-emerald-900/60 text-[11px] font-semibold">
-                <ShieldCheck className="size-3 text-[#284E3A] dark:text-emerald-400" />
-                <span>Owner only</span>
+              <span className="text-xs text-[#78716C] dark:text-muted-foreground">
+                ({filteredMembers.length} staff member{filteredMembers.length === 1 ? "" : "s"})
               </span>
             </div>
             <p className="text-xs text-[#78716C] dark:text-muted-foreground mt-0.5">
-              Manage staff accounts for this restaurant.
+              Unique PIN-only authentication on shared Android tablets ensures accurate order attribution.
             </p>
           </div>
 
@@ -469,8 +424,8 @@ export default function UsersPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name"
-                className="h-8.5 w-48 sm:w-60 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border pl-8.5 pr-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-[#B43403] focus:ring-1 focus:ring-[#B43403]/20"
+                placeholder="Search staff name..."
+                className="h-8.5 w-44 sm:w-56 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border pl-8.5 pr-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E]/20"
               />
             </div>
 
@@ -479,7 +434,7 @@ export default function UsersPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="h-8.5 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-[#B43403] cursor-pointer appearance-none"
+                className="h-8.5 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-[#C1440E] cursor-pointer appearance-none"
               >
                 <option value="All">All roles</option>
                 <option value="Owner">Owner</option>
@@ -489,16 +444,30 @@ export default function UsersPage() {
               </select>
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C] pointer-events-none" />
             </div>
+
+            {/* Status filter dropdown */}
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-8.5 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-[#C1440E] cursor-pointer appearance-none"
+              >
+                <option value="All">All status</option>
+                <option value="Active">Active</option>
+                <option value="Deactivated">Deactivated</option>
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C] pointer-events-none" />
+            </div>
           </div>
         </div>
 
-        {/* Team Table */}
+        {/* Staff Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-[#FAF8F5] dark:bg-muted/30 border-b border-[#EBE7DF] dark:border-border text-[#78716C]">
                 <th className="py-3 pl-5 font-semibold text-[11px] uppercase tracking-wider">
-                  NAME
+                  STAFF NAME
                 </th>
                 <th className="py-3 px-4 font-semibold text-[11px] uppercase tracking-wider">
                   ROLE
@@ -507,7 +476,10 @@ export default function UsersPage() {
                   STATUS
                 </th>
                 <th className="py-3 px-4 font-semibold text-[11px] uppercase tracking-wider">
-                  PLATFORM / ACCESS
+                  LAST LOGIN
+                </th>
+                <th className="py-3 px-4 font-semibold text-[11px] uppercase tracking-wider">
+                  PLATFORM ACCESS
                 </th>
                 <th className="py-3 pr-5 text-right font-semibold text-[11px] uppercase tracking-wider">
                   ACTIONS
@@ -518,7 +490,10 @@ export default function UsersPage() {
               {filteredMembers.map((member) => (
                 <tr
                   key={member.id}
-                  className="hover:bg-[#FAF8F5]/60 dark:hover:bg-muted/20 transition-colors"
+                  className={cn(
+                    "hover:bg-[#FAF8F5]/60 dark:hover:bg-muted/20 transition-colors",
+                    member.status === "Deactivated" && "opacity-60 bg-muted/10"
+                  )}
                 >
                   {/* Name Column */}
                   <td className="py-3.5 pl-5">
@@ -528,20 +503,27 @@ export default function UsersPage() {
                           "size-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none",
                           member.isOwner
                             ? "bg-[#D97706] text-white shadow-xs"
+                            : member.status === "Deactivated"
+                            ? "bg-muted text-muted-foreground"
                             : "bg-[#EDE7DD] dark:bg-muted text-[#574F45] dark:text-muted-foreground font-semibold"
                         )}
                       >
                         {member.avatarInitials}
                       </div>
                       <div>
-                        <div className="font-semibold text-sm text-[#1C1917] dark:text-foreground">
-                          {member.name}
+                        <div className="font-semibold text-sm text-[#1C1917] dark:text-foreground flex items-center gap-2">
+                          <span>{member.name}</span>
+                          {member.status === "Deactivated" && (
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              Deactivated
+                            </span>
+                          )}
                         </div>
-                        {member.isOwner && (
-                          <div className="text-[11px] text-[#78716C] leading-none mt-0.5">
-                            You · Account owner
-                          </div>
-                        )}
+                        <div className="text-[11px] text-[#78716C] dark:text-muted-foreground">
+                          {member.isOwner
+                            ? "Primary Account Owner · Superadmin"
+                            : member.email || member.phone || "No contact info provided"}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -560,22 +542,29 @@ export default function UsersPage() {
                     )}
                   </td>
 
-                  {/* Status Column */}
+                  {/* Status Column (Active or Deactivated) */}
                   <td className="py-3.5 px-4">
                     {member.status === "Active" ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EAF5EC] border border-[#C6E6CD] text-[#1E743A] text-xs font-medium">
-                        <Check className="size-3 stroke-[2.5]" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EAF5EC] border border-[#C6E6CD] text-[#1E743A] text-xs font-semibold">
+                        <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
                         <span>Active</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FEF4E6] border border-[#FADBB2] text-[#B45309] text-xs font-medium">
-                        <Mail className="size-3" />
-                        <span>Invited</span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted border border-border text-muted-foreground text-xs font-medium">
+                        <UserX className="size-3 text-muted-foreground" />
+                        <span>Deactivated</span>
                       </span>
                     )}
                   </td>
 
-                  {/* Platform / Access Column */}
+                  {/* Last Login Column */}
+                  <td className="py-3.5 px-4">
+                    <span className="text-xs font-medium text-[#78716C] dark:text-muted-foreground">
+                      {member.lastLogin}
+                    </span>
+                  </td>
+
+                  {/* Platform Access Column */}
                   <td className="py-3.5 px-4">
                     {member.platformAccess === "App + Web" ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1C1917] dark:text-foreground">
@@ -585,7 +574,7 @@ export default function UsersPage() {
                     ) : (
                       <span className="inline-flex items-center gap-1.5 text-xs text-[#78716C] dark:text-muted-foreground">
                         <Smartphone className="size-3.5 text-[#A8A29E]" />
-                        <span>App only</span>
+                        <span>POS Tablet only</span>
                       </span>
                     )}
                   </td>
@@ -595,112 +584,68 @@ export default function UsersPage() {
                     {member.isOwner ? (
                       <span className="inline-flex items-center gap-1 text-xs text-[#78716C] font-medium justify-end">
                         <Lock className="size-3.5 text-[#A8A29E]" />
-                        <span>Owner role fixed</span>
+                        <span>Protected</span>
                       </span>
-                    ) : member.status === "Invited" ? (
-                      <div className="inline-flex items-center justify-end gap-2.5">
-                        <button
-                          onClick={() => handleResendInvite(member)}
-                          className="text-xs font-semibold text-[#B43403] hover:underline cursor-pointer"
-                        >
-                          Resend invite
-                        </button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <button
-                                className="size-7 rounded-lg hover:bg-muted/60 flex items-center justify-center text-[#78716C] hover:text-foreground transition-colors cursor-pointer"
-                                title="More options"
-                              />
-                            }
-                          >
-                            <MoreHorizontal className="size-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingMember(member)
-                                setSelectedRole(member.role as "Manager" | "Cashier / Waiter" | "Kitchen / Stock")
-                              }}
-                              className="gap-2 cursor-pointer text-xs"
-                            >
-                              <UserCog className="size-3.5 text-muted-foreground" />
-                              <span>Change role</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setPinModalMember(member)
-                                setNewPin(member.shiftPin || "1234")
-                              }}
-                              className="gap-2 cursor-pointer text-xs"
-                            >
-                              <KeyRound className="size-3.5 text-muted-foreground" />
-                              <span>Reset PIN</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => setDeleteMember(member)}
-                              variant="destructive"
-                              className="gap-2 cursor-pointer text-xs text-destructive"
-                            >
-                              <Trash2 className="size-3.5" />
-                              <span>Remove user</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
                     ) : (
-                      <div className="inline-flex items-center justify-end gap-2.5">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        {/* Quick action: Reset PIN */}
                         <button
-                          onClick={() => {
-                            setEditingMember(member)
-                            setSelectedRole(member.role as "Manager" | "Cashier / Waiter" | "Kitchen / Stock")
-                          }}
-                          className="text-xs font-semibold text-[#B43403] hover:underline cursor-pointer"
+                          onClick={() => setResetPinCandidate(member)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C1440E] hover:bg-[#C1440E]/10 transition-colors cursor-pointer"
                         >
-                          Change role
+                          Reset PIN
                         </button>
+
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={
                               <button
-                                className="size-7 rounded-lg hover:bg-muted/60 flex items-center justify-center text-[#78716C] hover:text-foreground transition-colors cursor-pointer"
-                                title="More options"
+                                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-[#78716C] hover:text-foreground transition-colors cursor-pointer"
+                                title="Staff options"
                               />
                             }
                           >
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                          <DropdownMenuContent align="end" className="w-48 rounded-xl">
                             <DropdownMenuItem
                               onClick={() => {
-                                setEditingMember(member)
-                                setSelectedRole(member.role as "Manager" | "Cashier / Waiter" | "Kitchen / Stock")
+                                setRoleChangeMember(member)
+                                setNewSelectedRole(member.role)
                               }}
                               className="gap-2 cursor-pointer text-xs"
                             >
                               <UserCog className="size-3.5 text-muted-foreground" />
                               <span>Change role</span>
                             </DropdownMenuItem>
+
                             <DropdownMenuItem
-                              onClick={() => {
-                                setPinModalMember(member)
-                                setNewPin(member.shiftPin || "1234")
-                              }}
+                              onClick={() => setResetPinCandidate(member)}
                               className="gap-2 cursor-pointer text-xs"
                             >
                               <KeyRound className="size-3.5 text-muted-foreground" />
-                              <span>Reset PIN</span>
+                              <span>Reset login PIN</span>
                             </DropdownMenuItem>
+
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => setDeleteMember(member)}
-                              variant="destructive"
-                              className="gap-2 cursor-pointer text-xs text-destructive"
-                            >
-                              <Trash2 className="size-3.5" />
-                              <span>Remove user</span>
-                            </DropdownMenuItem>
+
+                            {member.status === "Active" ? (
+                              <DropdownMenuItem
+                                onClick={() => setStatusToggleMember(member)}
+                                className="gap-2 cursor-pointer text-xs text-amber-700 dark:text-amber-400"
+                              >
+                                <UserX className="size-3.5" />
+                                <span>Deactivate staff</span>
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                onClick={() => setStatusToggleMember(member)}
+                                className="gap-2 cursor-pointer text-xs text-emerald-700 dark:text-emerald-400 font-semibold"
+                              >
+                                <UserCheck className="size-3.5" />
+                                <span>Reactivate staff</span>
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -711,7 +656,7 @@ export default function UsersPage() {
 
               {filteredMembers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-xs text-muted-foreground">
+                  <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
                     No team members found matching your search.
                     <div className="mt-2">
                       <Button
@@ -720,8 +665,9 @@ export default function UsersPage() {
                         onClick={() => {
                           setSearchQuery("")
                           setRoleFilter("All")
+                          setStatusFilter("All")
                         }}
-                        className="h-7 text-xs rounded-lg"
+                        className="h-8 text-xs rounded-lg cursor-pointer"
                       >
                         Reset filters
                       </Button>
@@ -736,345 +682,438 @@ export default function UsersPage() {
         {/* Table Footer */}
         <div className="p-3.5 px-5 bg-[#FAF8F5]/60 dark:bg-muted/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-[#EBE7DF] dark:border-border text-xs text-[#78716C]">
           <div>
-            Showing all {filteredMembers.length} team member{filteredMembers.length === 1 ? "" : "s"}
+            Showing {filteredMembers.length} staff member{filteredMembers.length === 1 ? "" : "s"}
           </div>
           <div className="flex items-center gap-1.5 text-[#78716C]">
             <Info className="size-3.5 text-[#A8A29E]" />
-            <span>App-only staff cannot sign in to this web dashboard.</span>
+            <span>Deactivated staff retain full order &amp; stock movement audit trails.</span>
           </div>
         </div>
       </div>
 
-      {/* Modal 1: Add User */}
+      {/* Modal 1: Add Staff Member */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold">Add user</DialogTitle>
+            <DialogTitle className="text-base font-bold">Add New Staff Member</DialogTitle>
             <DialogDescription className="text-xs">
-              Add a new staff member to {restaurantDisplayName}. Configure their role, access tier, and PIN.
+              Add a team member to {restaurantDisplayName}. A unique 4-digit PIN will be generated for POS tablet login.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleAddUserSubmit} className="space-y-3.5 mt-2">
+          <form onSubmit={handleAddStaffSubmit} className="space-y-4 mt-2">
             <div>
-              <label className="text-xs font-semibold text-foreground">Full Name</label>
+              <label className="text-xs font-bold text-foreground">
+                Staff Name <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 required
                 placeholder="e.g. Samuel Mugisha"
                 value={addName}
                 onChange={(e) => setAddName(e.target.value)}
-                className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20"
+                className="mt-1 h-9.5 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-foreground">
+                Staff Role <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={addRole}
+                onChange={(e) => setAddRole(e.target.value as StaffRole)}
+                className="mt-1 h-9.5 w-full rounded-xl border border-border bg-background px-2.5 text-xs font-medium text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20 cursor-pointer"
+              >
+                <option value="Cashier / Waiter">Cashier / Waiter (POS App only)</option>
+                <option value="Kitchen / Stock">Kitchen / Stock (POS App only)</option>
+                <option value="Manager">Manager (POS App + Web Dashboard)</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-foreground">Operational Role</label>
-                <select
-                  value={addRole}
-                  onChange={(e) =>
-                    setAddRole(e.target.value as "Manager" | "Cashier / Waiter" | "Kitchen / Stock")
-                  }
-                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-2.5 text-xs text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20 cursor-pointer"
-                >
-                  <option value="Cashier / Waiter">Cashier / Waiter (App only)</option>
-                  <option value="Kitchen / Stock">Kitchen / Stock (App only)</option>
-                  <option value="Manager">Manager (App + Web)</option>
-                </select>
+                <label className="text-xs font-semibold text-foreground">Phone (MoMo / WhatsApp)</label>
+                <input
+                  type="tel"
+                  placeholder="+250 788 000 000"
+                  value={addPhone}
+                  onChange={(e) => setAddPhone(e.target.value)}
+                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20"
+                />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-foreground">4-Digit Shift PIN</label>
+                <label className="text-xs font-semibold text-foreground">Email (Optional)</label>
                 <input
-                  type="text"
-                  maxLength={4}
-                  placeholder="e.g. 1234"
-                  value={addPin}
-                  onChange={(e) => setAddPin(e.target.value.replace(/\D/g, ""))}
-                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20 font-mono tracking-widest text-center"
+                  type="email"
+                  placeholder="staff@restaurant.rw"
+                  value={addEmail}
+                  onChange={(e) => setAddEmail(e.target.value)}
+                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-foreground">Email Address</label>
-              <input
-                type="email"
-                placeholder="e.g. samuel@kigaliheightsbistro.rw"
-                value={addEmail}
-                onChange={(e) => setAddEmail(e.target.value)}
-                className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-foreground">Phone Number (MoMo / WhatsApp)</label>
-              <input
-                type="tel"
-                placeholder="+250 788 000 000"
-                value={addPhone}
-                onChange={(e) => setAddPhone(e.target.value)}
-                className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20"
-              />
-            </div>
-
-            {/* Platform Access badge indicator */}
-            <div className="rounded-xl border border-[#EBE7DF] dark:border-border p-3 bg-[#FAF8F5] dark:bg-muted/30 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {addRole === "Manager" ? (
-                  <Laptop className="size-4 text-[#284E3A]" />
-                ) : (
-                  <Smartphone className="size-4 text-[#78716C]" />
-                )}
-                <div>
-                  <div className="text-xs font-semibold text-foreground">
-                    {addRole === "Manager" ? "App + Web Access" : "App Only Access"}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {addRole === "Manager"
-                      ? "Can log in to Bara POS App and this Web Dashboard"
-                      : "Can only sign in to the Bara POS Android/iOS App"}
-                  </div>
-                </div>
+            {/* Access preview banner */}
+            <div className="rounded-xl border border-[#EBE7DF] dark:border-border p-3 bg-[#FAF8F5] dark:bg-muted/30 flex items-center gap-3">
+              {addRole === "Manager" ? (
+                <Laptop className="size-5 text-[#284E3A] shrink-0" />
+              ) : (
+                <Smartphone className="size-5 text-[#C1440E] shrink-0" />
+              )}
+              <div className="text-xs leading-relaxed">
+                <p className="font-bold text-foreground">
+                  {addRole === "Manager" ? "App + Web Access" : "Shared POS Tablet Only"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {addRole === "Manager"
+                    ? "Can manage ingredients, menu items, and view reports on web."
+                    : "Logs in with a fast 4-digit PIN on shared Android tablets."}
+                </p>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={addSendInvite}
-                onChange={(e) => setAddSendInvite(e.target.checked)}
-                className="rounded border-border text-[#B43403] focus:ring-[#B43403]"
-              />
-              <span className="text-xs text-foreground font-medium">
-                Send invitation link via email
-              </span>
-            </label>
-
-            <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <DialogFooter className="pt-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => setShowAddModal(false)}
-                className="h-8.5 text-xs rounded-xl"
+                className="h-9 rounded-xl text-xs cursor-pointer"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="h-8.5 text-xs rounded-xl bg-[#B43403] hover:bg-[#9A2C02] text-white font-bold px-4"
+                className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
               >
-                Save user
+                Generate PIN &amp; Add Staff
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Modal 2: Change Role */}
-      <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
+      {/* Modal 2: PIN Generated - Shown Once */}
+      <Dialog
+        open={Boolean(revealedPinMember)}
+        onOpenChange={(open) => {
+          if (!open) setRevealedPinMember(null)
+        }}
+      >
         <DialogContent className="sm:max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold">Change role</DialogTitle>
-            <DialogDescription className="text-xs">
-              Modify the operational role and platform permissions for {editingMember?.name}.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleUpdateRoleSubmit} className="space-y-4 mt-2">
-            <div>
-              <label className="text-xs font-semibold text-foreground">Select New Role</label>
-              <select
-                value={selectedRole}
-                onChange={(e) =>
-                  setSelectedRole(e.target.value as "Manager" | "Cashier / Waiter" | "Kitchen / Stock")
-                }
-                className="mt-1.5 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20 cursor-pointer"
-              >
-                <option value="Manager">Manager (App + Web)</option>
-                <option value="Cashier / Waiter">Cashier / Waiter (App only)</option>
-                <option value="Kitchen / Stock">Kitchen / Stock (App only)</option>
-              </select>
+          <DialogHeader className="text-center sm:text-center">
+            <div className="mx-auto size-12 rounded-2xl bg-[#EAF5EC] dark:bg-emerald-950/40 border border-[#C6E6CD] dark:border-emerald-900/60 flex items-center justify-center text-[#1E743A] dark:text-emerald-400 mb-2">
+              <KeyRound className="size-6 stroke-[2]" />
             </div>
-
-            <div className="rounded-xl border border-[#EBE7DF] dark:border-border p-3.5 bg-[#FAF8F5] dark:bg-muted/30 space-y-1.5">
-              <div className="flex items-center gap-2">
-                {selectedRole === "Manager" ? (
-                  <Laptop className="size-4 text-[#284E3A]" />
-                ) : (
-                  <Smartphone className="size-4 text-[#78716C]" />
-                )}
-                <span className="text-xs font-bold text-foreground">
-                  {selectedRole === "Manager" ? "App + Web Access" : "App-only Access"}
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {selectedRole === "Manager"
-                  ? "Managers can sign in to the Bara Web Dashboard to view sales analytics, modify menus, manage inventory, and supervise staff shifts."
-                  : "Cashiers, waitstaff, and kitchen staff can only log in via the Bara Mobile/Tablet POS app using their shift PIN. They cannot access this Web Dashboard."}
-              </p>
-            </div>
-
-            <DialogFooter className="mt-4 gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setEditingMember(null)}
-                className="h-8.5 text-xs rounded-xl"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="h-8.5 text-xs rounded-xl bg-[#B43403] hover:bg-[#9A2C02] text-white font-bold px-4"
-              >
-                Update role
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal 3: Reset PIN */}
-      <Dialog open={!!pinModalMember} onOpenChange={(open) => !open && setPinModalMember(null)}>
-        <DialogContent className="sm:max-w-sm rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold">Reset Shift PIN</DialogTitle>
-            <DialogDescription className="text-xs">
-              Set a new 4-digit PIN for {pinModalMember?.name} to unlock the Bara POS app.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleResetPinSubmit} className="space-y-4 mt-2">
-            <div>
-              <label className="text-xs font-semibold text-foreground">New 4-Digit PIN</label>
-              <input
-                type="password"
-                maxLength={4}
-                required
-                placeholder="••••"
-                value={newPin}
-                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
-                className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 text-lg text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20 font-mono tracking-widest text-center"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1 text-center">
-                This PIN is entered on tablet terminals when clocking in.
-              </p>
-            </div>
-
-            <DialogFooter className="mt-4 gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setPinModalMember(null)}
-                className="h-8.5 text-xs rounded-xl"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="h-8.5 text-xs rounded-xl bg-[#B43403] hover:bg-[#9A2C02] text-white font-bold px-4"
-              >
-                Save PIN
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal 4: Delete Member */}
-      <Dialog open={!!deleteMember} onOpenChange={(open) => !open && setDeleteMember(null)}>
-        <DialogContent className="sm:max-w-sm rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold text-destructive">
-              Revoke user access?
+            <DialogTitle className="text-base font-bold">
+              {revealedPinMember?.isReset ? "New PIN Generated" : "Staff Member Created"}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Are you sure you want to revoke access for <strong className="text-foreground">{deleteMember?.name}</strong>? They will no longer be able to log in to the Bara POS or access shift registers.
+              Login PIN for{" "}
+              <strong className="text-foreground font-semibold">
+                {revealedPinMember?.member.name}
+              </strong>{" "}
+              ({revealedPinMember?.member.role})
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+          <div className="py-2 space-y-4">
+            {/* PIN Card */}
+            <div className="rounded-2xl border-2 border-dashed border-[#C1440E]/40 bg-[#FAF8F5] dark:bg-muted/40 p-6 text-center space-y-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#C1440E]">
+                4-Digit POS Shift PIN
+              </span>
+
+              <div className="flex items-center justify-center gap-3">
+                {revealedPinMember?.pin.split("").map((digit, i) => (
+                  <div
+                    key={i}
+                    className="size-12 rounded-xl bg-white dark:bg-card border border-[#E5E0D5] dark:border-border flex items-center justify-center text-2xl font-bold font-mono text-[#1C1917] dark:text-foreground shadow-sm"
+                  >
+                    {digit}
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-1">
+                <Button
+                  type="button"
+                  onClick={() => revealedPinMember && handleCopyPin(revealedPinMember.pin)}
+                  variant="outline"
+                  className="h-8 rounded-lg text-xs font-semibold gap-1.5 cursor-pointer"
+                >
+                  {hasCopiedPin ? (
+                    <>
+                      <Check className="size-3.5 text-emerald-600 stroke-[2.5]" />
+                      <span className="text-emerald-600">Copied to Clipboard!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3.5" />
+                      <span>Copy PIN</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Shown once warning banner */}
+            <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/30 p-3 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+              <ShieldAlert className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold">Important: Shown once for security</p>
+                <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
+                  Share this PIN directly with {revealedPinMember?.member.name}. It cannot be viewed
+                  again after closing this window. You can reset it anytime as Owner.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
             <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setDeleteMember(null)}
-              className="h-8.5 text-xs rounded-xl"
+              onClick={() => setRevealedPinMember(null)}
+              className="w-full h-10 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
             >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleDeleteMember}
-              className="h-8.5 text-xs rounded-xl bg-destructive hover:bg-destructive/90 text-white font-bold px-4"
-            >
-              Revoke access
+              I have shared / saved this PIN
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal 5: Help & Platform Access */}
-      <Dialog open={showHelpModal} onOpenChange={setShowHelpModal}>
-        <DialogContent className="sm:max-w-lg rounded-2xl">
+      {/* Modal 3: Change Role */}
+      <Dialog
+        open={Boolean(roleChangeMember)}
+        onOpenChange={(open) => {
+          if (!open) setRoleChangeMember(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <ShieldCheck className="size-4 text-[#284E3A]" />
-              <span>Bara Roles &amp; Platform Access Guide</span>
-            </DialogTitle>
+            <DialogTitle className="text-base font-bold">Change Staff Role</DialogTitle>
             <DialogDescription className="text-xs">
-              Learn how permissions and multi-platform boundaries protect your restaurant.
+              Update role and system permissions for{" "}
+              <strong className="text-foreground">{roleChangeMember?.name}</strong>.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3.5 mt-2 text-xs">
-            <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#EBE7DF] dark:border-border">
-              <div className="font-bold text-foreground flex items-center gap-1.5">
-                <Crown className="size-3.5 text-amber-500 fill-amber-500" />
-                <span>Owner (App + Web)</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Full administrative access. Manages billing, subscription plans, bank details, tax configurations, and staff access.
-              </p>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground">Select New Role</label>
+              <select
+                value={newSelectedRole}
+                onChange={(e) => setNewSelectedRole(e.target.value as StaffRole)}
+                className="h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground focus:border-[#C1440E] focus:outline-none cursor-pointer"
+              >
+                <option value="Cashier / Waiter">Cashier / Waiter (POS App only)</option>
+                <option value="Kitchen / Stock">Kitchen / Stock (POS App only)</option>
+                <option value="Manager">Manager (POS App + Web Dashboard)</option>
+              </select>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#EBE7DF] dark:border-border">
-              <div className="font-bold text-foreground flex items-center gap-1.5">
-                <Laptop className="size-3.5 text-[#284E3A]" />
-                <span>Manager (App + Web)</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Supervises floor operations, reconciles daily register cash counts, updates recipes and menu prices, and accesses shift analytics.
-              </p>
+            <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs space-y-1">
+              <p className="font-semibold text-foreground">Role Permissions Summary:</p>
+              {newSelectedRole === "Manager" ? (
+                <p className="text-muted-foreground text-[11px]">
+                  Managers can access both the POS Android App and this Web Dashboard to adjust menu
+                  items, ingredients, and view sales reports.
+                </p>
+              ) : newSelectedRole === "Cashier / Waiter" ? (
+                <p className="text-muted-foreground text-[11px]">
+                  Waitstaff &amp; cashiers take orders, print tickets, and apply payments on shared
+                  tablets with their assigned shift PIN.
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-[11px]">
+                  Kitchen staff view incoming ticket orders and log stock-in, stock-out, and waste
+                  events on the tablet.
+                </p>
+              )}
             </div>
+          </div>
 
-            <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#EBE7DF] dark:border-border">
-              <div className="font-bold text-foreground flex items-center gap-1.5">
-                <Smartphone className="size-3.5 text-[#78716C]" />
-                <span>Cashier / Waiter (App only)</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Fast touchscreen interface to take table orders, print kitchen tickets, apply discounts, and accept MoMo/card payments.
-              </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRoleChangeMember(null)}
+              className="h-9 rounded-xl text-xs cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmRoleChange}
+              className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
+            >
+              Update Role
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 4: Reset PIN Confirmation */}
+      <Dialog
+        open={Boolean(resetPinCandidate)}
+        onOpenChange={(open) => {
+          if (!open) setResetPinCandidate(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <div className="size-11 rounded-xl bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-400 mb-1.5">
+              <KeyRound className="size-5" />
             </div>
+            <DialogTitle className="text-base font-bold">Reset Shift Login PIN?</DialogTitle>
+            <DialogDescription className="text-xs">
+              Generate a brand new unique PIN for{" "}
+              <strong className="text-foreground">{resetPinCandidate?.name}</strong>. Their
+              previous PIN will be immediately invalidated on all shared tablets.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#EBE7DF] dark:border-border">
-              <div className="font-bold text-foreground flex items-center gap-1.5">
-                <Smartphone className="size-3.5 text-[#78716C]" />
-                <span>Kitchen / Stock (App only)</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Kitchen Display System (KDS) order bump bar, prep timers, and daily ingredient stock taking.
+          <div className="py-2 text-xs text-muted-foreground">
+            The new PIN will be shown once on the screen immediately after generation so you can
+            provide it to the staff member.
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setResetPinCandidate(null)}
+              className="h-9 rounded-xl text-xs cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmResetPin}
+              className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
+            >
+              Generate New PIN
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 5: Deactivate / Reactivate Staff */}
+      <Dialog
+        open={Boolean(statusToggleMember)}
+        onOpenChange={(open) => {
+          if (!open) setStatusToggleMember(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <div
+              className={cn(
+                "size-11 rounded-xl flex items-center justify-center mb-1.5",
+                statusToggleMember?.status === "Active"
+                  ? "bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-900/60 text-amber-700 dark:text-amber-400"
+                  : "bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400"
+              )}
+            >
+              {statusToggleMember?.status === "Active" ? (
+                <UserX className="size-5" />
+              ) : (
+                <UserCheck className="size-5" />
+              )}
+            </div>
+            <DialogTitle className="text-base font-bold">
+              {statusToggleMember?.status === "Active"
+                ? `Deactivate ${statusToggleMember?.name}?`
+                : `Reactivate ${statusToggleMember?.name}?`}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {statusToggleMember?.status === "Active"
+                ? "This will immediately revoke POS tablet and web login for this staff member."
+                : "This staff member will be granted active POS access with their assigned PIN."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2 text-xs text-muted-foreground space-y-2">
+            <div className="rounded-xl border border-border bg-muted/30 p-3">
+              <p className="font-semibold text-foreground text-xs">
+                Audit Trail Integrity Guaranteed
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Staff accounts are never deleted. All past order attributions, cashier sessions,
+                voids, and stock movement logs remain permanently attributed to{" "}
+                <span className="font-semibold text-foreground">{statusToggleMember?.name}</span>.
               </p>
             </div>
           </div>
 
-          <DialogFooter className="mt-4">
+          <DialogFooter>
             <Button
-              type="button"
+              variant="outline"
+              onClick={() => setStatusToggleMember(null)}
+              className="h-9 rounded-xl text-xs cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmToggleStatus}
+              className={cn(
+                "h-9 rounded-xl text-white text-xs font-bold cursor-pointer",
+                statusToggleMember?.status === "Active"
+                  ? "bg-amber-700 hover:bg-amber-800"
+                  : "bg-emerald-700 hover:bg-emerald-800"
+              )}
+            >
+              {statusToggleMember?.status === "Active" ? "Confirm Deactivation" : "Confirm Reactivation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 6: Help & Role Guide */}
+      <Dialog open={showHelpModal} onOpenChange={setShowHelpModal}>
+        <DialogContent className="sm:max-w-lg rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold">Bara Access Roles &amp; Security</DialogTitle>
+            <DialogDescription className="text-xs">
+              How staff authentication and permission tiers work in Bara.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3.5 py-2 text-xs">
+            <div className="rounded-xl border border-border p-3 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-foreground">
+                <Crown className="size-3.5 text-amber-500 fill-amber-500" />
+                <span>Owner</span>
+              </div>
+              <p className="text-muted-foreground text-[11px]">
+                Full administrative access. Manages subscription billing, store profile, and staff
+                accounts. A restaurant must always have at least one active Owner.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border p-3 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-foreground">
+                <Laptop className="size-3.5 text-[#284E3A]" />
+                <span>Manager</span>
+              </div>
+              <p className="text-muted-foreground text-[11px]">
+                Access to POS App and Web Dashboard. Can manage menu items, ingredients, log stock
+                adjustments, and review daily sales reports. Cannot manage users or billing.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border p-3 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-foreground">
+                <Smartphone className="size-3.5 text-[#C1440E]" />
+                <span>Cashier / Waiter &amp; Kitchen / Stock</span>
+              </div>
+              <p className="text-muted-foreground text-[11px]">
+                Shared tablet app users. Log in with their unique 4-digit PIN. 5 consecutive failed
+                PIN attempts lock the account until reset by the Owner.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
               onClick={() => setShowHelpModal(false)}
-              className="h-8.5 text-xs rounded-xl bg-[#284E3A] hover:bg-[#1E3C2C] text-white font-bold px-4"
+              className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
             >
               Got it
             </Button>

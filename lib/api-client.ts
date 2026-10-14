@@ -1139,3 +1139,60 @@ export const paymentConfirmationsApi = {
     }
   },
 }
+
+// ==========================================
+// MENU API
+// ==========================================
+
+export interface BackendMenuItem {
+  menu_id?: string
+  id?: string
+  name: string
+  description?: string
+  price: string | number
+  category?: string
+  is_available: boolean
+  created_at?: string
+}
+
+export const menuApi = {
+  list: async (): Promise<BackendMenuItem[]> => {
+    try {
+      const items = await apiRequest<BackendMenuItem[]>("/api/menu/", { method: "GET" }, true)
+      return Array.isArray(items) ? items : []
+    } catch {
+      return []
+    }
+  },
+
+  create: async (data: Omit<BackendMenuItem, "menu_id" | "created_at">): Promise<BackendMenuItem> => {
+    return apiRequest<BackendMenuItem>(
+      "/api/menu/",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      true
+    )
+  },
+
+  retrieve: async (id: string): Promise<BackendMenuItem> => {
+    return apiRequest<BackendMenuItem>(`/api/menu/${id}/`, { method: "GET" }, true)
+  },
+
+  update: async (id: string, data: Partial<BackendMenuItem>): Promise<BackendMenuItem> => {
+    return apiRequest<BackendMenuItem>(
+      `/api/menu/${id}/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+      true
+    )
+  },
+
+  delete: async (id: string): Promise<void> => {
+    return apiRequest<void>(`/api/menu/${id}/`, { method: "DELETE" }, true)
+  },
+}
+

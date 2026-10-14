@@ -79,7 +79,7 @@ export default function ReportsPage() {
     [dateLabel]
   )
 
-  if (restaurant.plan === "basic") {
+  if (!restaurant.features?.canAccessReports && restaurant.plan === "basic") {
     return (
       <div className="flex flex-col gap-5 max-w-[1400px] mx-auto pb-10">
         <ReportsHeader

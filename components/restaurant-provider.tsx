@@ -3,6 +3,8 @@
 import * as React from "react"
 import { loadDraft } from "@/lib/onboarding"
 import { useAuth } from "@/components/auth-provider"
+import { applyRuntimeTheme } from "@/lib/runtime-theme"
+import { getTierFeatures, TierFeatures } from "@/lib/tier-features"
 
 export interface Restaurant {
   id: string
@@ -24,6 +26,9 @@ export interface Restaurant {
   billing: "monthly" | "annual"
   status?: "active" | "grace" | "restricted" | "locked" | "archived"
   graceDaysLeft?: number
+  brandColor: string
+  logo?: string
+  features: TierFeatures
 }
 
 export interface CurrentUser {
@@ -38,10 +43,12 @@ export interface CurrentUser {
 export interface RestaurantContextValue {
   restaurant: Restaurant
   user: CurrentUser
+  features: TierFeatures
   updateRestaurant: (patch: Partial<Restaurant>) => void
   updateUser: (patch: Partial<CurrentUser>) => void
   switchBranch: (branchName: string) => void
   formatCurrency: (amount: number) => string
+  applyTheme: (color?: string) => void
   refresh: () => void
 }
 
@@ -70,6 +77,9 @@ export const DEFAULT_RESTAURANT: Restaurant = {
   plan: "premium",
   billing: "monthly",
   status: "active",
+  brandColor: "#C85A24",
+  logo: undefined,
+  features: getTierFeatures("premium"),
 }
 
 export const DEFAULT_USER: CurrentUser = {
@@ -86,10 +96,11 @@ const USER_STORAGE_KEY = "bara:current_user_profile"
 
 function loadPersistedRestaurant(): Partial<Restaurant> {
   if (typeof window === "undefined") return {}
+  let saved: Partial<Restaurant> = {}
   try {
     const raw = window.localStorage.getItem(RESTAURANT_STORAGE_KEY)
     if (raw) {
-      return JSON.parse(raw) as Partial<Restaurant>
+      saved = JSON.parse(raw) as Partial<Restaurant>
     }
   } catch {
     /* ignore storage errors */
@@ -98,23 +109,30 @@ function loadPersistedRestaurant(): Partial<Restaurant> {
   try {
     const d = loadDraft()
     const name = d.tradingName?.trim() || d.restaurantName?.trim()
-    if (name) {
-      return {
-        name,
-        tradingName: d.tradingName?.trim() || name,
-        city: d.city?.trim() || undefined,
-        address: d.address?.trim() || undefined,
-        phone: d.phone?.trim() || undefined,
-        currency: d.currency || undefined,
-        plan: d.plan || undefined,
-        billing: d.billing || undefined,
-      }
+    if (name && !saved.name) {
+      saved.name = name
+      saved.tradingName = d.tradingName?.trim() || name
     }
+    if (d.brandColor && !saved.brandColor) {
+      saved.brandColor = d.brandColor
+    }
+    if (d.logoDataUrl && !saved.logo) {
+      saved.logo = d.logoDataUrl
+    }
+    if (d.plan && !saved.plan) {
+      saved.plan = d.plan
+    }
+    if (d.city && !saved.city) saved.city = d.city
+    if (d.address && !saved.address) saved.address = d.address
+    if (d.phone && !saved.phone) saved.phone = d.phone
+    if (d.currency && !saved.currency) saved.currency = d.currency
   } catch {
     /* ignore draft errors */
   }
 
-  return {}
+  const effectivePlan = saved.plan || DEFAULT_RESTAURANT.plan
+  saved.features = getTierFeatures(effectivePlan)
+  return saved
 }
 
 function loadPersistedUser(): Partial<CurrentUser> {
@@ -162,8 +180,17 @@ class RestaurantStore {
     this.initialized = true
     const persistedRest = loadPersistedRestaurant()
     const persistedUser = loadPersistedUser()
-    this.restaurant = { ...DEFAULT_RESTAURANT, ...persistedRest }
+    const effectivePlan = persistedRest.plan || DEFAULT_RESTAURANT.plan
+    this.restaurant = {
+      ...DEFAULT_RESTAURANT,
+      ...persistedRest,
+      features: getTierFeatures(effectivePlan),
+    }
     this.user = { ...DEFAULT_USER, ...persistedUser }
+
+    // Apply dynamic runtime theming on init
+    applyRuntimeTheme(this.restaurant.brandColor || "#C85A24")
+
     this.emit()
 
     if (typeof window !== "undefined") {
@@ -185,7 +212,20 @@ class RestaurantStore {
   getUserServerSnapshot = () => DEFAULT_USER
 
   updateRestaurant = (patch: Partial<Restaurant>) => {
-    this.restaurant = { ...this.restaurant, ...patch }
+    const nextPlan = patch.plan || this.restaurant.plan
+    const nextBrandColor = patch.brandColor || this.restaurant.brandColor
+
+    this.restaurant = {
+      ...this.restaurant,
+      ...patch,
+      features: getTierFeatures(nextPlan),
+    }
+
+    // Apply theme at runtime immediately whenever branding or colors change
+    if (patch.brandColor || patch.logo !== undefined) {
+      applyRuntimeTheme(nextBrandColor)
+    }
+
     try {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(RESTAURANT_STORAGE_KEY, JSON.stringify(this.restaurant))
@@ -211,8 +251,14 @@ class RestaurantStore {
   refresh = () => {
     const persistedRest = loadPersistedRestaurant()
     const persistedUser = loadPersistedUser()
-    this.restaurant = { ...DEFAULT_RESTAURANT, ...persistedRest }
+    const effectivePlan = persistedRest.plan || DEFAULT_RESTAURANT.plan
+    this.restaurant = {
+      ...DEFAULT_RESTAURANT,
+      ...persistedRest,
+      features: getTierFeatures(effectivePlan),
+    }
     this.user = { ...DEFAULT_USER, ...persistedUser }
+    applyRuntimeTheme(this.restaurant.brandColor || "#C85A24")
     this.emit()
   }
 
@@ -247,6 +293,8 @@ export function RestaurantProvider({ children }: { children: React.ReactNode }) 
           tradingName: authUser.restaurantName,
         })
       }
+      // Fetch and apply that restaurant's configuration and runtime theme upon staff login
+      store.refresh()
     }
   }, [authUser])
 
@@ -281,17 +329,26 @@ export function RestaurantProvider({ children }: { children: React.ReactNode }) 
     [restaurant.currency]
   )
 
+  const applyTheme = React.useCallback(
+    (color?: string) => {
+      applyRuntimeTheme(color || restaurant.brandColor || "#C85A24")
+    },
+    [restaurant.brandColor]
+  )
+
   const value = React.useMemo<RestaurantContextValue>(
     () => ({
       restaurant,
       user,
+      features: restaurant.features,
       updateRestaurant: store.updateRestaurant,
       updateUser: store.updateUser,
       switchBranch,
       formatCurrency,
+      applyTheme,
       refresh: store.refresh,
     }),
-    [restaurant, user, switchBranch, formatCurrency]
+    [restaurant, user, switchBranch, formatCurrency, applyTheme]
   )
 
   return (
