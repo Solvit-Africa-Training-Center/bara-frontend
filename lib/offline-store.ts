@@ -18,6 +18,7 @@ import {
   ConsumablePurchaseCreate,
   PaymentConfirmation,
   PaymentConfirmationCreate,
+  BackendMenuItem,
 } from "./api-client"
 
 export type SyncState = "synced" | "syncing" | "offline"
@@ -37,6 +38,7 @@ const STORAGE_KEYS = {
   CONSUMABLES: "bara:offline:consumables_v1",
   CONSUMABLE_PURCHASES: "bara:offline:consumable_purchases_v1",
   PAYMENT_CONFIRMATIONS: "bara:offline:payment_confirmations_v1",
+  MENU_ITEMS: "bara:offline:menu_items_v1",
   SYNC_QUEUE: "bara:offline:sync_queue_v1",
 }
 
@@ -282,6 +284,49 @@ export const SEED_PAYMENT_CONFIRMATIONS: PaymentConfirmation[] = [
     verified_by: "super-admin-01",
     verified_at: new Date(Date.now() - 864e5 * 5 + 3600000).toISOString(),
     rejection_reason: "",
+  },
+]
+
+export const SEED_MENU_ITEMS: BackendMenuItem[] = [
+  {
+    id: "item-seed-01",
+    name: "Grilled Whole Tilapia",
+    category: "Main dishes",
+    price: "12000.00",
+    description: "Lake Kivu whole fresh tilapia marinated in lemon, garlic, and fresh herbs.",
+    is_available: true,
+  },
+  {
+    id: "item-seed-02",
+    name: "Classic Beef Brochettes",
+    category: "Main dishes",
+    price: "8500.00",
+    description: "Tender skewered prime beef grilled over volcanic charcoal, served with pili-pili sauce.",
+    is_available: true,
+  },
+  {
+    id: "item-seed-03",
+    name: "Crispy Sambaza Bites",
+    category: "Starters",
+    price: "5000.00",
+    description: "Crispy Lake Kivu sambaza dusted with spiced corn flour, served with lemon aioli.",
+    is_available: true,
+  },
+  {
+    id: "item-seed-04",
+    name: "Avocado & Mango Salad",
+    category: "Starters",
+    price: "4500.00",
+    description: "Fresh Rwandan Hass avocado, ripe mango cubes, baby spinach and passion fruit vinaigrette.",
+    is_available: true,
+  },
+  {
+    id: "item-seed-05",
+    name: "Warm Belgian Chocolate Lava Cake",
+    category: "Desserts",
+    price: "6000.00",
+    description: "Rich dark chocolate fondant with a molten center, paired with vanilla bean gelato.",
+    is_available: true,
   },
 ]
 
@@ -554,6 +599,50 @@ class OfflineStore {
     items[index] = updated
     this.savePaymentConfirmations(items)
     return updated
+  }
+
+  // --- MENU ITEMS ---
+  public getMenuItems(): BackendMenuItem[] {
+    return this.getItem(STORAGE_KEYS.MENU_ITEMS, SEED_MENU_ITEMS)
+  }
+
+  public saveMenuItems(items: BackendMenuItem[]): void {
+    this.setItem(STORAGE_KEYS.MENU_ITEMS, items)
+  }
+
+  public addMenuItem(data: Omit<BackendMenuItem, "menu_id" | "created_at"> & { id?: string }): BackendMenuItem {
+    const items = this.getMenuItems()
+    const newItem: BackendMenuItem = {
+      id: data.id || `menu-uuid-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: data.name.trim(),
+      description: data.description?.trim() || "",
+      price: String(data.price),
+      category: data.category || "Main dishes",
+      is_available: data.is_available ?? true,
+      created_at: new Date().toISOString(),
+    }
+    const updated = [newItem, ...items]
+    this.saveMenuItems(updated)
+    return newItem
+  }
+
+  public updateMenuItem(id: string, patch: Partial<BackendMenuItem>): BackendMenuItem | null {
+    const items = this.getMenuItems()
+    const index = items.findIndex((i) => (i.id === id || i.menu_id === id))
+    if (index === -1) return null
+    const updated: BackendMenuItem = {
+      ...items[index],
+      ...patch,
+      price: patch.price !== undefined ? String(patch.price) : items[index].price,
+    }
+    items[index] = updated
+    this.saveMenuItems(items)
+    return updated
+  }
+
+  public deleteMenuItem(id: string): void {
+    const items = this.getMenuItems()
+    this.saveMenuItems(items.filter((i) => i.id !== id && i.menu_id !== id))
   }
 }
 

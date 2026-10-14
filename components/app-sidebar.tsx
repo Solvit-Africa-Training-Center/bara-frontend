@@ -36,11 +36,6 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Inventory & Stock",
-    url: "/inventory",
-    icon: Boxes,
-  },
-  {
     title: "Menu",
     url: "/menu",
     icon: UtensilsCrossed,

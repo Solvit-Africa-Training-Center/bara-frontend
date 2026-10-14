@@ -91,14 +91,6 @@ export function GlobalSearchDialog({
         icon: LayoutDashboard,
       },
       {
-        id: "nav-inventory",
-        title: "Inventory & Stock Levels",
-        subtitle: "Ingredients, thresholds, unit costs, and stock movements",
-        category: "Navigation",
-        url: "/inventory",
-        icon: Boxes,
-      },
-      {
         id: "nav-menu",
         title: "Menu & Recipes",
         subtitle: "Menu items, pricing, availability, and recipe ingredient costing",
@@ -154,12 +146,12 @@ export function GlobalSearchDialog({
     // 2. Quick Actions
     const quickActions: SearchResultItem[] = [
       {
-        id: "act-add-ingredient",
-        title: "Add New Ingredient",
-        subtitle: "Register ingredient with unit cost and low-stock threshold",
+        id: "act-manage-menu",
+        title: "Manage Menu Items & Prices",
+        subtitle: "Update dishes, pricing, recipes, and availability",
         category: "Quick Actions",
-        url: "/inventory",
-        icon: Plus,
+        url: "/menu",
+        icon: UtensilsCrossed,
       },
       {
         id: "act-add-staff",
@@ -200,7 +192,7 @@ export function GlobalSearchDialog({
           Number(ing.cost_per_unit || 0)
         )} · Threshold: ${threshold} ${ing.unit}`,
         category: "Inventory & Stock",
-        url: `/inventory`,
+        url: `/menu`,
         icon: Boxes,
         badge: isLow ? "Low Stock" : "In Stock",
         badgeVariant: isLow ? "destructive" : "outline",

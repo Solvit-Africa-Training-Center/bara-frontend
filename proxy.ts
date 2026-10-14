@@ -30,9 +30,10 @@ export function proxy(request: NextRequest) {
     request.cookies.get("bara_auth_logged_out")?.value === "true"
   const hasAccessToken = Boolean(request.cookies.get("bara_access_token")?.value)
   const hasRefreshToken = Boolean(request.cookies.get("bara_refresh_token")?.value)
+  const hasUser = Boolean(request.cookies.get("bara_auth_user")?.value)
   const hasToken = hasAccessToken || hasRefreshToken
 
-  const isAuthenticated = !isLoggedOut && hasToken
+  const isAuthenticated = !isLoggedOut && hasToken && hasUser
 
   // 1. If user is logged in, block access to login, register, and other auth pages
   if (isAuthenticated && isGuestAuthRoute(pathname)) {
@@ -47,7 +48,13 @@ export function proxy(request: NextRequest) {
     !pathname.startsWith("/setup") &&
     !pathname.startsWith("/onboarding")
   ) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    const response = NextResponse.redirect(new URL("/login", request.url))
+    if (!hasUser && (hasAccessToken || hasRefreshToken)) {
+      response.cookies.delete("bara_access_token")
+      response.cookies.delete("bara_refresh_token")
+      response.cookies.delete("bara_auth_user")
+    }
+    return response
   }
 
   return NextResponse.next()

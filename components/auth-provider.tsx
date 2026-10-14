@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { authApi, getCookie, setCookie, removeCookie, getStoredTokens } from "@/lib/api-client"
+import { authApi, getCookie, setCookie, removeCookie, getStoredTokens, saveStoredTokens } from "@/lib/api-client"
 
 export interface AuthUser {
   id: string
@@ -60,14 +60,21 @@ function getPersistedUser(): AuthUser | null {
     const tokens = getStoredTokens()
     if (!tokens?.access && !tokens?.refresh) {
       removeCookie(USER_COOKIE_KEY)
+      saveStoredTokens(null)
       return null
     }
 
     const stored = getCookie(USER_COOKIE_KEY)
-    if (stored) return JSON.parse(stored)
+    if (stored) {
+      return JSON.parse(stored)
+    }
 
+    // Missing user profile with lingering tokens: clear stale tokens to prevent redirect loops
+    saveStoredTokens(null)
     return null
   } catch {
+    saveStoredTokens(null)
+    removeCookie(USER_COOKIE_KEY)
     return null
   }
 }
@@ -95,10 +102,10 @@ function persistSession(authUser: AuthUser | null, keepSignedIn = true) {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [user, setUser] = React.useState<AuthUser | null>(getPersistedUser)
-  const [isLoading] = React.useState(false)
+  const [user, setUser] = React.useState<AuthUser | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
 
-  // Hydrate persisted session from cookies after initial render
+  // Hydrate persisted session from cookies after initial render to ensure exact SSR match
   React.useEffect(() => {
     // Clean up any legacy localStorage session
     try {
@@ -107,9 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
 
     const persisted = getPersistedUser()
-    if (persisted && !getCookie(USER_COOKIE_KEY)) {
-      persistSession(persisted)
-    }
+    setUser(persisted)
+    setIsLoading(false)
   }, [])
 
   // Listen for session expiration events from api-client

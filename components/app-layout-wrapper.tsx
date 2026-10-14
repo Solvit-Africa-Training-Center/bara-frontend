@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation"
 import {
   AlertTriangle,
   ArrowRight,
-  Bell,
   CheckCircle2,
   Cloud,
   CloudOff,
@@ -29,7 +28,6 @@ import { useAuth } from "@/components/auth-provider"
 import { offlineStore, SyncState } from "@/lib/offline-store"
 import { cn } from "@/lib/utils"
 import { GlobalSearchDialog } from "@/components/global-search-dialog"
-import { NotificationsSheet } from "@/components/notifications-sheet"
 
 function SyncStatusBadge() {
   const [status, setStatus] = React.useState<SyncState>("synced")
@@ -142,12 +140,23 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
         <div className="flex flex-col items-center gap-3">
           <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           <span className="text-xs text-muted-foreground font-medium">Loading workspace...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <span className="text-xs text-muted-foreground font-medium">Redirecting to sign in...</span>
         </div>
       </div>
     )
@@ -209,7 +218,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          {/* Right Actions: Search (mobile), Sync Indicator & Notifications Sheet */}
+          {/* Right Actions: Search (mobile), Sync Indicator & Theme Toggle */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Mobile Search Button */}
             <Button
@@ -224,9 +233,6 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
             </Button>
 
             <SyncStatusBadge />
-
-            {/* Notifications slide-out drawer with real-time operational alerts */}
-            <NotificationsSheet />
 
             <ThemeToggle />
           </div>

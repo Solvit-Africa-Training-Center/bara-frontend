@@ -56,8 +56,7 @@ export function getTierFeatures(tier: "basic" | "pro" | "premium" = "pro"): Tier
         featuresList: [
           "Multi-Staff Security PIN Roster & Audit Trails",
           "Financial Sales Totals & Daily Trajectory Charts",
-          "Consumables Spend Logging & Monthly Category Analysis",
-          "Read-Only Stock Movement History Log per Ingredient",
+          "Stock In/Out & Deductions on Tablet App",
           "Multi-Branch Support (up to 3 locations)",
         ],
       }
@@ -77,7 +76,6 @@ export function getTierFeatures(tier: "basic" | "pro" | "premium" = "pro"): Tier
         featuresList: [
           "Offline-First Fast POS & Shared Tablet Service",
           "Core Menu Management & Recipe Builder",
-          "Ingredient Stock & Low-Stock Thresholds",
           "Single Location / Sole Operator Workspace",
         ],
       }

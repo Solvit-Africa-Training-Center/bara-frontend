@@ -16,8 +16,8 @@ export interface CriticalIngredientsAlertProps {
 export function CriticalIngredientsAlert({
   message = "3 Critical Ingredients Below Threshold: Cassava Flour, Cooking Oil, Goat Meat",
   badgeLabel = "ALERT",
-  actionLabel = "Restock in Inventory",
-  href = "/inventory",
+  actionLabel = "View Menu Recipes",
+  href = "/menu",
   onActionClick,
 }: CriticalIngredientsAlertProps) {
   return (

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, Bell, Percent, Save, Sparkles } from "lucide-react"
+import { AlertCircle, Percent, Save, Sparkles } from "lucide-react"
 import { Card, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRestaurant } from "@/components/restaurant-provider"

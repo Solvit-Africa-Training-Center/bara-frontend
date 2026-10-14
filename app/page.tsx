@@ -155,8 +155,8 @@ export default function DashboardPage() {
           <CriticalIngredientsAlert
             message={lowStockAlert.message}
             badgeLabel={lowStockAlert.count > 0 ? "STOCK ALERT" : "OPTIMAL"}
-            href="/inventory"
-            actionLabel="Manage Inventory"
+            href="/menu"
+            actionLabel="View Menu Recipes"
           />
 
           {/* 3. Top Three Metric KPI Cards */}
