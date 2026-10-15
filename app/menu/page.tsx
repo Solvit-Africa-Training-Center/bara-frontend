@@ -11,7 +11,7 @@ import {
 import { MenuEditor } from "./_components/menu-editor"
 import { MenuCatalog } from "./_components/menu-catalog"
 import { MenuSkeleton } from "./_components/menu-skeleton"
-import { menuApi, type BackendMenuItem } from "@/lib/api-client"
+import { menuApi, type BackendMenuItem } from "./menu-api"
 
 const RECIPES_STORAGE_KEY = "bara_menu_recipes"
 

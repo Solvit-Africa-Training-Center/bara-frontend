@@ -10,6 +10,8 @@
  * - Minimum one active Owner guarantee
  */
 
+import type { StaffApiItem, ApiStaffRole } from "./api-client"
+
 export type StaffRole = "Owner" | "Manager" | "Cashier / Waiter" | "Kitchen / Stock"
 export type StaffStatus = "Active" | "Deactivated"
 export type PlatformAccess = "App + Web" | "App only"
@@ -29,6 +31,48 @@ export interface StaffMember {
   failedPinAttempts?: number
   deactivatedAt?: string
   createdAt: string
+}
+
+export function mapApiStaffToStaffMember(item: StaffApiItem): StaffMember {
+  const roleMap: Record<ApiStaffRole, StaffRole> = {
+    manager: "Manager",
+    cashier: "Cashier / Waiter",
+    kitchen: "Kitchen / Stock",
+  }
+  const role: StaffRole = roleMap[item.role] || "Cashier / Waiter"
+  const platformAccess: PlatformAccess = role === "Manager" ? "App + Web" : "App only"
+  const firstName = item.first_name || ""
+  const lastName = item.last_name || ""
+  const name = `${firstName} ${lastName}`.trim() || "Staff Member"
+  const avatarInitials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "ST"
+
+  return {
+    id: item.id,
+    name,
+    role,
+    status: item.is_active ? "Active" : "Deactivated",
+    platformAccess,
+    avatarInitials,
+    isOwner: false,
+    email: item.email || undefined,
+    phone: item.phone_number,
+    shiftPin: item.generated_pin || undefined,
+    lastLogin: "Active on till",
+    failedPinAttempts: 0,
+    createdAt: item.created_at,
+  }
+}
+
+export function mapStaffRoleToApiRole(role: StaffRole): ApiStaffRole {
+  switch (role) {
+    case "Manager":
+      return "manager"
+    case "Kitchen / Stock":
+      return "kitchen"
+    case "Cashier / Waiter":
+    default:
+      return "cashier"
+  }
 }
 
 export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
