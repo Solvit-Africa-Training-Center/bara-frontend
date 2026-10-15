@@ -31,7 +31,7 @@ export function PracticalQuestionCard({
       <Button
         size="sm"
         onClick={() => onAskBara(questionText)}
-        className="mt-4 h-8.5 w-fit rounded-xl bg-[#B84218] hover:bg-[#A03814] text-white text-xs font-bold px-3.5 gap-1.5 shadow-xs"
+        className="mt-4 h-8.5 w-fit rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-3.5 gap-1.5 shadow-xs"
       >
         <Sparkles className="size-3.5 fill-current" />
         <span>Ask Bara</span>

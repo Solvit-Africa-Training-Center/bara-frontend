@@ -51,7 +51,7 @@ export default function ErrorPage({
         <Button
           onClick={handleReset}
           disabled={retrying}
-          className="h-9 gap-1.5 rounded-xl bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-semibold px-4 shadow-xs"
+          className="h-9 gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-4 shadow-xs"
         >
           <RefreshCw className={cn("size-3.5", retrying && "animate-spin")} />
           <span>{retrying ? "Retrying..." : "Try again"}</span>

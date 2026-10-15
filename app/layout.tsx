@@ -30,7 +30,7 @@ export default function RootLayout({
         geist.variable
       )}
     >
-      <body className="min-h-svh bg-background text-foreground">
+      <body suppressHydrationWarning className="min-h-svh bg-background text-foreground">
         <ThemeProvider>
           <AuthProvider>
             <RestaurantProvider>

@@ -40,7 +40,7 @@ export function DessertForecastCard({ data }: DessertForecastCardProps) {
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-[#EAE5DE] dark:bg-muted">
           <div
-            className="h-full rounded-full bg-[#DF8D27]"
+            className="h-full rounded-full bg-primary"
             style={{ width: `${data.readinessPercentage}%` }}
           />
         </div>

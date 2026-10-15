@@ -30,7 +30,7 @@ export function PredictedRestockCard({
           <Button
             size="sm"
             onClick={onCreatePurchaseList}
-            className="h-8.5 rounded-xl bg-[#244830] hover:bg-[#1E3B27] text-white text-xs font-semibold gap-1.5 shadow-xs"
+            className="h-8.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold gap-1.5 shadow-xs"
           >
             <ClipboardList className="size-3.5" />
             <span>Create purchase list</span>

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { authApi, getCookie, setCookie, removeCookie } from "@/lib/api-client"
+import { authApi, getCookie, setCookie, removeCookie, getStoredTokens, saveStoredTokens } from "@/lib/api-client"
 
 export interface AuthUser {
   id: string
@@ -42,31 +42,6 @@ export interface AuthContextValue {
 const USER_COOKIE_KEY = "bara_auth_user"
 const LOGGED_OUT_COOKIE_KEY = "bara_auth_logged_out"
 
-export const DEMO_USERS: Record<string, AuthUser> = {
-  "alex@barabistro.rw": {
-    id: "usr-001",
-    name: "Alex Rivera",
-    email: "alex@barabistro.rw",
-    initials: "AR",
-    role: "General Manager",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-    restaurantName: "Bara Bistro & Grill",
-  },
-  "aline@ikazebistro.rw": {
-    id: "usr-002",
-    name: "Aline Uwase",
-    email: "aline@ikazebistro.rw",
-    initials: "AU",
-    role: "Restaurant Owner & GM",
-    avatar:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80",
-    restaurantName: "Ikaze Bistro & Lounge",
-  },
-}
-
-export const DEFAULT_AUTH_USER: AuthUser = DEMO_USERS["alex@barabistro.rw"]
-
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 
 function getInitials(name: string): string {
@@ -76,25 +51,61 @@ function getInitials(name: string): string {
 }
 
 function getPersistedUser(): AuthUser | null {
-  if (typeof document === "undefined") return DEFAULT_AUTH_USER
+  if (typeof document === "undefined") return null
   try {
     const isLoggedOut = getCookie(LOGGED_OUT_COOKIE_KEY) === "true"
     if (isLoggedOut) return null
 
+    // Require active JWT tokens. If cookies contain a stale user profile but no tokens, clear it!
+    const tokens = getStoredTokens()
+    if (!tokens?.access && !tokens?.refresh) {
+      removeCookie(USER_COOKIE_KEY)
+      saveStoredTokens(null)
+      return null
+    }
+
     const stored = getCookie(USER_COOKIE_KEY)
-    if (stored) return JSON.parse(stored)
-    return DEFAULT_AUTH_USER
+    if (stored) {
+      return JSON.parse(stored)
+    }
+
+    // Missing user profile with lingering tokens: clear stale tokens to prevent redirect loops
+    saveStoredTokens(null)
+    return null
   } catch {
-    return DEFAULT_AUTH_USER
+    saveStoredTokens(null)
+    removeCookie(USER_COOKIE_KEY)
+    return null
+  }
+}
+
+function persistSession(authUser: AuthUser | null, keepSignedIn = true) {
+  if (typeof document === "undefined") return
+  try {
+    if (authUser) {
+      removeCookie(LOGGED_OUT_COOKIE_KEY)
+      const json = JSON.stringify(authUser)
+      setCookie(USER_COOKIE_KEY, json, keepSignedIn ? 14 : 1)
+    } else {
+      removeCookie(USER_COOKIE_KEY)
+      setCookie(LOGGED_OUT_COOKIE_KEY, "true", 14)
+    }
+    // Ensure legacy localStorage is clean
+    try {
+      window.localStorage.removeItem("bara:auth_session")
+      window.localStorage.removeItem("bara:auth_logged_out")
+    } catch {}
+  } catch {
+    /* storage error ignore */
   }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [user, setUser] = React.useState<AuthUser | null>(DEFAULT_AUTH_USER)
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [user, setUser] = React.useState<AuthUser | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
 
-  // Hydrate persisted session from cookies after initial render
+  // Hydrate persisted session from cookies after initial render to ensure exact SSR match
   React.useEffect(() => {
     // Clean up any legacy localStorage session
     try {
@@ -103,33 +114,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
 
     const persisted = getPersistedUser()
-    if (persisted && persisted.id !== DEFAULT_AUTH_USER.id) {
-      setUser(persisted)
-    } else if (persisted === null) {
-      setUser(null)
-    }
+    setUser(persisted)
+    setIsLoading(false)
   }, [])
 
-  const persistSession = (authUser: AuthUser | null, keepSignedIn = true) => {
-    if (typeof document === "undefined") return
-    try {
-      if (authUser) {
-        removeCookie(LOGGED_OUT_COOKIE_KEY)
-        const json = JSON.stringify(authUser)
-        setCookie(USER_COOKIE_KEY, json, keepSignedIn ? 14 : 1)
-      } else {
-        removeCookie(USER_COOKIE_KEY)
-        setCookie(LOGGED_OUT_COOKIE_KEY, "true", 14)
-      }
-      // Ensure legacy localStorage is clean
-      try {
-        window.localStorage.removeItem("bara:auth_session")
-        window.localStorage.removeItem("bara:auth_logged_out")
-      } catch {}
-    } catch {
-      /* storage error ignore */
+  // Listen for session expiration events from api-client
+  React.useEffect(() => {
+    const onSessionExpired = () => {
+      setUser(null)
     }
-  }
+    window.addEventListener("bara:session_expired", onSessionExpired)
+    return () => window.removeEventListener("bara:session_expired", onSessionExpired)
+  }, [])
 
   const login = async (
     credentials: LoginCredentials
@@ -140,51 +136,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: "Please enter your email address." }
     }
 
-    // 1. Attempt live API login if credentials are provided
-    if (credentials.password) {
-      try {
-        const apiRes = await authApi.login({
-          email: credentials.email.trim(),
-          password: credentials.password,
-        })
-        if (apiRes.user) {
-          const fullName =
-            `${apiRes.user.first_name || ""} ${apiRes.user.last_name || ""}`.trim() ||
-            apiRes.user.email
-          const authenticatedUser: AuthUser = {
-            id: apiRes.user.id,
-            name: fullName,
-            email: apiRes.user.email,
-            initials: getInitials(fullName),
-            role: "Restaurant Owner",
-            avatar: DEFAULT_AUTH_USER.avatar,
-            restaurantName:
-              apiRes.user.restaurant?.name || "Bara Bistro & Grill",
-          }
-          setUser(authenticatedUser)
-          persistSession(authenticatedUser, credentials.keepSignedIn ?? true)
-          return { success: true }
+    if (!credentials.password) {
+      return { success: false, error: "Please enter your password." }
+    }
+
+    try {
+      const apiRes = await authApi.login({
+        email: credentials.email.trim(),
+        password: credentials.password,
+      })
+      if (apiRes.user) {
+        const fullName =
+          `${apiRes.user.first_name || ""} ${apiRes.user.last_name || ""}`.trim() ||
+          apiRes.user.email
+        const authenticatedUser: AuthUser = {
+          id: apiRes.user.id,
+          name: fullName,
+          email: apiRes.user.email,
+          initials: getInitials(fullName),
+          role: "Restaurant Owner",
+          avatar: "",
+          restaurantName:
+            apiRes.user.restaurant?.name || "Bara Bistro & Grill",
         }
-      } catch (err: unknown) {
-        // If not a preconfigured demo account, surface the live API error
-        if (!DEMO_USERS[emailKey]) {
-          const errMsg = err instanceof Error ? err.message : "Invalid credentials."
-          return { success: false, error: errMsg }
-        }
+        setUser(authenticatedUser)
+        persistSession(authenticatedUser, credentials.keepSignedIn ?? true)
+        return { success: true }
       }
-    }
-
-    // 2. Predefined demo account fallback
-    if (DEMO_USERS[emailKey]) {
-      const authenticatedUser = DEMO_USERS[emailKey]
-      setUser(authenticatedUser)
-      persistSession(authenticatedUser, credentials.keepSignedIn ?? true)
-      return { success: true }
-    }
-
-    return {
-      success: false,
-      error: "Unable to sign in. Please verify your credentials.",
+      return {
+        success: false,
+        error: "Login response did not contain user profile.",
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Invalid email or password."
+      return { success: false, error: errMsg }
     }
   }
 
@@ -214,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: signupRes.user.email,
         initials: getInitials(fullName),
         role: "Restaurant Owner",
-        avatar: DEFAULT_AUTH_USER.avatar,
+        avatar: "",
         restaurantName:
           signupRes.user.restaurant?.name || data.restaurantName.trim() || "My Restaurant",
       }

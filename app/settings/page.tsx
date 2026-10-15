@@ -75,21 +75,21 @@ function SettingsContent() {
         <TabsList className="h-11 w-full sm:w-auto p-1 bg-muted/80 rounded-2xl grid grid-cols-3 sm:inline-flex border border-border/60">
           <TabsTrigger
             value="profile"
-            className="rounded-xl px-4.5 py-2 text-xs font-bold gap-2 data-active:bg-card data-active:text-foreground data-active:shadow-xs"
+            className="rounded-xl px-4.5 py-2 text-xs font-bold gap-2 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-xs transition-all"
           >
             <Store className="size-4" />
             <span className="truncate">Restaurant Profile</span>
           </TabsTrigger>
           <TabsTrigger
             value="targets"
-            className="rounded-xl px-4.5 py-2 text-xs font-bold gap-2 data-active:bg-card data-active:text-foreground data-active:shadow-xs"
+            className="rounded-xl px-4.5 py-2 text-xs font-bold gap-2 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-xs transition-all"
           >
             <Percent className="size-4" />
             <span className="truncate">Food Cost &amp; Margins</span>
           </TabsTrigger>
           <TabsTrigger
             value="billing"
-            className="rounded-xl px-4.5 py-2 text-xs font-bold gap-2 data-active:bg-card data-active:text-foreground data-active:shadow-xs"
+            className="rounded-xl px-4.5 py-2 text-xs font-bold gap-2 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-xs transition-all"
           >
             <CreditCard className="size-4" />
             <span className="truncate">Subscription &amp; Plans</span>

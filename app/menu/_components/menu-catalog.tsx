@@ -200,12 +200,12 @@ export function MenuCatalog({
     <div className="flex flex-col gap-5 max-w-7xl mx-auto pb-12 animate-in fade-in duration-200">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 rounded-xl bg-[#284E3A] text-white px-4 py-3 shadow-lg border border-[#3b6d53] animate-in fade-in slide-in-from-top-3 duration-200">
-          <Check className="size-4 text-[#A8C5B3] shrink-0 stroke-[2.5]" />
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 rounded-xl bg-primary text-primary-foreground px-4 py-3 shadow-lg border border-primary/20 animate-in fade-in slide-in-from-top-3 duration-200">
+          <Check className="size-4 text-primary-foreground shrink-0 stroke-[2.5]" />
           <span className="text-xs font-medium">{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="ml-2 text-white/70 hover:text-white"
+            className="ml-2 text-primary-foreground/70 hover:text-primary-foreground"
           >
             <X className="size-3.5" />
           </button>
@@ -233,7 +233,7 @@ export function MenuCatalog({
           {/* Add menu item */}
           <Button
             onClick={onNewItem}
-            className="h-9 px-4 rounded-xl bg-[#B43403] hover:bg-[#9A2C02] text-white text-xs font-semibold gap-1.5 shadow-xs cursor-pointer"
+            className="h-9 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold gap-1.5 shadow-xs cursor-pointer"
           >
             <Plus className="size-3.5 stroke-[2.5]" />
             <span>Add menu item</span>
@@ -267,15 +267,15 @@ export function MenuCatalog({
           </span>
         </div>
 
-        {/* Card 2: Available for sale (Forest Green) */}
-        <div className="rounded-2xl bg-[#284E3A] text-white p-4.5 shadow-xs flex flex-col justify-between min-h-[110px]">
-          <span className="text-xs text-[#A8C5B3] font-medium">Available for sale</span>
+        {/* Card 2: Available for sale (Dynamic Theme Brand Color) */}
+        <div className="rounded-2xl bg-primary text-primary-foreground p-4.5 shadow-xs flex flex-col justify-between min-h-[110px]">
+          <span className="text-xs text-primary-foreground/80 font-medium">Available for sale</span>
           <div className="my-1">
-            <span className="text-3xl lg:text-4xl font-bold tracking-tight text-white">
+            <span className="text-3xl lg:text-4xl font-bold tracking-tight text-primary-foreground">
               {availableCount}
             </span>
           </div>
-          <span className="text-xs text-[#A8C5B3]">Visible on POS and online</span>
+          <span className="text-xs text-primary-foreground/80">Visible on POS and online</span>
         </div>
 
         {/* Card 3: Recipes complete */}
@@ -323,7 +323,7 @@ export function MenuCatalog({
             className={cn(
               "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
               selectedCategory === "All"
-                ? "bg-[#B43403] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-transparent text-[#78716C] hover:text-[#1C1917] dark:text-muted-foreground dark:hover:text-foreground hover:bg-[#FAF8F5] dark:hover:bg-muted/40"
             )}
           >
@@ -343,7 +343,7 @@ export function MenuCatalog({
                 className={cn(
                   "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                   isSelected
-                    ? "bg-[#B43403] text-white shadow-xs"
+                    ? "bg-primary text-primary-foreground shadow-xs"
                     : "bg-transparent text-[#78716C] hover:text-[#1C1917] dark:text-muted-foreground dark:hover:text-foreground hover:bg-[#FAF8F5] dark:hover:bg-muted/40"
                 )}
               >
@@ -380,7 +380,7 @@ export function MenuCatalog({
                 setCurrentPage(1)
               }}
               placeholder="Search menu items..."
-              className="h-9 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border pl-9.5 pr-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-[#B43403] focus:ring-1 focus:ring-[#B43403]/20"
+              className="h-9 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border pl-9.5 pr-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
 
@@ -394,7 +394,7 @@ export function MenuCatalog({
                   setAvailabilityFilter(e.target.value as "All" | "Available" | "Unavailable")
                   setCurrentPage(1)
                 }}
-                className="h-9 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-[#B43403] cursor-pointer appearance-none"
+                className="h-9 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none"
               >
                 <option value="All">All availability</option>
                 <option value="Available">Available</option>
@@ -411,7 +411,7 @@ export function MenuCatalog({
                   setRecipeFilter(e.target.value as "All" | "Complete" | "Recipe needed")
                   setCurrentPage(1)
                 }}
-                className="h-9 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-[#B43403] cursor-pointer appearance-none"
+                className="h-9 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none"
               >
                 <option value="All">All recipes</option>
                 <option value="Complete">Complete</option>
@@ -435,7 +435,7 @@ export function MenuCatalog({
                       paginatedItems.every((i) => selectedIds.includes(i.id))
                     }
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-[#D6D0C4] text-[#B43403] focus:ring-[#B43403] cursor-pointer"
+                    className="rounded border-[#D6D0C4] accent-primary cursor-pointer"
                   />
                 </th>
                 <th className="py-3 px-3 font-semibold text-[11px] uppercase tracking-wider">
@@ -481,7 +481,7 @@ export function MenuCatalog({
                         type="checkbox"
                         checked={isChecked}
                         onChange={(e) => handleSelectOne(item.id, e.target.checked)}
-                        className="rounded border-[#D6D0C4] text-[#B43403] focus:ring-[#B43403] cursor-pointer"
+                        className="rounded border-[#D6D0C4] accent-primary cursor-pointer"
                       />
                     </td>
 
@@ -563,7 +563,7 @@ export function MenuCatalog({
                       <div className="inline-flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => onEditItem(item)}
-                          className="size-7 rounded-lg text-[#B43403] hover:bg-[#FAF8F5] dark:hover:bg-muted/40 flex items-center justify-center transition-colors cursor-pointer"
+                          className="size-7 rounded-lg text-primary hover:bg-[#FAF8F5] dark:hover:bg-muted/40 flex items-center justify-center transition-colors cursor-pointer"
                           title="Edit recipe & details"
                         >
                           <Pencil className="size-3.5" />
@@ -685,7 +685,7 @@ export function MenuCatalog({
                 className={cn(
                   "size-7 rounded-lg text-xs font-semibold flex items-center justify-center transition-all cursor-pointer",
                   safePage === page
-                    ? "bg-[#B43403] text-white shadow-xs"
+                    ? "bg-primary text-primary-foreground shadow-xs"
                     : "border border-transparent text-[#78716C] hover:bg-muted/60 hover:text-foreground"
                 )}
               >
@@ -715,7 +715,7 @@ export function MenuCatalog({
         {firstIncompleteItem && (
           <button
             onClick={() => onEditItem(firstIncompleteItem)}
-            className="text-xs font-bold text-[#B43403] hover:underline self-start sm:self-auto cursor-pointer flex items-center gap-1"
+            className="text-xs font-bold text-primary hover:underline self-start sm:self-auto cursor-pointer flex items-center gap-1"
           >
             <span>Complete {firstIncompleteItem.name}</span>
             <span>&rarr;</span>
@@ -740,11 +740,11 @@ export function MenuCatalog({
                 placeholder="New category name (e.g. Beverages)"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                className="h-9 flex-1 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#B43403] focus:outline-none focus:ring-1 focus:ring-[#B43403]/20"
+                className="h-9 flex-1 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
               />
               <Button
                 type="submit"
-                className="h-9 px-3 rounded-xl bg-[#B43403] hover:bg-[#9A2C02] text-white text-xs font-bold shrink-0"
+                className="h-9 px-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shrink-0"
               >
                 <Plus className="size-3.5" />
                 <span>Add</span>
@@ -769,7 +769,7 @@ export function MenuCatalog({
               <Button
                 type="button"
                 onClick={() => setShowCategoriesModal(false)}
-                className="h-8.5 text-xs rounded-xl bg-[#284E3A] hover:bg-[#1E3C2C] text-white font-bold px-4"
+                className="h-8.5 text-xs rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4"
               >
                 Done
               </Button>
@@ -783,7 +783,7 @@ export function MenuCatalog({
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <HelpCircle className="size-4 text-[#B43403]" />
+              <HelpCircle className="size-4 text-primary" />
               <span>Menu &amp; Recipe Management Guide</span>
             </DialogTitle>
             <DialogDescription className="text-xs">
@@ -818,7 +818,7 @@ export function MenuCatalog({
             <Button
               type="button"
               onClick={() => setShowHelpModal(false)}
-              className="h-8.5 text-xs rounded-xl bg-[#284E3A] hover:bg-[#1E3C2C] text-white font-bold px-4"
+              className="h-8.5 text-xs rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4"
             >
               Close
             </Button>

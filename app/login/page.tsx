@@ -10,23 +10,50 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
+import { validateData, loginSchema } from "@/lib/validations"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuth()
+  const { login, isAuthenticated, isLoading } = useAuth()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
   const [keepSignedIn, setKeepSignedIn] = React.useState(true)
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [sessionExpiredNotice, setSessionExpiredNotice] = React.useState(false)
 
-  const isDev = process.env.NODE_ENV === "development"
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get("expired") === "1") {
+        setSessionExpiredNotice(true)
+      }
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/")
+    }
+  }, [isLoading, isAuthenticated, router])
+
+  if (!isLoading && isAuthenticated) {
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
+
+    // Joi schema validation
+    const validation = validateData(loginSchema, { email, password })
+    if (!validation.isValid) {
+      setError(validation.error || "Please check your login details.")
+      return
+    }
+
+    setLoading(true)
     const res = await login({ email, password, keepSignedIn })
     if (res.success) {
       router.push("/")
@@ -34,12 +61,6 @@ export default function LoginPage() {
       setError(res.error || "Unable to sign in. Please verify your credentials.")
       setLoading(false)
     }
-  }
-
-  const handleSelectDemo = (demoEmail: string) => {
-    setEmail(demoEmail)
-    setPassword("password123")
-    setError(null)
   }
 
   return (
@@ -73,52 +94,17 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Quick Demo Switchers (dev only) */}
-        {isDev && (
-          <div className="mb-5 rounded-xl border border-dashed border-[#EADFCF] dark:border-[#3D3028] bg-background/60 p-2.5 text-xs">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Quick demo account:
-              </span>
-              <span className="text-[9px] font-bold text-amber-700 bg-amber-500/10 dark:text-amber-400 px-1.5 py-0.5 rounded">
-                DEV ONLY
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleSelectDemo("aline@ikazebistro.rw")}
-                className={cn(
-                  "rounded-lg border px-2.5 py-1.5 text-left text-[11px] font-medium transition-colors cursor-pointer",
-                  email === "aline@ikazebistro.rw"
-                    ? "border-[#C1440E] bg-[#C1440E]/10 text-[#C1440E] font-bold"
-                    : "border-border hover:bg-muted/60 text-foreground"
-                )}
-              >
-                <div className="font-bold truncate">Aline Uwase</div>
-                <div className="text-[10px] text-muted-foreground truncate">Owner (Ikaze)</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectDemo("alex@barabistro.rw")}
-                className={cn(
-                  "rounded-lg border px-2.5 py-1.5 text-left text-[11px] font-medium transition-colors cursor-pointer",
-                  email === "alex@barabistro.rw"
-                    ? "border-[#C1440E] bg-[#C1440E]/10 text-[#C1440E] font-bold"
-                    : "border-border hover:bg-muted/60 text-foreground"
-                )}
-              >
-                <div className="font-bold truncate">Alex Rivera</div>
-                <div className="text-[10px] text-muted-foreground truncate">GM (Bara)</div>
-              </button>
-            </div>
-          </div>
-        )}
-
         {error && (
           <div className="mb-4 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {sessionExpiredNotice && !error && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>Your session has expired. Please sign in again to continue.</span>
           </div>
         )}
 
@@ -138,7 +124,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="aline@ikazebistro.rw"
+                placeholder="name@restaurant.rw"
                 className={cn(authInputClass, "pr-4")}
               />
             </div>
@@ -153,7 +139,7 @@ export default function LoginPage() {
                 Password
               </Label>
               <Link
-                href="#"
+                href="/forgot-password"
                 className="text-xs font-bold text-[#C1440E] transition-colors hover:text-[#A8380A] hover:underline"
               >
                 Forgot password?

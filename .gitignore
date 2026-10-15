@@ -40,3 +40,5 @@ next-env.d.ts
 /.idea/
 /.devin/
 /.vscode/
+/ToDo.md
+/api-schema.yaml

@@ -65,12 +65,12 @@ export function PlanUpgradeGate({
       {/* Container Card */}
       <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-card p-6 sm:p-10 shadow-lg">
         {/* Decorative Top Accent Bar */}
-        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#C1440E] via-[#EA982C] to-[#234D3A]" />
+        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-primary via-[#EA982C] to-[#234D3A]" />
 
         {/* Top Badges & Lock Icon */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-2">
-            <div className="size-10 rounded-2xl bg-[#C1440E]/10 border border-[#C1440E]/20 text-[#C1440E] flex items-center justify-center">
+            <div className="size-10 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
               <Lock className="size-5" />
             </div>
             <div>
@@ -146,7 +146,7 @@ export function PlanUpgradeGate({
               <Button
                 onClick={handleInstantUpgrade}
                 disabled={upgrading}
-                className="w-full h-10 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold shadow-md cursor-pointer flex items-center justify-center gap-2"
+                className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-md cursor-pointer flex items-center justify-center gap-2"
               >
                 {upgrading ? (
                   <span>Upgrading your workspace...</span>

@@ -17,39 +17,39 @@ export function ConsumablesSpendCard({
   sourcingEfficiency = "88.4% Rwandan Farm Sourced",
 }: ConsumablesSpendCardProps) {
   return (
-    <Card className="rounded-2xl border-border bg-card p-5 shadow-xs flex flex-col justify-between">
+    <Card className="rounded-2xl border-border bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between w-full min-w-0">
       <div>
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className="flex items-center justify-between border-b border-border/60 pb-3 gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Layers className="size-4" />
             </div>
-            <div>
-              <CardTitle className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE]">
+            <div className="min-w-0">
+              <CardTitle className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE] truncate">
                 Consumables Spend
               </CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
                 Breakdown of {totalSpendFormatted}
               </p>
             </div>
           </div>
 
-          <span className="rounded-full bg-muted/80 text-foreground px-2.5 py-0.5 text-[11px] font-bold">
+          <span className="shrink-0 rounded-full bg-muted/80 text-foreground px-2.5 py-0.5 text-[11px] font-bold">
             {categories.length} Categories
           </span>
         </div>
 
         <div className="mt-4 space-y-3.5">
           {categories.map((cat) => (
-            <div key={cat.id} className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className={`size-2.5 rounded-full ${cat.dotColor}`} />
-                  <span className="font-semibold text-foreground">
+            <div key={cat.id} className="space-y-1.5 min-w-0">
+              <div className="flex items-center justify-between text-xs gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`size-2.5 rounded-full shrink-0 ${cat.dotColor}`} />
+                  <span className="font-semibold text-foreground truncate">
                     {cat.name}
                   </span>
                 </div>
-                <div className="text-right text-xs">
+                <div className="text-right text-xs shrink-0 whitespace-nowrap">
                   <span className="font-bold text-foreground">
                     {cat.percentage}%
                   </span>
@@ -71,12 +71,12 @@ export function ConsumablesSpendCard({
       </div>
 
       {/* Local sourcing efficiency banner */}
-      <div className="mt-5 rounded-xl border border-emerald-200/60 bg-[#EEF7EF] dark:bg-emerald-950/20 dark:border-emerald-900/40 p-3 flex items-center justify-between text-xs text-[#245938] dark:text-emerald-300">
-        <div className="flex items-center gap-2 font-medium">
-          <ShieldCheck className="size-4 text-[#2E7D32] dark:text-emerald-400" />
-          <span>Local sourcing efficiency</span>
+      <div className="mt-5 rounded-xl border border-emerald-200/60 bg-[#EEF7EF] dark:bg-emerald-950/20 dark:border-emerald-900/40 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 text-xs text-[#245938] dark:text-emerald-300">
+        <div className="flex items-center gap-2 font-medium min-w-0">
+          <ShieldCheck className="size-4 text-[#2E7D32] dark:text-emerald-400 shrink-0" />
+          <span className="truncate">Local sourcing efficiency</span>
         </div>
-        <span className="font-bold">{sourcingEfficiency}</span>
+        <span className="font-bold shrink-0">{sourcingEfficiency}</span>
       </div>
     </Card>
   )

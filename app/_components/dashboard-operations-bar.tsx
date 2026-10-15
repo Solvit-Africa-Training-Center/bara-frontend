@@ -27,40 +27,40 @@ export function DashboardOperationsBar({
   onOpenDatePicker,
 }: DashboardOperationsBarProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3.5 sm:p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between w-full min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Store className="size-5" />
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-bold text-foreground">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-sm sm:text-base font-bold text-foreground truncate">
               {restaurantName} Operations
             </h1>
             <Badge
               variant="success"
-              className="gap-1 rounded-full text-[10px] font-bold py-0.5"
+              className="gap-1 rounded-full text-[10px] font-bold py-0.5 shrink-0"
             >
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live POS Connected
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
             Know your daily numbers. Real-time overview for {restaurantName} ({activeBranch}).
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 self-end sm:self-center">
+      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
         {/* Period Selector Tabs */}
-        <div className="flex items-center gap-1 rounded-xl border border-border bg-background p-1 shadow-2xs">
+        <div className="flex items-center gap-1 rounded-xl border border-border bg-background p-1 shadow-2xs overflow-x-auto max-w-full">
           <button
             type="button"
             onClick={() => onSelectPeriod("today")}
             className={cn(
-              "rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer",
+              "shrink-0 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
               selectedPeriod === "today"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -70,9 +70,9 @@ export function DashboardOperationsBar({
             type="button"
             onClick={() => onSelectPeriod("yesterday")}
             className={cn(
-              "rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer",
+              "shrink-0 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
               selectedPeriod === "yesterday"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -82,9 +82,9 @@ export function DashboardOperationsBar({
             type="button"
             onClick={() => onSelectPeriod("week")}
             className={cn(
-              "rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer",
+              "shrink-0 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
               selectedPeriod === "week"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -94,21 +94,21 @@ export function DashboardOperationsBar({
             type="button"
             onClick={onOpenDatePicker}
             className={cn(
-              "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer",
+              "shrink-0 rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap",
               selectedPeriod === "custom"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Calendar className="size-3.5" />
-            <span>{selectedPeriod === "custom" ? customLabel : "Custom"}</span>
+            <Calendar className="size-3.5 shrink-0" />
+            <span className="truncate max-w-[90px] sm:max-w-none">{selectedPeriod === "custom" ? customLabel : "Custom"}</span>
           </button>
         </div>
 
         <Button
           render={<Link href="/menu" />}
           size="sm"
-          className="h-8.5 gap-1.5 rounded-xl bg-[#234D3A] text-white hover:bg-[#1A3B2C] text-xs font-bold px-3.5 shadow-xs"
+          className="h-8.5 gap-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold px-3.5 shadow-xs shrink-0"
         >
           <Plus className="size-3.5" />
           <span>New Menu</span>

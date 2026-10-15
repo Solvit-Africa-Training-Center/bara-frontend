@@ -19,24 +19,24 @@ export function KitchenWasteAlerts({
   completedActions,
 }: KitchenWasteAlertsProps) {
   return (
-    <Card className="rounded-2xl border-border bg-card p-5 shadow-xs flex flex-col justify-between">
+    <Card className="rounded-2xl border-border bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between w-full min-w-0">
       <div>
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+        <div className="flex items-center justify-between border-b border-border/60 pb-3 gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
               <AlertTriangle className="size-4" />
             </div>
-            <div>
-              <CardTitle className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE]">
+            <div className="min-w-0">
+              <CardTitle className="text-base font-bold text-[#2C221E] dark:text-[#FAF5EE] truncate">
                 Kitchen Waste Alerts
               </CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
                 Underperforming stock requiring manager intervention
               </p>
             </div>
           </div>
 
-          <span className="rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-900/50 px-2.5 py-0.5 text-[11px] font-bold">
+          <span className="shrink-0 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-900/50 px-2.5 py-0.5 text-[11px] font-bold">
             Action Needed
           </span>
         </div>
@@ -92,7 +92,7 @@ export function KitchenWasteAlerts({
                     onClick={() => onActionClick(item)}
                     className={
                       isPromo
-                        ? "h-7.5 rounded-lg bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-semibold px-3 shadow-2xs"
+                        ? "h-7.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 shadow-2xs"
                         : "h-7.5 rounded-lg text-xs font-semibold px-3 border-border"
                     }
                   >

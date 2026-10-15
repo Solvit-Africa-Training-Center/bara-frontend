@@ -27,7 +27,7 @@ const ERRORS: Record<ErrorCode, ErrorItem> = {
     label: "404 error",
     title: "Page not found",
     description: "Sorry, we couldn't find the page you're looking for. It may have been moved or doesn't exist.",
-    color: "text-[#C85A24]",
+    color: "text-primary",
     primaryAction: {
       label: "Back to Dashboard",
       href: "/",
@@ -94,7 +94,7 @@ export default function ErrorCodesPage() {
             className={cn(
               "rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
               selected === code
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -120,7 +120,7 @@ export default function ErrorCodesPage() {
         <div className="mt-6 flex items-center justify-center gap-3">
           <Button
             render={<Link href={active.primaryAction.href} />}
-            className="h-9 gap-1.5 rounded-xl bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-semibold px-4 shadow-xs"
+            className="h-9 gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-4 shadow-xs"
           >
             <Home className="size-3.5" />
             <span>{active.primaryAction.label}</span>

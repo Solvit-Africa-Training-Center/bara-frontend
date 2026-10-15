@@ -146,15 +146,15 @@ export default function PricingPage() {
         </div>
 
         {/* Tier 3: Bara Pro + AI (Featured) */}
-        <div className="relative rounded-3xl border-2 border-[#C85A24] bg-card p-6 shadow-xl flex flex-col justify-between overflow-hidden">
-          <div className="absolute top-0 right-0 bg-gradient-to-l from-[#C85A24] to-[#E07A3E] text-white px-3 py-1 rounded-bl-xl text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-sm">
+        <div className="relative rounded-3xl border-2 border-primary bg-card p-6 shadow-xl flex flex-col justify-between overflow-hidden">
+          <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 rounded-bl-xl text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-sm">
             <Sparkles className="size-3 text-amber-200" />
             Most Popular
           </div>
 
           <div>
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-[#C85A24]">Bara Pro + AI</h2>
+              <h2 className="text-lg font-bold text-primary">Bara Pro + AI</h2>
               <p className="text-xs text-muted-foreground">
                 Complete operational intelligence suite.
               </p>
@@ -189,7 +189,7 @@ export default function PricingPage() {
           <div className="mt-8">
             <Button
               render={<Link href="/" />}
-              className="w-full h-10 rounded-xl bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-bold shadow-md"
+              className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-md cursor-pointer"
             >
               Upgrade to Pro
             </Button>

@@ -53,12 +53,12 @@ export function ReportsAuditModal({
             <div className="rounded-xl border border-border/60 bg-muted/30 p-3">
               <span className="text-[11px] text-muted-foreground">Voided Transactions</span>
               <div className="text-lg font-bold text-foreground mt-0.5">{voidedOrdersCount} orders</div>
-              <span className="text-xs text-[#C85A24] font-semibold">{voidedAmountFormatted} excluded</span>
+              <span className="text-xs text-primary font-semibold">{voidedAmountFormatted} excluded</span>
             </div>
             <div className="rounded-xl border border-border/60 bg-muted/30 p-3">
               <span className="text-[11px] text-muted-foreground">Refunded Transactions</span>
               <div className="text-lg font-bold text-foreground mt-0.5">{refundedOrdersCount} orders</div>
-              <span className="text-xs text-[#C85A24] font-semibold">{refundedAmountFormatted} excluded</span>
+              <span className="text-xs text-primary font-semibold">{refundedAmountFormatted} excluded</span>
             </div>
           </div>
 
@@ -99,7 +99,7 @@ export function ReportsAuditModal({
         <div className="pt-2 flex justify-end">
           <Button
             size="sm"
-            className="rounded-xl bg-[#234D3A] text-white text-xs cursor-pointer hover:bg-[#1A3B2C]"
+            className="rounded-xl bg-primary text-primary-foreground text-xs cursor-pointer hover:bg-primary/90"
             onClick={onClose}
           >
             Close Audit View

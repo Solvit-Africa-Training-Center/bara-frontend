@@ -37,7 +37,7 @@ export function LunchOpportunityCard({
       <button
         type="button"
         onClick={onViewDemand}
-        className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#234D3A] dark:text-emerald-300 hover:underline cursor-pointer"
+        className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline cursor-pointer"
       >
         <span>{data.actionLabel}</span>
         <span>→</span>

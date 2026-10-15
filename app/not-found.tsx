@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
-      <p className="text-xs font-bold tracking-wider text-[#C85A24] uppercase">
+      <p className="text-xs font-bold tracking-wider text-primary uppercase">
         404 error
       </p>
 
@@ -21,7 +21,7 @@ export default function NotFound() {
       <div className="mt-6 flex items-center justify-center gap-3">
         <Button
           render={<Link href="/" />}
-          className="h-9 gap-1.5 rounded-xl bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-semibold px-4 shadow-xs"
+          className="h-9 gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-4 shadow-xs"
         >
           <Home className="size-3.5" />
           <span>Back to Dashboard</span>

@@ -90,7 +90,7 @@ export function PaymentStep({
                   Payment method
                 </h2>
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-[#5D5048] dark:text-[#BAACA1]">
-                  <Lock className="size-3.5 stroke-[2] text-[#234D3A] dark:text-emerald-400" />
+                  <Lock className="size-3.5 stroke-[2] text-primary" />
                   <span>Secure payment</span>
                 </div>
               </div>
@@ -110,8 +110,8 @@ export function PaymentStep({
                   className={cn(
                     "flex items-center justify-between rounded-xl p-3.5 text-left transition-all cursor-pointer",
                     paymentMethod === "momo"
-                      ? "border-2 border-[#234D3A] bg-[#EAF2EC] dark:border-[#3D7055] dark:bg-[#1B2F24]"
-                      : "border border-[#E4D6C4] bg-[#FFFDF9] hover:border-[#C1440E]/60 dark:border-[#3D3028] dark:bg-[#251E1A]"
+                      ? "border-2 border-primary bg-primary/10 dark:bg-primary/20"
+                      : "border border-[#E4D6C4] bg-[#FFFDF9] hover:border-primary/60 dark:border-[#3D3028] dark:bg-[#251E1A]"
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -119,7 +119,7 @@ export function PaymentStep({
                       className={cn(
                         "size-4.5 shrink-0 stroke-[2]",
                         paymentMethod === "momo"
-                          ? "text-[#234D3A] dark:text-emerald-300"
+                          ? "text-primary"
                           : "text-[#75665E]"
                       )}
                     />
@@ -127,7 +127,7 @@ export function PaymentStep({
                       className={cn(
                         "text-xs sm:text-sm font-semibold truncate",
                         paymentMethod === "momo"
-                          ? "font-bold text-[#234D3A] dark:text-[#E8F3ED]"
+                          ? "font-bold text-primary dark:text-[#E8F3ED]"
                           : "text-[#3B2F2A] dark:text-[#FAF3E7]"
                       )}
                     >
@@ -138,7 +138,7 @@ export function PaymentStep({
                     className={cn(
                       "size-4 rounded-full flex items-center justify-center shrink-0 ml-1.5",
                       paymentMethod === "momo"
-                        ? "border-2 border-[#234D3A] bg-[#234D3A] dark:border-emerald-400 dark:bg-emerald-400"
+                        ? "border-2 border-primary bg-primary dark:border-primary dark:bg-primary"
                         : "border-2 border-[#D1C2B2] bg-transparent"
                     )}
                   >
@@ -158,8 +158,8 @@ export function PaymentStep({
                   className={cn(
                     "flex items-center justify-between rounded-xl p-3.5 text-left transition-all cursor-pointer",
                     paymentMethod === "card"
-                      ? "border-2 border-[#234D3A] bg-[#EAF2EC] dark:border-[#3D7055] dark:bg-[#1B2F24]"
-                      : "border border-[#E4D6C4] bg-[#FFFDF9] hover:border-[#C1440E]/60 dark:border-[#3D3028] dark:bg-[#251E1A]"
+                      ? "border-2 border-primary bg-primary/10 dark:bg-primary/20"
+                      : "border border-[#E4D6C4] bg-[#FFFDF9] hover:border-primary/60 dark:border-[#3D3028] dark:bg-[#251E1A]"
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -167,7 +167,7 @@ export function PaymentStep({
                       className={cn(
                         "size-4.5 shrink-0 stroke-[1.8]",
                         paymentMethod === "card"
-                          ? "text-[#234D3A] dark:text-emerald-300"
+                          ? "text-primary"
                           : "text-[#75665E]"
                       )}
                     />
@@ -175,7 +175,7 @@ export function PaymentStep({
                       className={cn(
                         "text-xs sm:text-sm font-medium truncate",
                         paymentMethod === "card"
-                          ? "font-bold text-[#234D3A] dark:text-[#E8F3ED]"
+                          ? "font-bold text-primary dark:text-[#E8F3ED]"
                           : "text-[#3B2F2A] dark:text-[#FAF3E7]"
                       )}
                     >
@@ -186,7 +186,7 @@ export function PaymentStep({
                     className={cn(
                       "size-4 rounded-full flex items-center justify-center shrink-0 ml-1.5",
                       paymentMethod === "card"
-                        ? "border-2 border-[#234D3A] bg-[#234D3A] dark:border-emerald-400 dark:bg-emerald-400"
+                        ? "border-2 border-primary bg-primary dark:border-primary dark:bg-primary"
                         : "border-2 border-[#D1C2B2] bg-transparent"
                     )}
                   >
@@ -448,7 +448,7 @@ export function PaymentStep({
           {/* RIGHT COLUMN: Plan Card & Order Summary */}
           <div className="space-y-5 lg:col-span-5">
             {/* Card 1: Selected Plan Details Card */}
-            <div className="rounded-[20px] border-2 border-[#234D3A] bg-[#FFFBF5] p-5 sm:p-6 shadow-xs dark:border-[#3D7055] dark:bg-[#1E1815]">
+            <div className="rounded-[20px] border-2 border-primary bg-primary/5 p-5 sm:p-6 shadow-xs">
               {/* Header */}
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="text-xl font-extrabold tracking-tight text-[#2D221D] dark:text-[#FAF3E7]">
@@ -481,7 +481,7 @@ export function PaymentStep({
                     key={feature}
                     className="flex items-start gap-2 text-xs font-medium text-[#2D221D] dark:text-[#FAF3E7]"
                   >
-                    <Check className="mt-0.5 size-3.5 shrink-0 stroke-[2.5] text-[#234D3A] dark:text-emerald-400" />
+                    <Check className="mt-0.5 size-3.5 shrink-0 stroke-[2.5] text-primary" />
                     <span>{feature}</span>
                   </div>
                 ))}

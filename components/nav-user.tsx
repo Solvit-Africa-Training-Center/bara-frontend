@@ -42,22 +42,23 @@ export interface NavUserProps {
   }
 }
 
-const DEFAULT_AVATAR =
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-
 export function NavUser({ user: override }: NavUserProps) {
   const { isMobile } = useSidebar()
   const { restaurant, user: current } = useRestaurant()
   const { user: authUser, logout } = useAuth()
 
+  const displayName = override?.name || authUser?.name || current?.name || "Manager"
   const user = {
-    name: override?.name || authUser?.name || current.name || "Alex Rivera",
-    email: override?.email || authUser?.email || current.email,
-    avatar: override?.avatar || authUser?.avatar || current.avatar || DEFAULT_AVATAR,
-    role: override?.role || authUser?.role || current.role || "General Manager",
+    name: displayName,
+    email: override?.email || authUser?.email || current?.email || "",
+    avatar: override?.avatar || authUser?.avatar || current?.avatar || "",
+    role: override?.role || authUser?.role || current?.role || "Staff",
     branch: override?.branch || restaurant.activeBranch || restaurant.name,
   }
-  const initials = authUser?.initials || current.initials || "AR"
+  const initials =
+    authUser?.initials ||
+    current?.initials ||
+    (displayName ? displayName.slice(0, 2).toUpperCase() : "MG")
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault()

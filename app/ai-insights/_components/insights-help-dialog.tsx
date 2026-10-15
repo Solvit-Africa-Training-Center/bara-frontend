@@ -25,7 +25,7 @@ export function InsightsHelpDialog({
       <DialogContent className="sm:max-w-md rounded-3xl p-6">
         <DialogHeader className="border-b border-border/60 pb-3">
           <div className="flex items-center gap-2 text-foreground">
-            <HelpCircle className="size-5 text-[#244830]" />
+            <HelpCircle className="size-5 text-primary" />
             <DialogTitle className="text-base font-bold text-foreground">
               How Bara AI Insights Works
             </DialogTitle>
@@ -66,7 +66,7 @@ export function InsightsHelpDialog({
           <Button
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="h-8 rounded-xl bg-[#244830] text-white text-xs font-semibold"
+            className="h-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold"
           >
             Got it
           </Button>

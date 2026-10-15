@@ -106,7 +106,7 @@ export function OilMovementsDialog({
                 "h-8 rounded-xl text-xs font-semibold",
                 isAcknowledged
                   ? "text-emerald-700"
-                  : "bg-[#244830] hover:bg-[#1E3B27] text-white"
+                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
               )}
             >
               {isAcknowledged ? "Acknowledged" : "Acknowledge Variance"}

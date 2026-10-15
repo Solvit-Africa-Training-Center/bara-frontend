@@ -94,7 +94,7 @@ export function AskBaraDialog({
       <DialogContent className="sm:max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl p-6">
         <DialogHeader className="border-b border-border/60 pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-[#B84218] text-white shadow-2xs">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-2xs">
               <Sparkles className="size-4.5 fill-current" />
             </div>
             <div>
@@ -122,7 +122,7 @@ export function AskBaraDialog({
                 className={cn(
                   "rounded-lg px-2.5 py-1 text-xs text-left transition-colors border",
                   activeQuestion === q.question
-                    ? "border-[#B84218] bg-[#B84218]/10 text-[#B84218] font-semibold"
+                    ? "border-primary bg-primary/10 text-primary font-semibold"
                     : "border-border/70 hover:bg-muted text-muted-foreground"
                 )}
               >
@@ -143,7 +143,7 @@ export function AskBaraDialog({
               )}
             >
               {msg.role === "bara" && (
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#244830] text-white">
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Sparkles className="size-3.5 fill-current" />
                 </div>
               )}
@@ -151,7 +151,7 @@ export function AskBaraDialog({
                 className={cn(
                   "rounded-2xl p-3.5 text-xs max-w-[85%] leading-relaxed",
                   msg.role === "user"
-                    ? "bg-[#B84218] text-white font-medium ml-8"
+                    ? "bg-primary text-primary-foreground font-medium ml-8"
                     : "bg-muted/70 text-foreground border border-border/60"
                 )}
               >
@@ -180,13 +180,13 @@ export function AskBaraDialog({
             value={customInput}
             onChange={(e) => setCustomInput(e.target.value)}
             placeholder="Ask a question about food costs, sales rushes, or inventory..."
-            className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#B84218]"
+            className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <Button
             type="submit"
             size="sm"
             disabled={!customInput.trim()}
-            className="h-8.5 rounded-xl bg-[#B84218] hover:bg-[#A03814] text-white px-3 text-xs font-semibold gap-1"
+            className="h-8.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-3 text-xs font-semibold gap-1"
           >
             <Send className="size-3.5" />
             <span>Ask</span>
