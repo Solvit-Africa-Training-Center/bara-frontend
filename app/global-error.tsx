@@ -38,7 +38,7 @@ export default function GlobalError({
         <div className="mt-6">
           <button
             onClick={() => reset()}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#C85A24] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#B34D1C] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors cursor-pointer"
           >
             <RefreshCw className="size-3.5" />
             <span>Reload application</span>

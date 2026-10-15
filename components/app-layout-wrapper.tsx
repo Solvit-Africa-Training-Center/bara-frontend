@@ -238,13 +238,8 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Brand Multi-color Accent Bar - Dynamically themes with restaurant.brandColor */}
-        <div
-          className="h-[2px] w-full opacity-85 transition-colors duration-300"
-          style={{
-            background: `linear-gradient(to right, ${restaurant.brandColor || "#C85A24"}, #E56A1C, #EA982C, #EBA529, #2F5233)`,
-          }}
-        />
+        {/* Brand Accent Bar - Dynamically themes with restaurant.brandColor */}
+        <div className="h-[2px] w-full bg-primary opacity-90 transition-colors duration-300" />
 
         {/* Section 4.3 Account States Non-Payment Banners */}
         {isGraceState && (

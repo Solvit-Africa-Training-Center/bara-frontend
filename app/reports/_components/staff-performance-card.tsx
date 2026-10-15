@@ -54,7 +54,7 @@ export function StaffPerformanceCard({
 
           {/* Total row matching Figma */}
           <div className="grid grid-cols-12 pt-3 mt-1 text-xs items-center border-t border-border/80">
-            <span className="col-span-6 font-bold text-[#234D3A] dark:text-emerald-400">
+            <span className="col-span-6 font-bold text-primary">
               Total
             </span>
             <span className="col-span-2 text-right font-bold text-[#2C221E] dark:text-[#FAF5EE]">

@@ -29,7 +29,7 @@ export function HourlyDemandDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-3xl p-6">
         <DialogHeader className="border-b border-border/60 pb-3">
-          <div className="flex items-center gap-2 text-[#244830]">
+          <div className="flex items-center gap-2 text-primary">
             <TrendingUp className="size-5" />
             <DialogTitle className="text-base font-bold text-foreground">
               Lunch Service Hourly Demand
@@ -52,7 +52,7 @@ export function HourlyDemandDialog({
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-[#244830]"
+                    className="h-full rounded-full bg-primary"
                     style={{ width: `${slot.percentage}%` }}
                   />
                 </div>
@@ -74,7 +74,7 @@ export function HourlyDemandDialog({
           <Button
             size="sm"
             onClick={onUpdateSchedule}
-            className="h-8 rounded-xl bg-[#244830] hover:bg-[#1E3B27] text-white text-xs font-semibold"
+            className="h-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold"
           >
             Update Grill Prep Schedule
           </Button>

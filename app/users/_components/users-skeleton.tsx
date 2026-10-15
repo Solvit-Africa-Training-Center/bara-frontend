@@ -21,8 +21,8 @@ export function UsersSkeleton() {
 
       {/* 2. 4 Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Card 1: Forest Green Card */}
-        <div className="rounded-2xl bg-[#284E3A] p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
+        {/* Card 1: Primary Brand Card */}
+        <div className="rounded-2xl bg-primary/90 p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
           <Skeleton className="h-3.5 w-24 bg-white/20" />
           <div className="my-1">
             <Skeleton className="h-8 w-12 bg-white/30" />

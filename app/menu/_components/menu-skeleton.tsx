@@ -30,8 +30,8 @@ export function MenuSkeleton() {
           <Skeleton className="h-3 w-36" />
         </div>
 
-        {/* Card 2 (Forest Green) */}
-        <div className="rounded-2xl bg-[#284E3A] p-4.5 shadow-xs flex flex-col justify-between min-h-[110px]">
+        {/* Card 2 (Brand Highlight) */}
+        <div className="rounded-2xl bg-primary/90 p-4.5 shadow-xs flex flex-col justify-between min-h-[110px]">
           <Skeleton className="h-3.5 w-28 bg-white/20" />
           <div className="my-1">
             <Skeleton className="h-8 w-16 bg-white/30" />

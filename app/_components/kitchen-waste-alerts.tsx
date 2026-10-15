@@ -92,7 +92,7 @@ export function KitchenWasteAlerts({
                     onClick={() => onActionClick(item)}
                     className={
                       isPromo
-                        ? "h-7.5 rounded-lg bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-semibold px-3 shadow-2xs"
+                        ? "h-7.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 shadow-2xs"
                         : "h-7.5 rounded-lg text-xs font-semibold px-3 border-border"
                     }
                   >

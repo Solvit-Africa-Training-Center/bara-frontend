@@ -110,8 +110,8 @@ Total Estimated: RWF 400,000`
     <div className="flex flex-col gap-6 max-w-[1360px] mx-auto pb-12">
       {/* Toast Feedback */}
       {notification && (
-        <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-top-3 duration-200">
-          <CheckCircle2 className="size-4 shrink-0 text-white" />
+        <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-lg animate-in fade-in slide-in-from-top-3 duration-200">
+          <CheckCircle2 className="size-4 shrink-0 text-primary-foreground" />
           <span>{notification}</span>
           <button
             onClick={() => setNotification(null)}

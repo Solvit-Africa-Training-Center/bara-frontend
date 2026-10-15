@@ -40,8 +40,8 @@ export function AIInsightsHeader({
         </div>
 
         {/* Subscription Tier Badge */}
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FDF0E9] px-3 py-1.5 text-xs font-semibold text-[#C05621] border border-[#F9DACB] dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 shadow-2xs">
-          <span className="size-2 rounded-full bg-[#C05621]" />
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary border border-primary/20 shadow-2xs">
+          <span className="size-2 rounded-full bg-primary" />
           <span>{planName}</span>
         </div>
 
@@ -49,7 +49,7 @@ export function AIInsightsHeader({
         <Button
           size="sm"
           onClick={onOpenAskBara}
-          className="h-8.5 rounded-xl bg-[#B84218] hover:bg-[#A03814] text-white px-3.5 text-xs font-semibold gap-1.5 shadow-xs transition-colors"
+          className="h-8.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-3.5 text-xs font-semibold gap-1.5 shadow-xs transition-colors"
         >
           <Sparkles className="size-3.5 fill-current" />
           <span>Ask Bara</span>

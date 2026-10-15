@@ -28,7 +28,7 @@ export function ReportsAuditBanner({
       </div>
       <button
         onClick={onViewAuditTrail}
-        className="text-[#C85A24] font-semibold hover:underline cursor-pointer shrink-0 self-start sm:self-auto flex items-center gap-1"
+        className="text-primary font-semibold hover:underline cursor-pointer shrink-0 self-start sm:self-auto flex items-center gap-1"
       >
         <span>View audit trail</span>
         <ArrowRight className="size-3" />

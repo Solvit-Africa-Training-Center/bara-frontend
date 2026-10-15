@@ -45,8 +45,8 @@ export function ReportsSkeleton({ includeHeaderAndFilters = false }: ReportsSkel
 
       {/* 1. 4 Top KPI Cards Skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-        {/* Card 1 Skeleton (Highlight Forest Green Card) */}
-        <div className="rounded-2xl bg-[#234D3A] p-5 shadow-xs flex flex-col justify-between min-h-[120px]">
+        {/* Card 1 Skeleton (Highlight Brand Card) */}
+        <div className="rounded-2xl bg-primary/90 p-5 shadow-xs flex flex-col justify-between min-h-[120px]">
           <Skeleton className="h-3.5 w-20 bg-white/20" />
           <div className="my-2">
             <Skeleton className="h-7 sm:h-8 w-44 max-w-[85%] bg-white/30" />

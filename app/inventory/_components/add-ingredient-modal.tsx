@@ -201,7 +201,7 @@ export function AddIngredientModal({
             <Button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className="h-9 px-5 rounded-xl text-xs font-bold bg-[#C1440E] hover:bg-[#A8390B] text-white shadow-xs"
+              className="h-9 px-5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
             >
               {isSubmitting ? "Creating..." : "Save Ingredient"}
             </Button>

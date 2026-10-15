@@ -71,8 +71,8 @@ export function SalesTrendCard({
             >
               <defs>
                 <linearGradient id="salesTrendGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#234D3A" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#234D3A" stopOpacity={0.01} />
+                  <stop offset="5%" stopColor="var(--primary, #234D3A)" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="var(--primary, #234D3A)" stopOpacity={0.01} />
                 </linearGradient>
               </defs>
 
@@ -129,10 +129,10 @@ export function SalesTrendCard({
                 type="linear"
                 fill="url(#salesTrendGradient)"
                 fillOpacity={1}
-                stroke="#234D3A"
+                stroke="var(--primary, #234D3A)"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: "#234D3A" }}
+                activeDot={{ r: 4, fill: "var(--primary, #234D3A)" }}
               />
             </AreaChart>
           </ChartContainer>
@@ -141,7 +141,7 @@ export function SalesTrendCard({
 
       {/* Footer legend */}
       <div className="mt-3 pt-2 flex items-center gap-2 text-xs text-[#8C7D73] dark:text-muted-foreground">
-        <span className="h-0.5 w-3.5 rounded-full bg-[#234D3A]" />
+        <span className="h-0.5 w-3.5 rounded-full bg-primary" />
         <span>Sales exclude voided and refunded orders</span>
       </div>
     </div>

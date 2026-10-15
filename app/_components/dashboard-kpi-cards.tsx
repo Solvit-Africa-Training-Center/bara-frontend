@@ -40,7 +40,7 @@ export function DashboardKpiCards({ data }: DashboardKpiCardsProps) {
 
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-[#C85A24]"
+            className="h-full rounded-full bg-primary"
             style={{ width: `${totalSales.progressPercent}%` }}
           />
         </div>
@@ -101,7 +101,7 @@ export function DashboardKpiCards({ data }: DashboardKpiCardsProps) {
 
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-[#234D3A]"
+            className="h-full rounded-full bg-primary"
             style={{ width: `${profitMargin.progressPercent}%` }}
           />
         </div>

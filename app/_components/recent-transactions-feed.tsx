@@ -29,7 +29,7 @@ export function RecentTransactionsFeed({
         <button
           type="button"
           onClick={onViewAll}
-          className="shrink-0 text-xs font-bold text-[#C85A24] hover:text-[#B34D1C] hover:underline cursor-pointer transition-colors"
+          className="shrink-0 text-xs font-bold text-primary hover:text-primary/80 hover:underline cursor-pointer transition-colors"
         >
           View All Transactions
         </button>

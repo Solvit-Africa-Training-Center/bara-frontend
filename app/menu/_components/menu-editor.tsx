@@ -193,7 +193,7 @@ export function MenuEditor({
           <Button
             type="button"
             onClick={handleSave}
-            className="h-9 px-4 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+            className="h-9 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Save className="size-3.5 stroke-[2.2]" />
             <span>Save changes</span>
@@ -330,7 +330,7 @@ export function MenuEditor({
                 type="text"
                 value={item.name}
                 onChange={(e) => setItem({ ...item, name: e.target.value })}
-                className="mt-1 h-10 w-full rounded-xl border border-[#E4D6C4] bg-background px-3.5 text-xs sm:text-sm text-[#2C221E] dark:text-[#FAF5EE] font-medium outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E] transition-all dark:border-[#3D3028]"
+                className="mt-1 h-10 w-full rounded-xl border border-[#E4D6C4] bg-background px-3.5 text-xs sm:text-sm text-[#2C221E] dark:text-[#FAF5EE] font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all dark:border-[#3D3028]"
                 placeholder="e.g. Grilled tilapia"
               />
             </div>
@@ -352,7 +352,7 @@ export function MenuEditor({
                     onChange={(e) =>
                       setItem({ ...item, price: Number(e.target.value) || 0 })
                     }
-                    className="h-10 w-full rounded-xl border border-[#E4D6C4] bg-background pl-3.5 pr-14 text-xs sm:text-sm font-bold text-[#2C221E] dark:text-[#FAF5EE] outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E] transition-all dark:border-[#3D3028]"
+                    className="h-10 w-full rounded-xl border border-[#E4D6C4] bg-background pl-3.5 pr-14 text-xs sm:text-sm font-bold text-[#2C221E] dark:text-[#FAF5EE] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all dark:border-[#3D3028]"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">
                     {currency}
@@ -371,7 +371,7 @@ export function MenuEditor({
                   id="category"
                   value={item.category}
                   onChange={(e) => setItem({ ...item, category: e.target.value })}
-                  className="mt-1 h-10 w-full rounded-xl border border-[#E4D6C4] bg-background px-3 text-xs sm:text-sm font-medium text-[#2C221E] dark:text-[#FAF5EE] outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E] transition-all dark:border-[#3D3028]"
+                  className="mt-1 h-10 w-full rounded-xl border border-[#E4D6C4] bg-background px-3 text-xs sm:text-sm font-medium text-[#2C221E] dark:text-[#FAF5EE] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all dark:border-[#3D3028]"
                 >
                   {MENU_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
@@ -398,7 +398,7 @@ export function MenuEditor({
                   setItem({ ...item, description: e.target.value })
                 }
                 placeholder="Char-grilled tilapia, market vegetables and lemon."
-                className="mt-1 w-full rounded-xl border border-[#E4D6C4] bg-background p-3 text-xs text-[#2C221E] dark:text-[#FAF5EE] font-medium outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E] transition-all resize-none dark:border-[#3D3028]"
+                className="mt-1 w-full rounded-xl border border-[#E4D6C4] bg-background p-3 text-xs text-[#2C221E] dark:text-[#FAF5EE] font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none dark:border-[#3D3028]"
               />
             </div>
           </div>
@@ -434,7 +434,7 @@ export function MenuEditor({
                 className={cn(
                   "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none",
                   item.available
-                    ? "bg-[#234D3A] dark:bg-emerald-600"
+                    ? "bg-primary"
                     : "bg-[#D9CFC5] dark:bg-[#3D3028]"
                 )}
               >
@@ -474,7 +474,7 @@ export function MenuEditor({
                       "flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                       isSelected
                         ? "border border-emerald-500/30 bg-emerald-500/10 text-[#234D3A] dark:text-emerald-400"
-                        : "border border-[#E4D6C4] bg-background text-[#8C7D73] hover:border-[#C1440E]/60 dark:border-[#3D3028] dark:text-[#A89A90]"
+                        : "border border-[#E4D6C4] bg-background text-[#8C7D73] hover:border-primary/60 dark:border-[#3D3028] dark:text-[#A89A90]"
                     )}
                   >
                     {isSelected && <Check className="size-3.5 stroke-[2.5]" />}
@@ -522,7 +522,7 @@ export function MenuEditor({
                   }}
                   onFocus={() => setShowAddMenu(true)}
                   placeholder="Search inventory ingredients..."
-                  className="h-10 w-full rounded-xl border border-[#E4D6C4] bg-background pl-9 pr-24 text-xs text-[#2C221E] dark:text-[#FAF5EE] font-medium outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E] transition-all dark:border-[#3D3028]"
+                  className="h-10 w-full rounded-xl border border-[#E4D6C4] bg-background pl-9 pr-24 text-xs text-[#2C221E] dark:text-[#FAF5EE] font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all dark:border-[#3D3028]"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#8C7D73] pointer-events-none">
                   238 available
@@ -560,7 +560,7 @@ export function MenuEditor({
               <Button
                 type="button"
                 onClick={() => setShowAddMenu(!showAddMenu)}
-                className="h-10 px-4 rounded-xl bg-[#234D3A] hover:bg-[#1A3D2D] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                className="h-10 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
               >
                 <Plus className="size-4 stroke-[2.5]" />
                 <span>Add ingredient</span>
@@ -636,7 +636,7 @@ export function MenuEditor({
                           type="button"
                           onClick={() => handleDeleteIngredient(ing.id)}
                           aria-label={`Remove ${ing.name} from recipe`}
-                          className="text-[#C1440E]/60 hover:text-[#C1440E] transition-colors p-1 cursor-pointer"
+                          className="text-destructive/70 hover:text-destructive transition-colors p-1 cursor-pointer"
                         >
                           <Trash2 className="size-4 stroke-[1.8]" />
                         </button>

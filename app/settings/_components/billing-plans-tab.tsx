@@ -217,7 +217,7 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
             <Button
               size="sm"
               onClick={() => setShowConfirmModal(true)}
-              className="h-8.5 rounded-xl text-xs font-bold bg-[#C1440E] hover:bg-[#A8390B] text-white shadow-xs"
+              className="h-8.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
             >
               <Smartphone className="size-3.5 mr-1.5" />
               <span>Submit MoMo Receipt</span>
@@ -277,14 +277,14 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
                 className={cn(
                   "relative flex flex-col justify-between rounded-[22px] p-5.5 shadow-xs transition-all",
                   plan.highlight
-                    ? "border-[#C85A24] dark:border-[#C85A24]/60 bg-gradient-to-b from-[#C85A24]/5 to-transparent"
+                    ? "border-primary dark:border-primary/60 bg-gradient-to-b from-primary/5 to-transparent"
                     : "border-border/70 bg-card",
                   isCurrent && "ring-2 ring-primary/40"
                 )}
               >
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-[#C85A24] px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-xs">
+                    <span className="rounded-full bg-primary px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary-foreground shadow-xs">
                       {plan.badge}
                     </span>
                   </div>
@@ -341,8 +341,6 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
                       "w-full h-8.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer",
                       isCurrent
                         ? "bg-muted text-muted-foreground cursor-default border border-border"
-                        : plan.highlight
-                        ? "bg-[#C85A24] hover:bg-[#B34D1C] text-white"
                         : "bg-primary text-primary-foreground hover:bg-primary/90"
                     )}
                   >
@@ -384,7 +382,7 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
           <Button
             size="sm"
             onClick={() => setShowConfirmModal(true)}
-            className="h-8 rounded-xl text-xs font-bold bg-[#C1440E] hover:bg-[#A8390B] text-white self-start sm:self-auto shadow-2xs"
+            className="h-8 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground self-start sm:self-auto shadow-2xs"
           >
             <Smartphone className="size-3.5 mr-1.5" />
             <span>Submit Payment Confirmation</span>

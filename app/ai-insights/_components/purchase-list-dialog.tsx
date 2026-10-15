@@ -35,7 +35,7 @@ export function PurchaseListDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg rounded-3xl p-6">
         <DialogHeader className="border-b border-border/60 pb-3">
-          <div className="flex items-center gap-2 text-[#244830]">
+          <div className="flex items-center gap-2 text-primary">
             <ClipboardList className="size-5" />
             <DialogTitle className="text-base font-bold text-foreground">
               Generated Restock Purchase List
@@ -97,7 +97,7 @@ export function PurchaseListDialog({
           <Button
             size="sm"
             onClick={onApprove}
-            className="h-8 rounded-xl bg-[#244830] hover:bg-[#1E3B27] text-white text-xs font-semibold"
+            className="h-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold"
           >
             Approve Purchase List
           </Button>

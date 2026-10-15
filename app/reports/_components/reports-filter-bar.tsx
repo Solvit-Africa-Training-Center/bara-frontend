@@ -30,7 +30,7 @@ export function ReportsFilterBar({
           className={cn(
             "rounded-lg px-3.5 py-1 text-xs font-medium transition-all cursor-pointer",
             period === "today"
-              ? "bg-[#B24515] text-white font-semibold shadow-xs"
+              ? "bg-primary text-primary-foreground font-semibold shadow-xs"
               : "text-[#6B5E55] dark:text-muted-foreground hover:text-foreground"
           )}
         >
@@ -42,7 +42,7 @@ export function ReportsFilterBar({
           className={cn(
             "rounded-lg px-3.5 py-1 text-xs font-medium transition-all cursor-pointer",
             period === "week"
-              ? "bg-[#B24515] text-white font-semibold shadow-xs"
+              ? "bg-primary text-primary-foreground font-semibold shadow-xs"
               : "text-[#6B5E55] dark:text-muted-foreground hover:text-foreground"
           )}
         >
@@ -54,7 +54,7 @@ export function ReportsFilterBar({
           className={cn(
             "rounded-lg px-3.5 py-1 text-xs font-medium transition-all cursor-pointer",
             period === "month"
-              ? "bg-[#B24515] text-white font-semibold shadow-xs"
+              ? "bg-primary text-primary-foreground font-semibold shadow-xs"
               : "text-[#6B5E55] dark:text-muted-foreground hover:text-foreground"
           )}
         >
@@ -65,7 +65,7 @@ export function ReportsFilterBar({
           className={cn(
             "rounded-lg px-3.5 py-1 text-xs font-medium transition-all cursor-pointer",
             period === "custom"
-              ? "bg-[#B24515] text-white font-semibold shadow-xs"
+              ? "bg-primary text-primary-foreground font-semibold shadow-xs"
               : "text-[#6B5E55] dark:text-muted-foreground hover:text-foreground"
           )}
         >

@@ -32,7 +32,7 @@ export function ReportsHeader({ onExport, onOpenHelp }: ReportsHeaderProps) {
         <Button
           size="sm"
           onClick={onExport}
-          className="h-8 gap-1.5 rounded-xl bg-[#C85A24] hover:bg-[#B24515] text-white text-xs font-semibold px-3.5 shadow-xs cursor-pointer"
+          className="h-8 gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3.5 shadow-xs cursor-pointer"
         >
           <Download className="size-3.5" />
           <span>Export report</span>

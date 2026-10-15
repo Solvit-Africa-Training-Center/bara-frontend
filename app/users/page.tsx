@@ -281,12 +281,12 @@ export default function UsersPage() {
     <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-10">
       {/* Toast Alert */}
       {toastNotice && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 rounded-xl bg-[#284E3A] text-white px-4 py-3 shadow-lg border border-[#3b6d53] animate-in fade-in slide-in-from-top-3 duration-200">
-          <Check className="size-4 text-[#A8C5B3] shrink-0 stroke-[2.5]" />
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 rounded-xl bg-primary text-primary-foreground px-4 py-3 shadow-lg border border-primary/40 animate-in fade-in slide-in-from-top-3 duration-200">
+          <Check className="size-4 text-primary-foreground/90 shrink-0 stroke-[2.5]" />
           <span className="text-xs font-medium">{toastNotice}</span>
           <button
             onClick={() => setToastNotice(null)}
-            className="ml-2 text-white/70 hover:text-white cursor-pointer"
+            className="ml-2 text-primary-foreground/70 hover:text-primary-foreground cursor-pointer"
           >
             <X className="size-3.5" />
           </button>
@@ -300,8 +300,8 @@ export default function UsersPage() {
             <h1 className="text-2xl font-bold tracking-tight text-[#1C1917] dark:text-[#FAF5EE]">
               Users &amp; Staff
             </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EBF2EC] text-[#284E3A] dark:bg-emerald-950/40 dark:text-emerald-400 border border-[#D5E3D7] dark:border-emerald-900/60 text-[11px] font-semibold">
-              <ShieldCheck className="size-3 text-[#284E3A] dark:text-emerald-400" />
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[11px] font-semibold">
+              <ShieldCheck className="size-3 text-primary" />
               <span>Owner only</span>
             </span>
           </div>
@@ -320,7 +320,7 @@ export default function UsersPage() {
               setAddRole("Cashier / Waiter")
               setShowAddModal(true)
             }}
-            className="h-9.5 px-4 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold gap-1.5 shadow-xs cursor-pointer"
+            className="h-9.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-xs cursor-pointer"
           >
             <Plus className="size-4 stroke-[2.5]" />
             <span>Add staff</span>
@@ -339,15 +339,15 @@ export default function UsersPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Card 1: Team members (Dark Forest Green) */}
-        <div className="rounded-2xl bg-[#284E3A] text-white p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
-          <span className="text-xs text-[#A8C5B3] font-medium">Total Staff Enrolled</span>
+        {/* Card 1: Team members (Dynamic Theme Brand Color) */}
+        <div className="rounded-2xl bg-primary text-primary-foreground p-5 shadow-xs flex flex-col justify-between min-h-[115px]">
+          <span className="text-xs text-primary-foreground/80 font-medium">Total Staff Enrolled</span>
           <div className="my-1">
-            <span className="text-3xl lg:text-4xl font-bold tracking-tight text-white">
+            <span className="text-3xl lg:text-4xl font-bold tracking-tight text-primary-foreground">
               {totalStaff}
             </span>
           </div>
-          <span className="text-xs text-[#A8C5B3] truncate">
+          <span className="text-xs text-primary-foreground/80 truncate">
             {restaurantDisplayName}
           </span>
         </div>
@@ -425,7 +425,7 @@ export default function UsersPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search staff name..."
-                className="h-8.5 w-44 sm:w-56 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border pl-8.5 pr-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-[#C1440E] focus:ring-1 focus:ring-[#C1440E]/20"
+                className="h-8.5 w-44 sm:w-56 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border pl-8.5 pr-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
             </div>
 
@@ -434,7 +434,7 @@ export default function UsersPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="h-8.5 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-[#C1440E] cursor-pointer appearance-none"
+                className="h-8.5 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none"
               >
                 <option value="All">All roles</option>
                 <option value="Owner">Owner</option>
@@ -450,7 +450,7 @@ export default function UsersPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-8.5 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-[#C1440E] cursor-pointer appearance-none"
+                className="h-8.5 pl-3 pr-8 rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border text-xs font-semibold text-foreground focus:outline-none focus:border-primary cursor-pointer appearance-none"
               >
                 <option value="All">All status</option>
                 <option value="Active">Active</option>
@@ -568,7 +568,7 @@ export default function UsersPage() {
                   <td className="py-3.5 px-4">
                     {member.platformAccess === "App + Web" ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1C1917] dark:text-foreground">
-                        <Laptop className="size-3.5 text-[#284E3A] dark:text-emerald-400" />
+                        <Laptop className="size-3.5 text-primary" />
                         <span>App + Web</span>
                       </span>
                     ) : (
@@ -591,7 +591,7 @@ export default function UsersPage() {
                         {/* Quick action: Reset PIN */}
                         <button
                           onClick={() => setResetPinCandidate(member)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C1440E] hover:bg-[#C1440E]/10 transition-colors cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                         >
                           Reset PIN
                         </button>
@@ -712,7 +712,7 @@ export default function UsersPage() {
                 placeholder="e.g. Samuel Mugisha"
                 value={addName}
                 onChange={(e) => setAddName(e.target.value)}
-                className="mt-1 h-9.5 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20"
+                className="mt-1 h-9.5 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
               />
             </div>
 
@@ -723,7 +723,7 @@ export default function UsersPage() {
               <select
                 value={addRole}
                 onChange={(e) => setAddRole(e.target.value as StaffRole)}
-                className="mt-1 h-9.5 w-full rounded-xl border border-border bg-background px-2.5 text-xs font-medium text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20 cursor-pointer"
+                className="mt-1 h-9.5 w-full rounded-xl border border-border bg-background px-2.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
               >
                 <option value="Cashier / Waiter">Cashier / Waiter (POS App only)</option>
                 <option value="Kitchen / Stock">Kitchen / Stock (POS App only)</option>
@@ -739,7 +739,7 @@ export default function UsersPage() {
                   placeholder="+250 788 000 000"
                   value={addPhone}
                   onChange={(e) => setAddPhone(e.target.value)}
-                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20"
+                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
                 />
               </div>
 
@@ -750,7 +750,7 @@ export default function UsersPage() {
                   placeholder="staff@restaurant.rw"
                   value={addEmail}
                   onChange={(e) => setAddEmail(e.target.value)}
-                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-[#C1440E] focus:outline-none focus:ring-1 focus:ring-[#C1440E]/20"
+                  className="mt-1 h-9 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -758,9 +758,9 @@ export default function UsersPage() {
             {/* Access preview banner */}
             <div className="rounded-xl border border-[#EBE7DF] dark:border-border p-3 bg-[#FAF8F5] dark:bg-muted/30 flex items-center gap-3">
               {addRole === "Manager" ? (
-                <Laptop className="size-5 text-[#284E3A] shrink-0" />
+                <Laptop className="size-5 text-primary shrink-0" />
               ) : (
-                <Smartphone className="size-5 text-[#C1440E] shrink-0" />
+                <Smartphone className="size-5 text-primary shrink-0" />
               )}
               <div className="text-xs leading-relaxed">
                 <p className="font-bold text-foreground">
@@ -785,7 +785,7 @@ export default function UsersPage() {
               </Button>
               <Button
                 type="submit"
-                className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
+                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
               >
                 Generate PIN &amp; Add Staff
               </Button>
@@ -820,8 +820,8 @@ export default function UsersPage() {
 
           <div className="py-2 space-y-4">
             {/* PIN Card */}
-            <div className="rounded-2xl border-2 border-dashed border-[#C1440E]/40 bg-[#FAF8F5] dark:bg-muted/40 p-6 text-center space-y-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#C1440E]">
+            <div className="rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 dark:bg-muted/40 p-6 text-center space-y-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
                 4-Digit POS Shift PIN
               </span>
 
@@ -874,7 +874,7 @@ export default function UsersPage() {
           <DialogFooter>
             <Button
               onClick={() => setRevealedPinMember(null)}
-              className="w-full h-10 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
+              className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
             >
               I have shared / saved this PIN
             </Button>
@@ -904,7 +904,7 @@ export default function UsersPage() {
               <select
                 value={newSelectedRole}
                 onChange={(e) => setNewSelectedRole(e.target.value as StaffRole)}
-                className="h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground focus:border-[#C1440E] focus:outline-none cursor-pointer"
+                className="h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground focus:border-primary focus:outline-none cursor-pointer"
               >
                 <option value="Cashier / Waiter">Cashier / Waiter (POS App only)</option>
                 <option value="Kitchen / Stock">Kitchen / Stock (POS App only)</option>
@@ -943,7 +943,7 @@ export default function UsersPage() {
             </Button>
             <Button
               onClick={handleConfirmRoleChange}
-              className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
+              className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
             >
               Update Role
             </Button>
@@ -986,7 +986,7 @@ export default function UsersPage() {
             </Button>
             <Button
               onClick={handleConfirmResetPin}
-              className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
+              className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
             >
               Generate New PIN
             </Button>
@@ -1089,7 +1089,7 @@ export default function UsersPage() {
 
             <div className="rounded-xl border border-border p-3 space-y-1">
               <div className="flex items-center gap-1.5 font-bold text-foreground">
-                <Laptop className="size-3.5 text-[#284E3A]" />
+                <Laptop className="size-3.5 text-primary" />
                 <span>Manager</span>
               </div>
               <p className="text-muted-foreground text-[11px]">
@@ -1100,7 +1100,7 @@ export default function UsersPage() {
 
             <div className="rounded-xl border border-border p-3 space-y-1">
               <div className="flex items-center gap-1.5 font-bold text-foreground">
-                <Smartphone className="size-3.5 text-[#C1440E]" />
+                <Smartphone className="size-3.5 text-primary" />
                 <span>Cashier / Waiter &amp; Kitchen / Stock</span>
               </div>
               <p className="text-muted-foreground text-[11px]">
@@ -1113,7 +1113,7 @@ export default function UsersPage() {
           <DialogFooter>
             <Button
               onClick={() => setShowHelpModal(false)}
-              className="h-9 rounded-xl bg-[#C1440E] hover:bg-[#A8380A] text-white text-xs font-bold cursor-pointer"
+              className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
             >
               Got it
             </Button>

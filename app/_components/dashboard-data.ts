@@ -199,8 +199,8 @@ export const DEFAULT_CONSUMABLES_CATEGORIES: ConsumableCategory[] = [
     percentage: 44,
     amountRwf: 1399200,
     amountFormatted: "1,399,200 RWF",
-    dotColor: "bg-[#C85A24]",
-    barColor: "bg-[#C85A24]",
+    dotColor: "bg-primary",
+    barColor: "bg-primary",
   },
   {
     id: "cat-2",

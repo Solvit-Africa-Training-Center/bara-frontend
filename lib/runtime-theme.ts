@@ -192,10 +192,10 @@ export function applyRuntimeTheme(brandColor: string = "#C85A24"): void {
     const contrast = evaluateDaylightContrast(brandColor)
     const oklchPrimary = hexToOklch(brandColor)
 
-    // Set core CSS theme variables
-    root.style.setProperty("--primary", oklchPrimary)
-    root.style.setProperty("--sidebar-primary", oklchPrimary)
-    root.style.setProperty("--ring", oklchPrimary)
+    // Set core CSS theme variables to the exact brandColor chosen
+    root.style.setProperty("--primary", brandColor)
+    root.style.setProperty("--sidebar-primary", brandColor)
+    root.style.setProperty("--ring", brandColor)
     root.style.setProperty("--brand-accent", brandColor)
     root.style.setProperty("--brand-accent-rgb", `${r}, ${g}, ${b}`)
     root.style.setProperty(
@@ -203,14 +203,9 @@ export function applyRuntimeTheme(brandColor: string = "#C85A24"): void {
       `rgba(${r}, ${g}, ${b}, 0.2)`
     )
 
-    // Foreground contrast
-    if (contrast.recommendedForeground === "#ffffff") {
-      root.style.setProperty("--primary-foreground", "oklch(0.99 0 0)")
-      root.style.setProperty("--sidebar-primary-foreground", "oklch(0.99 0 0)")
-    } else {
-      root.style.setProperty("--primary-foreground", "oklch(0.2 0.02 50)")
-      root.style.setProperty("--sidebar-primary-foreground", "oklch(0.2 0.02 50)")
-    }
+    // Foreground text on brand color is always clean white (#ffffff)
+    root.style.setProperty("--primary-foreground", "#ffffff")
+    root.style.setProperty("--sidebar-primary-foreground", "#ffffff")
 
     // Dynamic brand multi-color gradient
     const gradient = `linear-gradient(to right, ${brandColor}, #E56A1C, #EA982C, #EBA529, #2F5233)`

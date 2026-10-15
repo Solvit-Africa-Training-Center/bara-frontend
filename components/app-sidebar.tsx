@@ -83,12 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           href="/"
           className="flex min-w-0 items-center gap-2 rounded-xl p-1 transition-colors hover:bg-sidebar-accent/60 group-data-[collapsible=icon]:justify-center"
         >
-          <BaraLogo
-            collapsed={isCollapsed}
-            subtitle={restaurant.name || undefined}
-            logoUrl={restaurant.logo}
-            accentColor={restaurant.brandColor}
-          />
+          <BaraLogo collapsed={isCollapsed} />
         </Link>
       </SidebarHeader>
 

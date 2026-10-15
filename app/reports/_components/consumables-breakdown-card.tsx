@@ -55,7 +55,7 @@ export function ConsumablesBreakdownCard({
               </span>
               <div className="flex-1 mx-3 h-2 rounded-full bg-[#EFE8DF] dark:bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#234D3A]"
+                  className="h-full rounded-full bg-primary"
                   style={{ width: `${item.percentage}%` }}
                 />
               </div>

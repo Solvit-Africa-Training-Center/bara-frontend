@@ -45,8 +45,8 @@ export function SettingsHeader({
 
       <div className="flex items-center gap-2.5 self-end sm:self-center">
         {/* Tier badge */}
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FDF0E9] px-3 py-1 text-xs font-semibold text-[#C05621] border border-[#F9DACB] dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 shadow-2xs">
-          <span className="size-1.5 rounded-full bg-[#C05621]" />
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20 shadow-2xs">
+          <span className="size-1.5 rounded-full bg-primary" />
           <span className="capitalize">{planName} Plan</span>
         </div>
 
@@ -55,7 +55,7 @@ export function SettingsHeader({
             size="sm"
             onClick={onSave}
             disabled={isSaving}
-            className="h-8.5 gap-1.5 rounded-xl bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-bold px-4 shadow-xs"
+            className="h-8.5 gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-4 shadow-xs"
           >
             <Save className="size-3.5" />
             <span>{isSaving ? "Saving..." : "Save Changes"}</span>

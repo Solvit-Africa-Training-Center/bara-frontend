@@ -60,7 +60,7 @@ export function DashboardOperationsBar({
             className={cn(
               "shrink-0 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
               selectedPeriod === "today"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -72,7 +72,7 @@ export function DashboardOperationsBar({
             className={cn(
               "shrink-0 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
               selectedPeriod === "yesterday"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -84,7 +84,7 @@ export function DashboardOperationsBar({
             className={cn(
               "shrink-0 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
               selectedPeriod === "week"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -96,7 +96,7 @@ export function DashboardOperationsBar({
             className={cn(
               "shrink-0 rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap",
               selectedPeriod === "custom"
-                ? "bg-[#C85A24] text-white shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -108,7 +108,7 @@ export function DashboardOperationsBar({
         <Button
           render={<Link href="/menu" />}
           size="sm"
-          className="h-8.5 gap-1.5 rounded-xl bg-[#234D3A] text-white hover:bg-[#1A3B2C] text-xs font-bold px-3.5 shadow-xs shrink-0"
+          className="h-8.5 gap-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold px-3.5 shadow-xs shrink-0"
         >
           <Plus className="size-3.5" />
           <span>New Menu</span>

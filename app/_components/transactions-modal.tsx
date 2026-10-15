@@ -75,7 +75,7 @@ export function TransactionsModal({
                 onClick={() => setFilterMethod(method)}
                 className={`shrink-0 rounded-lg px-2.5 py-1 font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                   filterMethod === method
-                    ? "bg-[#C85A24] text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
               >

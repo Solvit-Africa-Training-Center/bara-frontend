@@ -282,7 +282,7 @@ export function GlobalSearchDialog({
 
         {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3.5 border-b border-border/80 gap-3 bg-background">
-          <Search className="size-4.5 text-[#C1440E] shrink-0 stroke-[2.2]" />
+          <Search className="size-4.5 text-primary shrink-0 stroke-[2.2]" />
           <input
             type="text"
             autoFocus
@@ -332,7 +332,7 @@ export function GlobalSearchDialog({
                       className={cn(
                         "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs transition-colors cursor-pointer group",
                         isSelected
-                          ? "bg-[#C1440E]/10 text-foreground dark:bg-[#C1440E]/20"
+                          ? "bg-primary/10 text-foreground dark:bg-primary/20"
                           : "hover:bg-muted/60 text-foreground"
                       )}
                     >
@@ -341,7 +341,7 @@ export function GlobalSearchDialog({
                           className={cn(
                             "size-8 rounded-lg flex items-center justify-center shrink-0 border transition-colors",
                             isSelected
-                              ? "bg-[#C1440E] text-white border-[#C1440E]"
+                              ? "bg-primary text-primary-foreground border-primary"
                               : "bg-muted/70 text-muted-foreground border-border/80 group-hover:border-primary/40 group-hover:text-primary"
                           )}
                         >
@@ -375,7 +375,7 @@ export function GlobalSearchDialog({
                         className={cn(
                           "size-3.5 shrink-0 transition-transform",
                           isSelected
-                            ? "text-[#C1440E] translate-x-0.5"
+                            ? "text-primary translate-x-0.5"
                             : "text-muted-foreground/40"
                         )}
                       />

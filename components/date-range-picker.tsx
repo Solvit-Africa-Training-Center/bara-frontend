@@ -238,7 +238,7 @@ function DateRangePickerContent({
             onClick={handleApply}
             disabled={!isValidRange}
             className={cn(
-              "rounded-xl bg-[#C85A24] text-white hover:bg-[#B34D1C] font-bold text-xs px-5 shadow-xs cursor-pointer",
+              "rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs px-5 shadow-xs cursor-pointer",
               !isValidRange && "opacity-50 cursor-not-allowed"
             )}
           >

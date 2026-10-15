@@ -74,7 +74,7 @@ export function BaraLogo({
             <span className="text-sm font-black tracking-tight text-foreground truncate max-w-[150px]">
               {subtitle || "Bara"}
             </span>
-            <span className="text-[10px] font-bold tracking-wider text-primary uppercase">
+            <span className="text-[10px] font-bold tracking-wider text-[#C1440E] uppercase">
               Bara Workspace
             </span>
           </div>
@@ -115,7 +115,7 @@ export function BaraLogo({
           xmlns="http://www.w3.org/2000/svg"
           className="size-8 transition-transform hover:scale-105"
         >
-          <rect y="29.5" width="12" height="15" rx="4" fill={accentColor || "var(--brand-accent, #C1440E)"} />
+          <rect y="29.5" width="12" height="15" rx="4" fill="#C1440E" />
           <rect x="16" y="19" width="14" height="25" rx="4" fill="#E56A1C" />
           <rect x="34" y="10" width="14" height="35" rx="4" fill="#EA982C" />
           <rect x="52" width="14" height="45" rx="4" fill="#EBA529" />

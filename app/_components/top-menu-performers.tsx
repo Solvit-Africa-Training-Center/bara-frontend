@@ -67,7 +67,7 @@ export function TopMenuPerformers({ performers }: TopMenuPerformersProps) {
             </div>
 
             <div className="text-right shrink-0 pl-2">
-              <span className="text-sm font-extrabold text-[#C85A24] whitespace-nowrap">
+              <span className="text-sm font-extrabold text-primary whitespace-nowrap">
                 {item.revenueFormatted}
               </span>
               <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap">

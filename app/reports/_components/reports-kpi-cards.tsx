@@ -11,13 +11,13 @@ interface ReportsKPICardsProps {
 export function ReportsKPICards({ kpis }: ReportsKPICardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Card 1: Total sales (Deep forest green card) */}
-      <div className="rounded-2xl bg-[#234D3A] p-5 shadow-xs text-white flex flex-col justify-between">
-        <span className="text-xs font-medium text-[#A8C5B5]">Total sales</span>
-        <div className="mt-2 text-2xl font-bold tracking-tight text-white">
+      {/* Card 1: Total sales (Dynamic Theme Brand Color) */}
+      <div className="rounded-2xl bg-primary p-5 shadow-xs text-primary-foreground flex flex-col justify-between">
+        <span className="text-xs font-medium text-primary-foreground/80">Total sales</span>
+        <div className="mt-2 text-2xl font-bold tracking-tight text-primary-foreground">
           {kpis.totalSalesFormatted}
         </div>
-        <div className="mt-2 flex items-center gap-1 text-[11px] text-[#A8C5B5]">
+        <div className="mt-2 flex items-center gap-1 text-[11px] text-primary-foreground/80">
           <ArrowUp className="size-3 shrink-0" />
           <span>
             {kpis.salesGrowthPct.toFixed(1)}% vs {kpis.previousPeriodName} · {kpis.previousPeriodSalesFormatted}

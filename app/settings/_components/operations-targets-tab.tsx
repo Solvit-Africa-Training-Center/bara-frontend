@@ -107,7 +107,7 @@ export function OperationsTargetsTab({ onSavedNotice }: OperationsTargetsTabProp
         {/* AI Monitoring & Thresholds */}
         <Card className="rounded-[22px] border-border/70 bg-card p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2.5 border-b border-border/60 pb-3">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-[#C85A24]/10 text-[#C85A24]">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Sparkles className="size-4" />
             </div>
             <div>
@@ -134,7 +134,7 @@ export function OperationsTargetsTab({ onSavedNotice }: OperationsTargetsTabProp
                 type="checkbox"
                 checked={aiAlerts}
                 onChange={(e) => setAiAlerts(e.target.checked)}
-                className="mt-1 size-4 rounded accent-[#C85A24] cursor-pointer"
+                className="mt-1 size-4 rounded accent-primary cursor-pointer"
               />
             </div>
 
@@ -164,7 +164,7 @@ export function OperationsTargetsTab({ onSavedNotice }: OperationsTargetsTabProp
       <div className="flex justify-end">
         <Button
           type="submit"
-          className="h-9 gap-1.5 rounded-xl bg-[#C85A24] hover:bg-[#B34D1C] text-white text-xs font-bold px-5 shadow-xs"
+          className="h-9 gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 shadow-xs"
         >
           <Save className="size-3.5" />
           <span>Save Margin Targets</span>
