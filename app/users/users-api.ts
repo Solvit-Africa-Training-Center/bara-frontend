@@ -38,10 +38,20 @@ export interface UpdateStaffPayload {
 
 export const accountApi = {
   getStaff: async (options?: ApiRequestOptions): Promise<StaffApiItem[]> => {
-    return apiRequest<StaffApiItem[]>("/api/account/staff/", {
-      method: "GET",
-      ...options,
-    }, true)
+    const res = await apiRequest<
+      StaffApiItem[] | { results?: StaffApiItem[]; data?: StaffApiItem[] }
+    >(
+      "/api/account/staff/",
+      {
+        method: "GET",
+        ...options,
+      },
+      true
+    )
+    if (Array.isArray(res)) return res
+    if (res && Array.isArray(res.results)) return res.results
+    if (res && Array.isArray(res.data)) return res.data
+    return []
   },
 
   createStaff: async (
@@ -82,6 +92,16 @@ export const accountApi = {
     options?: ApiRequestOptions
   ): Promise<{ message: string }> => {
     return apiRequest<{ message: string }>(`/api/account/staff/${id}/deactivate/`, {
+      method: "POST",
+      ...options,
+    }, true)
+  },
+
+  resetPin: async (
+    id: string,
+    options?: ApiRequestOptions
+  ): Promise<StaffApiItem> => {
+    return apiRequest<StaffApiItem>(`/api/account/staff/${id}/reset-pin/`, {
       method: "POST",
       ...options,
     }, true)

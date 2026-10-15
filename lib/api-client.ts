@@ -142,7 +142,20 @@ export function extractApiErrorMessage(data: unknown, status?: number): string {
 
   if (typeof data === "string") {
     const trimmed = data.trim()
-    if (trimmed.startsWith("<") || trimmed.includes("Internal Server Error")) {
+    if (
+      trimmed.startsWith("<") ||
+      trimmed.includes("Django Version") ||
+      trimmed.includes("Internal Server Error") ||
+      trimmed.includes("Traceback") ||
+      trimmed.includes("Exception Value")
+    ) {
+      const match =
+        trimmed.match(/<pre class="exception_value">([^<]+)<\/pre>/i) ||
+        trimmed.match(/Exception Value:\s*([^\n<]+)/i) ||
+        trimmed.match(/<h1[^>]*>([^<]+)<\/h1>/i)
+      if (match && match[1]) {
+        return `Backend error: ${match[1].trim()}`
+      }
       return status === 500
         ? "The server encountered a temporary internal error. Please try again in a moment."
         : `Server returned an error (${status || "unknown"}).`
@@ -303,6 +316,7 @@ export async function apiRequest<T>(
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "Accept": "application/json",
     ...(fetchOptions.headers as Record<string, string>),
   }
 
@@ -351,6 +365,7 @@ export async function apiRequest<T>(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Accept": "application/json",
             },
             body: JSON.stringify({ refresh: tokens.refresh }),
             signal: refreshTimeout.signal,
@@ -359,7 +374,8 @@ export async function apiRequest<T>(
           refreshTimeout.cleanup()
         }
 
-        if (refreshRes.ok) {
+        const refreshCt = refreshRes.headers.get("content-type") || ""
+        if (refreshRes.ok && refreshCt.includes("application/json")) {
           const newTokens: AuthTokens = await refreshRes.json()
           saveStoredTokens(newTokens)
           headers["Authorization"] = `Bearer ${newTokens.access}`
@@ -395,7 +411,26 @@ export async function apiRequest<T>(
             throw new ApiError(msg, retryRes.status, retryErrorData)
           }
           if (retryRes.status === 204) return {} as T
-          return (await retryRes.json()) as T
+
+          const retryCt = retryRes.headers.get("content-type") || ""
+          if (retryCt.includes("application/json")) {
+            return (await retryRes.json()) as T
+          }
+
+          const rawRetryText = await retryRes.text()
+          if (rawRetryText.trim().startsWith("<") || rawRetryText.includes("<!DOCTYPE")) {
+            throw new ApiError(
+              "Backend server returned an HTML page instead of JSON. The backend or ngrok tunnel may be offline.",
+              retryRes.status,
+              rawRetryText
+            )
+          }
+
+          try {
+            return JSON.parse(rawRetryText) as T
+          } catch {
+            return rawRetryText as unknown as T
+          }
         } else {
           handleSessionExpired()
         }
@@ -429,7 +464,25 @@ export async function apiRequest<T>(
     return {} as T
   }
 
-  return (await response.json()) as T
+  const contentType = response.headers.get("content-type") || ""
+  if (contentType.includes("application/json")) {
+    return (await response.json()) as T
+  }
+
+  const rawText = await response.text()
+  if (rawText.trim().startsWith("<") || rawText.includes("<!DOCTYPE")) {
+    throw new ApiError(
+      "Backend server returned an HTML page instead of JSON. The backend or ngrok tunnel may be offline.",
+      response.status,
+      rawText
+    )
+  }
+
+  try {
+    return JSON.parse(rawText) as T
+  } catch {
+    return rawText as unknown as T
+  }
 }
 
 // ==========================================

@@ -11,6 +11,7 @@ import {
   Laptop,
   Lock,
   MoreHorizontal,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -52,6 +53,7 @@ import {
   PlatformAccess,
   loadStaffMembers,
   saveStaffMembers,
+  createOwnerMember,
   generateUniquePin,
   mapApiStaffToStaffMember,
   mapStaffRoleToApiRole,
@@ -105,12 +107,29 @@ export default function UsersPage() {
 
   // Modal 4: Reset PIN confirmation
   const [resetPinCandidate, setResetPinCandidate] = React.useState<StaffMember | null>(null)
+  const [isResettingPin, setIsResettingPin] = React.useState(false)
 
   // Modal 5: Deactivate / Reactivate
   const [statusToggleMember, setStatusToggleMember] = React.useState<StaffMember | null>(null)
 
   // Modal 6: Help / Role guide
   const [showHelpModal, setShowHelpModal] = React.useState(false)
+
+  // Modal 7: Edit staff member info
+  const [editMember, setEditMember] = React.useState<StaffMember | null>(null)
+  const [editName, setEditName] = React.useState("")
+  const [editEmail, setEditEmail] = React.useState("")
+  const [editPhone, setEditPhone] = React.useState("")
+  const [isSubmittingEdit, setIsSubmittingEdit] = React.useState(false)
+  const [editError, setEditError] = React.useState<string | null>(null)
+
+  const openEditModal = (member: StaffMember) => {
+    setEditMember(member)
+    setEditName(member.name)
+    setEditEmail(member.email || "")
+    setEditPhone(member.phone || "")
+    setEditError(null)
+  }
 
   // Fetch staff from backend (/api/account/staff/)
   const fetchBackendStaff = React.useCallback(async () => {
@@ -120,23 +139,18 @@ export default function UsersPage() {
     setIsLoadingStaff(true)
     try {
       const apiItems = await accountApi.getStaff()
-      if (Array.isArray(apiItems) && apiItems.length > 0) {
+      if (Array.isArray(apiItems)) {
         const mapped = apiItems.map(mapApiStaffToStaffMember)
 
         setStaffMembers((prev) => {
-          const currentOwner = prev.find((m) => m.isOwner) || {
-            id: authUser?.id || "staff-owner-1",
-            name: authUser?.name || "Aline Mukamana",
-            role: "Owner" as StaffRole,
-            status: "Active" as StaffStatus,
-            platformAccess: "App + Web" as PlatformAccess,
-            avatarInitials: authUser?.initials || "OW",
-            isOwner: true,
-            email: authUser?.email || "owner@restaurant.rw",
-            phone: authUser?.phone || "+250 788 100 001",
-            lastLogin: "Active now",
-            createdAt: new Date().toISOString(),
-          }
+          const currentOwner =
+            prev.find((m) => m.isOwner) ||
+            createOwnerMember({
+              id: authUser?.id,
+              name: authUser?.name,
+              email: authUser?.email,
+              phone: authUser?.phone,
+            })
           const nonOwners = mapped.filter((m) => m.id !== currentOwner.id)
           const combined = [currentOwner, ...nonOwners]
           saveStaffMembers(combined)
@@ -153,8 +167,10 @@ export default function UsersPage() {
   // Load from store on mount and sync with live backend
   React.useEffect(() => {
     const list = loadStaffMembers({
+      id: authUser?.id,
       name: authUser?.name,
       email: authUser?.email,
+      phone: authUser?.phone,
     })
     setStaffMembers(list)
     setIsInitialized(true)
@@ -231,13 +247,14 @@ export default function UsersPage() {
 
       try {
         const apiRole = mapStaffRoleToApiRole(addRole)
+        const trimmedEmail = addEmail.trim()
         const payload: CreateStaffPayload = {
           first_name: firstName,
-          last_name: lastName,
+          last_name: lastName || ".",
           phone_number: formattedPhone,
           role: apiRole,
-          email: addRole === "Manager" ? addEmail.trim() : null,
-          password: addRole === "Manager" ? addPassword : undefined,
+          ...(trimmedEmail ? { email: trimmedEmail.toLowerCase() } : {}),
+          ...(addRole === "Manager" && addPassword ? { password: addPassword } : {}),
         }
 
         const createdItem = await accountApi.createStaff(payload)
@@ -342,27 +359,128 @@ export default function UsersPage() {
     setRoleChangeMember(null)
   }
 
-  const handleConfirmResetPin = () => {
-    if (!resetPinCandidate) return
+  const handleConfirmResetPin = async () => {
+    if (!resetPinCandidate || isResettingPin) return
 
-    const otherPins = staffMembers
-      .filter((m) => m.id !== resetPinCandidate.id)
-      .map((m) => m.shiftPin)
-    const newUniquePin = generateUniquePin(otherPins)
+    setIsResettingPin(true)
+    try {
+      const tokens = getStoredTokens()
+      let newPin: string | undefined
+
+      // If backend tokens available and candidate has real backend ID, invoke /api/account/staff/{id}/reset-pin/
+      if (tokens?.access && !resetPinCandidate.id.startsWith("staff-")) {
+        try {
+          const res = await accountApi.resetPin(resetPinCandidate.id)
+          if (res.generated_pin) {
+            newPin = res.generated_pin
+          }
+        } catch (err: unknown) {
+          console.warn("Backend PIN reset failed, falling back to local:", err)
+        }
+      }
+
+      if (!newPin) {
+        const otherPins = staffMembers
+          .filter((m) => m.id !== resetPinCandidate.id)
+          .map((m) => m.shiftPin)
+        newPin = generateUniquePin(otherPins)
+      }
+
+      updateStaffList((prev) =>
+        prev.map((m) =>
+          m.id === resetPinCandidate.id
+            ? { ...m, shiftPin: newPin, failedPinAttempts: 0 }
+            : m
+        )
+      )
+
+      const memberCopy = { ...resetPinCandidate, shiftPin: newPin }
+      setResetPinCandidate(null)
+      setHasCopiedPin(false)
+      setRevealedPinMember({ member: memberCopy, pin: newPin, isReset: true })
+      showToast(`Generated a new PIN for ${memberCopy.name}.`)
+    } finally {
+      setIsResettingPin(false)
+    }
+  }
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editMember) return
+    if (!editName.trim()) {
+      setEditError("Staff name cannot be empty.")
+      return
+    }
+
+    const nameParts = editName.trim().split(/\s+/)
+    const firstName = nameParts[0]
+    const lastName = nameParts.slice(1).join(" ") || "."
+    const formattedPhone = normalizePhoneNumber(editPhone)
+    const trimmedEmail = editEmail.trim()
+
+    if (editMember.role === "Manager" && !trimmedEmail) {
+      setEditError("Managers require an email address.")
+      return
+    }
+
+    setIsSubmittingEdit(true)
+    setEditError(null)
+
+    const tokens = getStoredTokens()
+    const isBackendId = tokens?.access && !editMember.id.startsWith("staff-") && !editMember.isOwner
+
+    if (isBackendId) {
+      try {
+        const payload = {
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: formattedPhone,
+          email: trimmedEmail ? trimmedEmail.toLowerCase() : "",
+        }
+        const updatedApiItem = await accountApi.updateStaff(editMember.id, payload)
+        const updatedMember = mapApiStaffToStaffMember(updatedApiItem)
+        updateStaffList((prev) =>
+          prev.map((m) => (m.id === editMember.id ? updatedMember : m))
+        )
+        setEditMember(null)
+        showToast(`Staff information for ${updatedMember.name} updated!`)
+        return
+      } catch (err: unknown) {
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to update staff member."
+        setEditError(errorMsg)
+        showToast(errorMsg)
+        return
+      } finally {
+        setIsSubmittingEdit(false)
+      }
+    }
+
+    // Local / Offline fallback update (or Owner profile update)
+    const initials =
+      editName
+        .trim()
+        .split(" ")
+        .map((p) => p[0])
+        .filter(Boolean)
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "ST"
+
+    const updatedLocally: StaffMember = {
+      ...editMember,
+      name: editName.trim(),
+      email: trimmedEmail || undefined,
+      phone: formattedPhone,
+      avatarInitials: initials,
+    }
 
     updateStaffList((prev) =>
-      prev.map((m) =>
-        m.id === resetPinCandidate.id
-          ? { ...m, shiftPin: newUniquePin, failedPinAttempts: 0 }
-          : m
-      )
+      prev.map((m) => (m.id === editMember.id ? updatedLocally : m))
     )
-
-    const memberCopy = { ...resetPinCandidate, shiftPin: newUniquePin }
-    setResetPinCandidate(null)
-    setHasCopiedPin(false)
-    setRevealedPinMember({ member: memberCopy, pin: newUniquePin, isReset: true })
-    showToast(`Generated a new PIN for ${memberCopy.name}.`)
+    setEditMember(null)
+    setIsSubmittingEdit(false)
+    showToast(`Staff information for ${updatedLocally.name} updated!`)
   }
 
   const handleConfirmToggleStatus = async () => {
@@ -737,10 +855,20 @@ export default function UsersPage() {
                   {/* Actions Column */}
                   <td className="py-3.5 pr-5 text-right">
                     {member.isOwner ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-[#78716C] font-medium justify-end">
-                        <Lock className="size-3.5 text-[#A8A29E]" />
-                        <span>Protected</span>
-                      </span>
+                      <div className="inline-flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEditModal(member)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer inline-flex items-center gap-1"
+                          title="Edit your contact info"
+                        >
+                          <Pencil className="size-3 text-primary" />
+                          <span>Edit info</span>
+                        </button>
+                        <span className="inline-flex items-center gap-1 text-xs text-[#78716C] font-medium justify-end">
+                          <Lock className="size-3.5 text-[#A8A29E]" />
+                          <span>Protected</span>
+                        </span>
+                      </div>
                     ) : (
                       <div className="inline-flex items-center justify-end gap-1.5">
                         {/* Quick action: Reset PIN */}
@@ -763,6 +891,14 @@ export default function UsersPage() {
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                            <DropdownMenuItem
+                              onClick={() => openEditModal(member)}
+                              className="gap-2 cursor-pointer text-xs"
+                            >
+                              <Pencil className="size-3.5 text-muted-foreground" />
+                              <span>Edit info</span>
+                            </DropdownMenuItem>
+
                             <DropdownMenuItem
                               onClick={() => {
                                 setRoleChangeMember(member)
@@ -1153,7 +1289,7 @@ export default function UsersPage() {
       <Dialog
         open={Boolean(resetPinCandidate)}
         onOpenChange={(open) => {
-          if (!open) setResetPinCandidate(null)
+          if (!open && !isResettingPin) setResetPinCandidate(null)
         }}
       >
         <DialogContent className="sm:max-w-md rounded-2xl">
@@ -1177,6 +1313,7 @@ export default function UsersPage() {
           <DialogFooter>
             <Button
               variant="outline"
+              disabled={isResettingPin}
               onClick={() => setResetPinCandidate(null)}
               className="h-9 rounded-xl text-xs cursor-pointer"
             >
@@ -1184,9 +1321,17 @@ export default function UsersPage() {
             </Button>
             <Button
               onClick={handleConfirmResetPin}
-              className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
+              disabled={isResettingPin}
+              className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer disabled:opacity-50"
             >
-              Generate New PIN
+              {isResettingPin ? (
+                <span className="flex items-center gap-1.5">
+                  <RefreshCw className="size-3.5 animate-spin" />
+                  <span>Generating PIN...</span>
+                </span>
+              ) : (
+                "Generate New PIN"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1316,6 +1461,112 @@ export default function UsersPage() {
               Got it
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 7: Edit Staff Member Info */}
+      <Dialog open={!!editMember} onOpenChange={(open) => !open && setEditMember(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Pencil className="size-4 text-primary" />
+              <span>Edit Staff Member</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Update personal details and contact information for {editMember?.name}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveEdit} className="space-y-4 mt-2">
+            {editError && (
+              <div className="rounded-xl border border-rose-200/60 bg-rose-50/70 dark:bg-rose-950/30 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+                {editError}
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-bold text-foreground">
+                Staff Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Samuel Mugisha"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="mt-1 h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-foreground">
+                Phone (MoMo / WhatsApp) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                required
+                placeholder="e.g. 0788 123 456"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="mt-1 h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">
+                  Email {editMember?.role === "Manager" ? <span className="text-red-500">*</span> : "(Optional)"}
+                </label>
+                {editMember?.role !== "Manager" && (
+                  <span className="text-[11px] text-muted-foreground">Optional for POS staff</span>
+                )}
+              </div>
+              <input
+                type="email"
+                required={editMember?.role === "Manager"}
+                placeholder="name@restaurant.rw"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="mt-1 h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            {/* Read-only role information card */}
+            <div className="rounded-xl bg-[#FAF8F5] dark:bg-muted/20 border border-[#EBE7DF] dark:border-border p-3 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-semibold text-muted-foreground block">Assigned Role</span>
+                <span className="text-xs font-bold text-foreground">{editMember?.role}</span>
+              </div>
+              <span className="text-[11px] text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                {editMember?.platformAccess}
+              </span>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditMember(null)}
+                className="h-9 rounded-xl text-xs cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmittingEdit}
+                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer disabled:opacity-50"
+              >
+                {isSubmittingEdit ? (
+                  <span className="flex items-center gap-1.5">
+                    <RefreshCw className="size-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </span>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

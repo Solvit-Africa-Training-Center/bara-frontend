@@ -57,7 +57,6 @@ export const authApi = {
     const res = await apiRequest<LoginResponse>("/api/auth/login/", {
       method: "POST",
       body: JSON.stringify(data),
-      headers: { "ngrok-skip-browser-warning": "69420" },
     })
     if (res.access && res.refresh) {
       saveStoredTokens({ access: res.access, refresh: res.refresh })
@@ -69,7 +68,6 @@ export const authApi = {
     const res = await apiRequest<LoginResponse>("/api/auth/pin-login/", {
       method: "POST",
       body: JSON.stringify({ pin }),
-      headers: { "ngrok-skip-browser-warning": "69420" },
     })
     if (res.access && res.refresh) {
       saveStoredTokens({ access: res.access, refresh: res.refresh })
