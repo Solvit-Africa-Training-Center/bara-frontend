@@ -58,8 +58,8 @@ export function mapApiStaffToStaffMember(item: StaffApiItem): StaffMember {
     isOwner: false,
     email: item.email || undefined,
     phone: item.phone_number,
-    shiftPin: item.generated_pin || undefined,
-    lastLogin: "Active on till",
+    shiftPin: role === "Manager" ? undefined : item.generated_pin || undefined,
+    lastLogin: role === "Manager" ? "Active on web" : "Active on till",
     failedPinAttempts: 0,
     createdAt: item.created_at,
   }
@@ -150,9 +150,19 @@ export function loadStaffMembers(currentOwner?: {
   name?: string
   email?: string
   phone?: string
+  isOwner?: boolean
+  role?: string
 }): StaffMember[] {
+  const isExplicitNonOwner =
+    currentOwner?.isOwner === false ||
+    currentOwner?.role === "Manager" ||
+    currentOwner?.role === "manager"
+
   if (typeof window === "undefined") {
-    return currentOwner?.name ? [createOwnerMember(currentOwner)] : []
+    if (!isExplicitNonOwner && currentOwner?.name) {
+      return [createOwnerMember(currentOwner)]
+    }
+    return []
   }
 
   try {
@@ -163,11 +173,31 @@ export function loadStaffMembers(currentOwner?: {
     list = list.filter((m) => !isDemoStaff(m))
 
     // Handle Owner
-    const ownerMember = createOwnerMember(currentOwner)
     const existingOwnerIndex = list.findIndex((m) => m.isOwner)
 
     if (existingOwnerIndex !== -1) {
-      if (currentOwner?.name) {
+      // If current user is explicitly a hired manager / non-owner, NEVER overwrite the owner slot!
+      if (isExplicitNonOwner) {
+        // If the owner slot was previously corrupted by this non-owner's record, restore or clean it
+        if (
+          currentOwner?.id &&
+          (list[existingOwnerIndex].id === currentOwner.id ||
+            (currentOwner.email && list[existingOwnerIndex].email === currentOwner.email))
+        ) {
+          let cachedOwner: StaffMember | null = null
+          try {
+            const rawOwner = localStorage.getItem("bara:restaurant_owner_record")
+            if (rawOwner) {
+              const parsed = JSON.parse(rawOwner)
+              if (parsed?.id !== currentOwner.id) cachedOwner = parsed
+            }
+          } catch {}
+          list[existingOwnerIndex] =
+            cachedOwner || createOwnerMember({ name: "Restaurant Owner" })
+        }
+      } else if (currentOwner?.name) {
+        // Current user is the legitimate Owner
+        const ownerMember = createOwnerMember(currentOwner)
         list[existingOwnerIndex] = {
           ...list[existingOwnerIndex],
           id: currentOwner.id || list[existingOwnerIndex].id,
@@ -176,15 +206,42 @@ export function loadStaffMembers(currentOwner?: {
           phone: currentOwner.phone || list[existingOwnerIndex].phone,
           avatarInitials: ownerMember.avatarInitials,
         }
+        try {
+          localStorage.setItem(
+            "bara:restaurant_owner_record",
+            JSON.stringify(list[existingOwnerIndex])
+          )
+        } catch {}
       }
-    } else if (currentOwner?.name) {
-      list.unshift(ownerMember)
+    } else {
+      // No existing owner in the list
+      if (!isExplicitNonOwner && currentOwner?.name) {
+        const ownerMember = createOwnerMember(currentOwner)
+        list.unshift(ownerMember)
+        try {
+          localStorage.setItem("bara:restaurant_owner_record", JSON.stringify(ownerMember))
+        } catch {}
+      } else {
+        // Non-owner or no user provided: restore from cached owner or fallback
+        let cachedOwner: StaffMember | null = null
+        try {
+          const rawOwner = localStorage.getItem("bara:restaurant_owner_record")
+          if (rawOwner) {
+            const parsed = JSON.parse(rawOwner)
+            if (!currentOwner?.id || parsed?.id !== currentOwner.id) cachedOwner = parsed
+          }
+        } catch {}
+        list.unshift(cachedOwner || createOwnerMember({ name: "Restaurant Owner" }))
+      }
     }
 
     saveStaffMembers(list)
     return list
   } catch {
-    return currentOwner?.name ? [createOwnerMember(currentOwner)] : []
+    if (!isExplicitNonOwner && currentOwner?.name) {
+      return [createOwnerMember(currentOwner)]
+    }
+    return []
   }
 }
 

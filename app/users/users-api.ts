@@ -106,6 +106,35 @@ export const accountApi = {
       ...options,
     }, true)
   },
+
+  resetPassword: async (
+    id: string,
+    newPassword: string,
+    options?: ApiRequestOptions
+  ): Promise<{ message: string }> => {
+    try {
+      return await apiRequest<{ message: string }>(
+        `/api/account/staff/${id}/reset-password/`,
+        {
+          method: "POST",
+          body: JSON.stringify({ password: newPassword }),
+          ...options,
+        },
+        true
+      )
+    } catch {
+      await apiRequest<StaffApiItem>(
+        `/api/account/staff/${id}/`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ password: newPassword }),
+          ...options,
+        },
+        true
+      )
+      return { message: "Password updated successfully" }
+    }
+  },
 }
 
 export const usersApi = accountApi
