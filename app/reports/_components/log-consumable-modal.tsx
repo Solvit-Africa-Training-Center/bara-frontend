@@ -16,7 +16,7 @@ import {
   consumablePurchasesApi,
   Consumable,
   ConsumablePurchaseCreate,
-} from "@/lib/api-client"
+} from "../reports-api"
 
 interface LogConsumableModalProps {
   isOpen: boolean

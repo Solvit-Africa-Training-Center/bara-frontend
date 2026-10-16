@@ -1,18 +1,11 @@
 import type { NextConfig } from "next"
 
 const BACKEND_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "https://bara-backend-5g84.onrender.com"
+  process.env.NEXT_PUBLIC_API_URL || "https://shirt-shady-daisy.ngrok-free.dev"
 ).replace(/\/+$/, "")
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${BACKEND_URL}/api/:path*`,
-      },
-    ]
-  },
+  skipTrailingSlashRedirect: true,
   async redirects() {
     return [
       {

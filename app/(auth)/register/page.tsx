@@ -216,6 +216,7 @@ export default function RegisterPage() {
                 id="email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="owner@restaurant.rw"
@@ -241,6 +242,7 @@ export default function RegisterPage() {
                 type="password"
                 required
                 minLength={8}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"

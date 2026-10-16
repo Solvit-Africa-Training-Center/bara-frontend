@@ -23,7 +23,7 @@ import {
   subscriptionApi,
   paymentConfirmationsApi,
   PaymentConfirmation,
-} from "@/lib/api-client"
+} from "../settings-api"
 import { SubscriptionPlanItem } from "./types"
 import { PaymentConfirmationModal } from "./payment-confirmation-modal"
 

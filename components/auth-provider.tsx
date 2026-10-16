@@ -65,7 +65,7 @@ function getPersistedUser(): AuthUser | null {
     }
 
     const stored = getCookie(USER_COOKIE_KEY)
-    if (stored) {
+    if (stored && stored.trim() !== "") {
       return JSON.parse(stored)
     }
 

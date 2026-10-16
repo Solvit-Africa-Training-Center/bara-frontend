@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { paymentConfirmationsApi, PaymentConfirmationCreate } from "@/lib/api-client"
+import { paymentConfirmationsApi, PaymentConfirmationCreate } from "../settings-api"
 
 interface PaymentConfirmationModalProps {
   isOpen: boolean

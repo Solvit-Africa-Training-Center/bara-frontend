@@ -11,6 +11,7 @@ import {
   Laptop,
   Lock,
   MoreHorizontal,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -43,6 +44,8 @@ import {
 import { cn } from "@/lib/utils"
 import { useRestaurant } from "@/components/restaurant-provider"
 import { useAuth } from "@/components/auth-provider"
+import { accountApi, type CreateStaffPayload } from "./users-api"
+import { getStoredTokens } from "@/lib/api-client"
 import {
   StaffMember,
   StaffRole,
@@ -50,8 +53,20 @@ import {
   PlatformAccess,
   loadStaffMembers,
   saveStaffMembers,
+  createOwnerMember,
   generateUniquePin,
+  mapApiStaffToStaffMember,
+  mapStaffRoleToApiRole,
 } from "@/lib/staff-store"
+
+function normalizePhoneNumber(phone: string): string {
+  const digits = phone.replace(/[^\d+]/g, "")
+  if (digits.startsWith("+")) return digits
+  if (digits.startsWith("250")) return `+${digits}`
+  if (digits.startsWith("0")) return `+250${digits.slice(1)}`
+  if (digits.length >= 9) return `+250${digits}`
+  return digits ? `+250${digits}` : "+250788000000"
+}
 
 export default function UsersPage() {
   const { restaurant } = useRestaurant()
@@ -60,6 +75,8 @@ export default function UsersPage() {
   // Staff members state with local persistence
   const [staffMembers, setStaffMembers] = React.useState<StaffMember[]>([])
   const [isInitialized, setIsInitialized] = React.useState(false)
+  const [isLoadingStaff, setIsLoadingStaff] = React.useState(false)
+  const [isSubmittingStaff, setIsSubmittingStaff] = React.useState(false)
 
   // Filters & search
   const [searchQuery, setSearchQuery] = React.useState("")
@@ -73,6 +90,8 @@ export default function UsersPage() {
   const [addRole, setAddRole] = React.useState<StaffRole>("Cashier / Waiter")
   const [addEmail, setAddEmail] = React.useState("")
   const [addPhone, setAddPhone] = React.useState("")
+  const [addPassword, setAddPassword] = React.useState("")
+  const [addError, setAddError] = React.useState<string | null>(null)
 
   // Modal 2: PIN Generated - Shown Once
   const [revealedPinMember, setRevealedPinMember] = React.useState<{
@@ -88,6 +107,7 @@ export default function UsersPage() {
 
   // Modal 4: Reset PIN confirmation
   const [resetPinCandidate, setResetPinCandidate] = React.useState<StaffMember | null>(null)
+  const [isResettingPin, setIsResettingPin] = React.useState(false)
 
   // Modal 5: Deactivate / Reactivate
   const [statusToggleMember, setStatusToggleMember] = React.useState<StaffMember | null>(null)
@@ -95,15 +115,68 @@ export default function UsersPage() {
   // Modal 6: Help / Role guide
   const [showHelpModal, setShowHelpModal] = React.useState(false)
 
-  // Load from store on mount
+  // Modal 7: Edit staff member info
+  const [editMember, setEditMember] = React.useState<StaffMember | null>(null)
+  const [editName, setEditName] = React.useState("")
+  const [editEmail, setEditEmail] = React.useState("")
+  const [editPhone, setEditPhone] = React.useState("")
+  const [isSubmittingEdit, setIsSubmittingEdit] = React.useState(false)
+  const [editError, setEditError] = React.useState<string | null>(null)
+
+  const openEditModal = (member: StaffMember) => {
+    setEditMember(member)
+    setEditName(member.name)
+    setEditEmail(member.email || "")
+    setEditPhone(member.phone || "")
+    setEditError(null)
+  }
+
+  // Fetch staff from backend (/api/account/staff/)
+  const fetchBackendStaff = React.useCallback(async () => {
+    const tokens = getStoredTokens()
+    if (!tokens?.access) return
+
+    setIsLoadingStaff(true)
+    try {
+      const apiItems = await accountApi.getStaff()
+      if (Array.isArray(apiItems)) {
+        const mapped = apiItems.map(mapApiStaffToStaffMember)
+
+        setStaffMembers((prev) => {
+          const currentOwner =
+            prev.find((m) => m.isOwner) ||
+            createOwnerMember({
+              id: authUser?.id,
+              name: authUser?.name,
+              email: authUser?.email,
+              phone: authUser?.phone,
+            })
+          const nonOwners = mapped.filter((m) => m.id !== currentOwner.id)
+          const combined = [currentOwner, ...nonOwners]
+          saveStaffMembers(combined)
+          return combined
+        })
+      }
+    } catch (err: unknown) {
+      console.warn("Could not fetch staff from backend, keeping cached records:", err)
+    } finally {
+      setIsLoadingStaff(false)
+    }
+  }, [authUser])
+
+  // Load from store on mount and sync with live backend
   React.useEffect(() => {
     const list = loadStaffMembers({
+      id: authUser?.id,
       name: authUser?.name,
       email: authUser?.email,
+      phone: authUser?.phone,
     })
     setStaffMembers(list)
     setIsInitialized(true)
-  }, [authUser])
+
+    fetchBackendStaff()
+  }, [authUser, fetchBackendStaff])
 
   // Sync to store on change
   const updateStaffList = (updater: (prev: StaffMember[]) => StaffMember[]) => {
@@ -146,21 +219,94 @@ export default function UsersPage() {
   }, [staffMembers, searchQuery, roleFilter, statusFilter])
 
   // Handlers
-  const handleAddStaffSubmit = (e: React.FormEvent) => {
+  const handleAddStaffSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!addName.trim()) return
 
+    const nameParts = addName.trim().split(/\s+/)
+    const firstName = nameParts[0]
+    const lastName = nameParts.slice(1).join(" ") || "."
+    const formattedPhone = normalizePhoneNumber(addPhone)
+
+    if (addRole === "Manager" && !addEmail.trim()) {
+      setAddError("Managers require an email address.")
+      return
+    }
+
+    if (addRole === "Manager" && (!addPassword || addPassword.length < 8)) {
+      setAddError("Manager password must be at least 8 characters.")
+      return
+    }
+
+    const tokens = getStoredTokens()
+
+    // 1. If backend tokens available, invoke live /api/account/staff/
+    if (tokens?.access) {
+      setIsSubmittingStaff(true)
+      setAddError(null)
+
+      try {
+        const apiRole = mapStaffRoleToApiRole(addRole)
+        const trimmedEmail = addEmail.trim()
+        const payload: CreateStaffPayload = {
+          first_name: firstName,
+          last_name: lastName || ".",
+          phone_number: formattedPhone,
+          role: apiRole,
+          ...(trimmedEmail ? { email: trimmedEmail.toLowerCase() } : {}),
+          ...(addRole === "Manager" && addPassword ? { password: addPassword } : {}),
+        }
+
+        const createdItem = await accountApi.createStaff(payload)
+        const newStaff = mapApiStaffToStaffMember(createdItem)
+
+        updateStaffList((prev) => [...prev, newStaff])
+        setShowAddModal(false)
+        setAddName("")
+        setAddEmail("")
+        setAddPhone("")
+        setAddPassword("")
+        setAddRole("Cashier / Waiter")
+        setAddError(null)
+
+        if (createdItem.generated_pin) {
+          setHasCopiedPin(false)
+          setRevealedPinMember({
+            member: newStaff,
+            pin: createdItem.generated_pin,
+            isReset: false,
+          })
+        }
+        showToast(
+          addRole === "Manager"
+            ? `Manager account ${newStaff.name} created! They can log in with their email & password.`
+            : `Staff member ${newStaff.name} created!`
+        )
+        return
+      } catch (err: unknown) {
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to create staff member."
+        setAddError(errorMsg)
+        showToast(errorMsg)
+        return
+      } finally {
+        setIsSubmittingStaff(false)
+      }
+    }
+
+    // 2. Offline fallback mode
     const existingPins = staffMembers.map((m) => m.shiftPin)
     const generatedPin = generateUniquePin(existingPins)
 
     const platformAccess: PlatformAccess = addRole === "Manager" ? "App + Web" : "App only"
-    const initials = addName
-      .trim()
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "ST"
+    const initials =
+      addName
+        .trim()
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "ST"
 
     const newStaff: StaffMember = {
       id: `staff-${Date.now()}`,
@@ -170,7 +316,7 @@ export default function UsersPage() {
       platformAccess,
       avatarInitials: initials,
       email: addEmail.trim() || undefined,
-      phone: addPhone.trim() || undefined,
+      phone: formattedPhone,
       shiftPin: generatedPin,
       lastLogin: "Never logged in",
       failedPinAttempts: 0,
@@ -182,12 +328,15 @@ export default function UsersPage() {
     setAddName("")
     setAddEmail("")
     setAddPhone("")
+    setAddPassword("")
     setAddRole("Cashier / Waiter")
+    setAddError(null)
 
-    // Show the PIN once
-    setHasCopiedPin(false)
-    setRevealedPinMember({ member: newStaff, pin: generatedPin, isReset: false })
-    showToast(`Staff member ${newStaff.name} created!`)
+    if (addRole !== "Manager") {
+      setHasCopiedPin(false)
+      setRevealedPinMember({ member: newStaff, pin: generatedPin, isReset: false })
+    }
+    showToast(`Staff member ${newStaff.name} created (offline mode)!`)
   }
 
   const handleConfirmRoleChange = () => {
@@ -210,30 +359,131 @@ export default function UsersPage() {
     setRoleChangeMember(null)
   }
 
-  const handleConfirmResetPin = () => {
-    if (!resetPinCandidate) return
+  const handleConfirmResetPin = async () => {
+    if (!resetPinCandidate || isResettingPin) return
 
-    const otherPins = staffMembers
-      .filter((m) => m.id !== resetPinCandidate.id)
-      .map((m) => m.shiftPin)
-    const newUniquePin = generateUniquePin(otherPins)
+    setIsResettingPin(true)
+    try {
+      const tokens = getStoredTokens()
+      let newPin: string | undefined
 
-    updateStaffList((prev) =>
-      prev.map((m) =>
-        m.id === resetPinCandidate.id
-          ? { ...m, shiftPin: newUniquePin, failedPinAttempts: 0 }
-          : m
+      // If backend tokens available and candidate has real backend ID, invoke /api/account/staff/{id}/reset-pin/
+      if (tokens?.access && !resetPinCandidate.id.startsWith("staff-")) {
+        try {
+          const res = await accountApi.resetPin(resetPinCandidate.id)
+          if (res.generated_pin) {
+            newPin = res.generated_pin
+          }
+        } catch (err: unknown) {
+          console.warn("Backend PIN reset failed, falling back to local:", err)
+        }
+      }
+
+      if (!newPin) {
+        const otherPins = staffMembers
+          .filter((m) => m.id !== resetPinCandidate.id)
+          .map((m) => m.shiftPin)
+        newPin = generateUniquePin(otherPins)
+      }
+
+      updateStaffList((prev) =>
+        prev.map((m) =>
+          m.id === resetPinCandidate.id
+            ? { ...m, shiftPin: newPin, failedPinAttempts: 0 }
+            : m
+        )
       )
-    )
 
-    const memberCopy = { ...resetPinCandidate, shiftPin: newUniquePin }
-    setResetPinCandidate(null)
-    setHasCopiedPin(false)
-    setRevealedPinMember({ member: memberCopy, pin: newUniquePin, isReset: true })
-    showToast(`Generated a new PIN for ${memberCopy.name}.`)
+      const memberCopy = { ...resetPinCandidate, shiftPin: newPin }
+      setResetPinCandidate(null)
+      setHasCopiedPin(false)
+      setRevealedPinMember({ member: memberCopy, pin: newPin, isReset: true })
+      showToast(`Generated a new PIN for ${memberCopy.name}.`)
+    } finally {
+      setIsResettingPin(false)
+    }
   }
 
-  const handleConfirmToggleStatus = () => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editMember) return
+    if (!editName.trim()) {
+      setEditError("Staff name cannot be empty.")
+      return
+    }
+
+    const nameParts = editName.trim().split(/\s+/)
+    const firstName = nameParts[0]
+    const lastName = nameParts.slice(1).join(" ") || "."
+    const formattedPhone = normalizePhoneNumber(editPhone)
+    const trimmedEmail = editEmail.trim()
+
+    if (editMember.role === "Manager" && !trimmedEmail) {
+      setEditError("Managers require an email address.")
+      return
+    }
+
+    setIsSubmittingEdit(true)
+    setEditError(null)
+
+    const tokens = getStoredTokens()
+    const isBackendId = tokens?.access && !editMember.id.startsWith("staff-") && !editMember.isOwner
+
+    if (isBackendId) {
+      try {
+        const payload = {
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: formattedPhone,
+          email: trimmedEmail ? trimmedEmail.toLowerCase() : "",
+        }
+        const updatedApiItem = await accountApi.updateStaff(editMember.id, payload)
+        const updatedMember = mapApiStaffToStaffMember(updatedApiItem)
+        updateStaffList((prev) =>
+          prev.map((m) => (m.id === editMember.id ? updatedMember : m))
+        )
+        setEditMember(null)
+        showToast(`Staff information for ${updatedMember.name} updated!`)
+        return
+      } catch (err: unknown) {
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to update staff member."
+        setEditError(errorMsg)
+        showToast(errorMsg)
+        return
+      } finally {
+        setIsSubmittingEdit(false)
+      }
+    }
+
+    // Local / Offline fallback update (or Owner profile update)
+    const initials =
+      editName
+        .trim()
+        .split(" ")
+        .map((p) => p[0])
+        .filter(Boolean)
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "ST"
+
+    const updatedLocally: StaffMember = {
+      ...editMember,
+      name: editName.trim(),
+      email: trimmedEmail || undefined,
+      phone: formattedPhone,
+      avatarInitials: initials,
+    }
+
+    updateStaffList((prev) =>
+      prev.map((m) => (m.id === editMember.id ? updatedLocally : m))
+    )
+    setEditMember(null)
+    setIsSubmittingEdit(false)
+    showToast(`Staff information for ${updatedLocally.name} updated!`)
+  }
+
+  const handleConfirmToggleStatus = async () => {
     if (!statusToggleMember) return
     if (statusToggleMember.isOwner) {
       showToast("The restaurant must always have at least one active Owner.")
@@ -243,6 +493,16 @@ export default function UsersPage() {
 
     const isCurrentlyActive = statusToggleMember.status === "Active"
     const nextStatus: StaffStatus = isCurrentlyActive ? "Deactivated" : "Active"
+
+    // If deactivating on live backend (/api/account/staff/{id}/deactivate/)
+    const tokens = getStoredTokens()
+    if (isCurrentlyActive && tokens?.access && !statusToggleMember.id.startsWith("staff-")) {
+      try {
+        await accountApi.deactivateStaff(statusToggleMember.id)
+      } catch (err: unknown) {
+        console.warn("Backend deactivation failed, applying locally:", err)
+      }
+    }
 
     updateStaffList((prev) =>
       prev.map((m) =>
@@ -311,13 +571,26 @@ export default function UsersPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          {/* Refresh button */}
+          <button
+            type="button"
+            onClick={() => fetchBackendStaff()}
+            disabled={isLoadingStaff}
+            className="size-9.5 rounded-xl border border-[#E5E0D5] dark:border-border/60 bg-white dark:bg-card flex items-center justify-center text-[#78716C] hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer disabled:opacity-50"
+            title="Refresh staff list from cloud backend"
+          >
+            <RefreshCw className={cn("size-4", isLoadingStaff && "animate-spin text-primary")} />
+          </button>
+
           {/* Add Staff Button */}
           <Button
             onClick={() => {
               setAddName("")
               setAddEmail("")
               setAddPhone("")
+              setAddPassword("")
               setAddRole("Cashier / Waiter")
+              setAddError(null)
               setShowAddModal(true)
             }}
             className="h-9.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-xs cursor-pointer"
@@ -582,10 +855,20 @@ export default function UsersPage() {
                   {/* Actions Column */}
                   <td className="py-3.5 pr-5 text-right">
                     {member.isOwner ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-[#78716C] font-medium justify-end">
-                        <Lock className="size-3.5 text-[#A8A29E]" />
-                        <span>Protected</span>
-                      </span>
+                      <div className="inline-flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEditModal(member)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer inline-flex items-center gap-1"
+                          title="Edit your contact info"
+                        >
+                          <Pencil className="size-3 text-primary" />
+                          <span>Edit info</span>
+                        </button>
+                        <span className="inline-flex items-center gap-1 text-xs text-[#78716C] font-medium justify-end">
+                          <Lock className="size-3.5 text-[#A8A29E]" />
+                          <span>Protected</span>
+                        </span>
+                      </div>
                     ) : (
                       <div className="inline-flex items-center justify-end gap-1.5">
                         {/* Quick action: Reset PIN */}
@@ -608,6 +891,14 @@ export default function UsersPage() {
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                            <DropdownMenuItem
+                              onClick={() => openEditModal(member)}
+                              className="gap-2 cursor-pointer text-xs"
+                            >
+                              <Pencil className="size-3.5 text-muted-foreground" />
+                              <span>Edit info</span>
+                            </DropdownMenuItem>
+
                             <DropdownMenuItem
                               onClick={() => {
                                 setRoleChangeMember(member)
@@ -702,6 +993,12 @@ export default function UsersPage() {
           </DialogHeader>
 
           <form onSubmit={handleAddStaffSubmit} className="space-y-4 mt-2">
+            {addError && (
+              <div className="rounded-xl border border-rose-200/60 bg-rose-50/70 dark:bg-rose-950/30 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+                {addError}
+              </div>
+            )}
+
             <div>
               <label className="text-xs font-bold text-foreground">
                 Staff Name <span className="text-red-500">*</span>
@@ -733,9 +1030,12 @@ export default function UsersPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-foreground">Phone (MoMo / WhatsApp)</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Phone (MoMo / WhatsApp) <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="tel"
+                  required
                   placeholder="+250 788 000 000"
                   value={addPhone}
                   onChange={(e) => setAddPhone(e.target.value)}
@@ -744,9 +1044,12 @@ export default function UsersPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-foreground">Email (Optional)</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Email {addRole === "Manager" ? <span className="text-red-500">*</span> : "(Optional)"}
+                </label>
                 <input
                   type="email"
+                  required={addRole === "Manager"}
                   placeholder="staff@restaurant.rw"
                   value={addEmail}
                   onChange={(e) => setAddEmail(e.target.value)}
@@ -754,6 +1057,26 @@ export default function UsersPage() {
                 />
               </div>
             </div>
+
+            {addRole === "Manager" && (
+              <div>
+                <label className="text-xs font-bold text-foreground">
+                  Manager Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="•••••••• (Min. 8 characters)"
+                  value={addPassword}
+                  onChange={(e) => setAddPassword(e.target.value)}
+                  className="mt-1 h-9.5 w-full rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Managers log in with email and password to access the web dashboard and POS tablet.
+                </p>
+              </div>
+            )}
 
             {/* Access preview banner */}
             <div className="rounded-xl border border-[#EBE7DF] dark:border-border p-3 bg-[#FAF8F5] dark:bg-muted/30 flex items-center gap-3">
@@ -778,6 +1101,7 @@ export default function UsersPage() {
               <Button
                 type="button"
                 variant="outline"
+                disabled={isSubmittingStaff}
                 onClick={() => setShowAddModal(false)}
                 className="h-9 rounded-xl text-xs cursor-pointer"
               >
@@ -785,9 +1109,19 @@ export default function UsersPage() {
               </Button>
               <Button
                 type="submit"
-                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
+                disabled={isSubmittingStaff}
+                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer disabled:opacity-50"
               >
-                Generate PIN &amp; Add Staff
+                {isSubmittingStaff ? (
+                  <span className="flex items-center gap-1.5">
+                    <RefreshCw className="size-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </span>
+                ) : addRole === "Manager" ? (
+                  "Create Manager Account"
+                ) : (
+                  "Generate PIN & Add Staff"
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -955,7 +1289,7 @@ export default function UsersPage() {
       <Dialog
         open={Boolean(resetPinCandidate)}
         onOpenChange={(open) => {
-          if (!open) setResetPinCandidate(null)
+          if (!open && !isResettingPin) setResetPinCandidate(null)
         }}
       >
         <DialogContent className="sm:max-w-md rounded-2xl">
@@ -979,6 +1313,7 @@ export default function UsersPage() {
           <DialogFooter>
             <Button
               variant="outline"
+              disabled={isResettingPin}
               onClick={() => setResetPinCandidate(null)}
               className="h-9 rounded-xl text-xs cursor-pointer"
             >
@@ -986,9 +1321,17 @@ export default function UsersPage() {
             </Button>
             <Button
               onClick={handleConfirmResetPin}
-              className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer"
+              disabled={isResettingPin}
+              className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer disabled:opacity-50"
             >
-              Generate New PIN
+              {isResettingPin ? (
+                <span className="flex items-center gap-1.5">
+                  <RefreshCw className="size-3.5 animate-spin" />
+                  <span>Generating PIN...</span>
+                </span>
+              ) : (
+                "Generate New PIN"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1118,6 +1461,112 @@ export default function UsersPage() {
               Got it
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 7: Edit Staff Member Info */}
+      <Dialog open={!!editMember} onOpenChange={(open) => !open && setEditMember(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Pencil className="size-4 text-primary" />
+              <span>Edit Staff Member</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Update personal details and contact information for {editMember?.name}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveEdit} className="space-y-4 mt-2">
+            {editError && (
+              <div className="rounded-xl border border-rose-200/60 bg-rose-50/70 dark:bg-rose-950/30 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+                {editError}
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-bold text-foreground">
+                Staff Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Samuel Mugisha"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="mt-1 h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-foreground">
+                Phone (MoMo / WhatsApp) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                required
+                placeholder="e.g. 0788 123 456"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="mt-1 h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">
+                  Email {editMember?.role === "Manager" ? <span className="text-red-500">*</span> : "(Optional)"}
+                </label>
+                {editMember?.role !== "Manager" && (
+                  <span className="text-[11px] text-muted-foreground">Optional for POS staff</span>
+                )}
+              </div>
+              <input
+                type="email"
+                required={editMember?.role === "Manager"}
+                placeholder="name@restaurant.rw"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="mt-1 h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            {/* Read-only role information card */}
+            <div className="rounded-xl bg-[#FAF8F5] dark:bg-muted/20 border border-[#EBE7DF] dark:border-border p-3 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-semibold text-muted-foreground block">Assigned Role</span>
+                <span className="text-xs font-bold text-foreground">{editMember?.role}</span>
+              </div>
+              <span className="text-[11px] text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                {editMember?.platformAccess}
+              </span>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditMember(null)}
+                className="h-9 rounded-xl text-xs cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmittingEdit}
+                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer disabled:opacity-50"
+              >
+                {isSubmittingEdit ? (
+                  <span className="flex items-center gap-1.5">
+                    <RefreshCw className="size-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </span>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

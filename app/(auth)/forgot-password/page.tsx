@@ -9,7 +9,7 @@ import { AuthShell, authInputClass } from "@/components/auth-shell"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/components/auth-provider"
-import { authApi } from "@/lib/api-client"
+import { authApi } from "../auth-api"
 import { validateData, forgotPasswordSchema } from "@/lib/validations"
 
 export default function ForgotPasswordPage() {
