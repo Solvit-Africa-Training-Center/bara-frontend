@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  RefreshCw,
   Salad,
   Search,
   SlidersHorizontal,
@@ -52,6 +53,7 @@ export interface MenuCatalogProps {
   onToggleAvailable: (id: string) => void
   onDuplicateItem?: (item: MenuItemWithRecipe) => void
   onDeleteItem?: (id: string) => void
+  onRefreshAvailability?: (id: string) => Promise<void> | void
   currency?: string
 }
 
@@ -87,6 +89,7 @@ export function MenuCatalog({
   onToggleAvailable,
   onDuplicateItem,
   onDeleteItem,
+  onRefreshAvailability,
   currency = "RWF",
 }: MenuCatalogProps) {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("All")
@@ -511,13 +514,13 @@ export function MenuCatalog({
 
                     {/* Recipe Cost */}
                     <td className="py-3.5 px-4">
-                      {item.ingredients.length > 0 && totalRecipeCost > 0 ? (
+                      {(item.ingredients.length > 0 && totalRecipeCost > 0) || (item.costPerServing && item.costPerServing > 0) ? (
                         <div>
                           <div className="font-semibold text-xs text-[#1C1917] dark:text-foreground">
-                            {currency} {Math.round(totalRecipeCost).toLocaleString()}
+                            {currency} {Math.round(totalRecipeCost > 0 ? totalRecipeCost : (item.costPerServing || 0)).toLocaleString()}
                           </div>
                           <div className="text-[11px] text-[#78716C] dark:text-muted-foreground mt-0.5">
-                            {foodCostPercent}% food cost
+                            {foodCostPercent ? `${foodCostPercent}% food cost` : item.foodCostPercent ? `${item.foodCostPercent}% food cost` : "Calculated"}
                           </div>
                         </div>
                       ) : (
@@ -547,15 +550,22 @@ export function MenuCatalog({
 
                     {/* Availability Badge */}
                     <td className="py-3.5 px-4">
-                      {item.available ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#EAF5EC] border border-[#C6E6CD] text-[#1E743A] text-xs font-medium">
-                          Available
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FEF4E6] border border-[#FADBB2] text-[#B45309] text-xs font-medium">
-                          Unavailable
-                        </span>
-                      )}
+                      <div>
+                        {item.available ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#EAF5EC] border border-[#C6E6CD] text-[#1E743A] text-xs font-medium">
+                            Available
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FEF4E6] border border-[#FADBB2] text-[#B45309] text-xs font-medium">
+                            Unavailable
+                          </span>
+                        )}
+                        {item.availableServings !== undefined && item.availableServings !== null && (
+                          <div className="text-[11px] text-[#78716C] dark:text-muted-foreground mt-0.5">
+                            {item.availableServings} {Number(item.availableServings) === 1 ? "serving left" : "servings left"}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* Actions */}
@@ -602,6 +612,18 @@ export function MenuCatalog({
                                 {item.available ? "Mark as unavailable" : "Mark as available"}
                               </span>
                             </DropdownMenuItem>
+                            {onRefreshAvailability && (
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  await onRefreshAvailability(item.id)
+                                  showToast(`Recalculated availability for ${item.name}.`)
+                                }}
+                                className="gap-2 cursor-pointer text-xs"
+                              >
+                                <RefreshCw className="size-3.5 text-muted-foreground" />
+                                <span>Recalculate availability</span>
+                              </DropdownMenuItem>
+                            )}
                             {onDuplicateItem && (
                               <DropdownMenuItem
                                 onClick={() => {

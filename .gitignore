@@ -42,3 +42,4 @@ next-env.d.ts
 /.vscode/
 /ToDo.md
 /api-schema.yaml
+/backend_debug.log

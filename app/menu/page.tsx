@@ -11,7 +11,8 @@ import {
 import { MenuEditor } from "./_components/menu-editor"
 import { MenuCatalog } from "./_components/menu-catalog"
 import { MenuSkeleton } from "./_components/menu-skeleton"
-import { menuApi, type BackendMenuItem } from "./menu-api"
+import { menuApi, type BackendMenuItem, type BackendRecipeLine } from "./menu-api"
+import { offlineStore } from "@/lib/offline-store"
 
 const RECIPES_STORAGE_KEY = "bara_menu_recipes"
 
@@ -58,11 +59,31 @@ function mapBackendToFrontend(
       (s) => s.id === id || s.name.toLowerCase().trim() === nameLower
     )
 
-    const ingredients = saved?.ingredients || seedMatch?.ingredients || []
+    let ingredients = saved?.ingredients || seedMatch?.ingredients || []
+    if (Array.isArray(bItem.recipe_lines) && bItem.recipe_lines.length > 0) {
+      ingredients = bItem.recipe_lines.map((rl) => ({
+        id: rl.id || rl.ingredient,
+        ingredientId: rl.ingredient,
+        name: rl.ingredient_name || "Ingredient",
+        stockQuantity: "In stock",
+        quantity: parseFloat(String(rl.quantity_used)) || 0,
+        unit: rl.unit || "unit",
+        costPerUnit: 0,
+        lineCost: 0,
+        wastePercent: parseFloat(String(rl.waste_percent || 0)),
+      }))
+    }
+
     const recipeStatus =
-      saved?.recipeStatus ||
-      seedMatch?.recipeStatus ||
-      (ingredients.length > 0 ? "complete" : "draft")
+      ingredients.length > 0
+        ? "complete"
+        : (saved?.recipeStatus || seedMatch?.recipeStatus || "draft")
+
+    const costPerServing = bItem.cost_per_serving ? parseFloat(bItem.cost_per_serving) : undefined
+    const foodCostPercent = bItem.food_cost_percent ? parseFloat(bItem.food_cost_percent) : undefined
+    const grossProfit = bItem.gross_profit ? parseFloat(bItem.gross_profit) : undefined
+    const targetFoodCostPercent = bItem.target_food_cost_percent ? parseFloat(String(bItem.target_food_cost_percent)) : undefined
+    const availableServings = bItem.available_servings !== undefined ? bItem.available_servings : undefined
 
     return {
       id,
@@ -80,6 +101,11 @@ function mapBackendToFrontend(
       recipeStatus,
       lastSavedText: saved?.lastSavedText || seedMatch?.lastSavedText || "Synced with server",
       ingredients,
+      costPerServing,
+      foodCostPercent,
+      grossProfit,
+      targetFoodCostPercent,
+      availableServings,
     }
   })
 }
@@ -132,6 +158,28 @@ function MenuPageContent() {
   const activeItem = items.find((i) => i.id === activeItemId) || items[0]
   const currentIndex = items.findIndex((i) => i.id === activeItem?.id)
 
+  // When active item is opened in the editor, refresh its latest details and recipe lines from backend
+  React.useEffect(() => {
+    if (!activeItemId || activeItemId.startsWith("item-") || activeItemId.startsWith("seed-")) return
+    let isCurrent = true
+    menuApi
+      .retrieve(activeItemId)
+      .then((backendItem) => {
+        if (!isCurrent || !backendItem) return
+        const savedRecipes = getSavedRecipes()
+        const mapped = mapBackendToFrontend([backendItem], savedRecipes)[0]
+        if (mapped) {
+          setItems((prev) =>
+            prev.map((item) => (item.id === mapped.id ? { ...item, ...mapped } : item))
+          )
+        }
+      })
+      .catch(() => {})
+    return () => {
+      isCurrent = false
+    }
+  }, [activeItemId])
+
   const handlePreviousItem = () => {
     if (items.length === 0) return
     const prevIndex = (currentIndex - 1 + items.length) % items.length
@@ -166,15 +214,75 @@ function MenuPageContent() {
 
     saveRecipeLocally(itemToSave)
 
+    // Map ingredients to backend recipe_lines format
+    const allIngredients = offlineStore.getIngredients()
+    const isUUID = (val?: string) =>
+      typeof val === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val)
+
+    const recipeLines: BackendRecipeLine[] = []
+    for (const ing of updated.ingredients || []) {
+      let ingredientUuid: string | undefined = undefined
+
+      if (isUUID(ing.ingredientId)) {
+        ingredientUuid = ing.ingredientId
+      } else if (isUUID(ing.id)) {
+        ingredientUuid = ing.id
+      } else {
+        const match = allIngredients.find(
+          (ai) => isUUID(ai.id) && ai.name.toLowerCase().trim() === ing.name.toLowerCase().trim()
+        )
+        if (match) {
+          ingredientUuid = match.id
+        }
+      }
+
+      if (ingredientUuid && ing.quantity > 0) {
+        recipeLines.push({
+          ingredient: ingredientUuid,
+          quantity_used: String(ing.quantity),
+          waste_percent: String(ing.wastePercent || 0),
+        })
+      }
+    }
+
     // Sync to backend
     try {
-      await menuApi.update(updated.id, {
+      const updatedRes = await menuApi.update(updated.id, {
         name: updated.name,
         description: updated.description,
         price: String(updated.price),
         category: updated.category,
         is_available: updated.available,
+        recipe_lines: recipeLines,
+        target_food_cost_percent: updated.targetFoodCostPercent,
       })
+
+      if (updatedRes) {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === updated.id
+              ? {
+                  ...i,
+                  available: updatedRes.is_available ?? i.available,
+                  costPerServing: updatedRes.cost_per_serving
+                    ? parseFloat(updatedRes.cost_per_serving)
+                    : i.costPerServing,
+                  foodCostPercent: updatedRes.food_cost_percent
+                    ? parseFloat(updatedRes.food_cost_percent)
+                    : i.foodCostPercent,
+                  grossProfit: updatedRes.gross_profit
+                    ? parseFloat(updatedRes.gross_profit)
+                    : i.grossProfit,
+                  availableServings:
+                    updatedRes.available_servings !== undefined
+                      ? updatedRes.available_servings
+                      : i.availableServings,
+                }
+              : i
+          )
+        )
+      }
     } catch {
       // If item was created locally and not on backend yet, create it
       try {
@@ -184,9 +292,18 @@ function MenuPageContent() {
           price: String(updated.price),
           category: updated.category,
           is_available: updated.available,
+          recipe_lines: recipeLines,
+          target_food_cost_percent: updated.targetFoodCostPercent,
         })
         if (created.id && created.id !== updated.id) {
-          const syncedItem = { ...itemToSave, id: created.id }
+          const syncedItem = {
+            ...itemToSave,
+            id: created.id,
+            costPerServing: created.cost_per_serving ? parseFloat(created.cost_per_serving) : itemToSave.costPerServing,
+            foodCostPercent: created.food_cost_percent ? parseFloat(created.food_cost_percent) : itemToSave.foodCostPercent,
+            grossProfit: created.gross_profit ? parseFloat(created.gross_profit) : itemToSave.grossProfit,
+            availableServings: created.available_servings !== undefined ? created.available_servings : itemToSave.availableServings,
+          }
           setItems((prev) =>
             prev.map((i) => (i.id === updated.id ? syncedItem : i))
           )
@@ -279,6 +396,25 @@ function MenuPageContent() {
       await menuApi.update(id, { is_available: nextAvailable })
     } catch (err) {
       console.error("Failed to toggle availability:", err)
+    }
+  }
+
+  const handleRefreshAvailability = async (id: string) => {
+    try {
+      const refreshed = await menuApi.refreshAvailability(id)
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === id
+            ? {
+                ...i,
+                available: refreshed.is_available ?? i.available,
+                availableServings: refreshed.available_servings ?? i.availableServings,
+              }
+            : i
+        )
+      )
+    } catch (err) {
+      console.error("Failed to refresh availability from backend:", err)
     }
   }
 
@@ -380,6 +516,7 @@ function MenuPageContent() {
       onToggleAvailable={handleToggleAvailable}
       onDuplicateItem={handleDuplicateItem}
       onDeleteItem={handleDeleteItem}
+      onRefreshAvailability={handleRefreshAvailability}
       currency={restaurant.currency || "RWF"}
     />
   )

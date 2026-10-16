@@ -1,5 +1,6 @@
 export interface RecipeIngredient {
   id: string
+  ingredientId?: string
   name: string
   stockQuantity: string
   quantity: number
@@ -28,6 +29,11 @@ export interface MenuItemWithRecipe {
   recipeStatus: "complete" | "in_progress" | "draft"
   lastSavedText: string
   ingredients: RecipeIngredient[]
+  availableServings?: number | string
+  costPerServing?: number
+  grossProfit?: number
+  foodCostPercent?: number
+  targetFoodCostPercent?: number
 }
 
 export const INVENTORY_INGREDIENTS_LIBRARY = [
