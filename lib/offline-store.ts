@@ -39,6 +39,7 @@ const STORAGE_KEYS = {
   CONSUMABLE_PURCHASES: "bara:offline:consumable_purchases_v1",
   PAYMENT_CONFIRMATIONS: "bara:offline:payment_confirmations_v1",
   MENU_ITEMS: "bara:offline:menu_items_v1",
+  ORDERS: "bara:offline:orders_v1",
   SYNC_QUEUE: "bara:offline:sync_queue_v1",
 }
 
@@ -327,6 +328,111 @@ export const SEED_MENU_ITEMS: BackendMenuItem[] = [
     price: "6000.00",
     description: "Rich dark chocolate fondant with a molten center, paired with vanilla bean gelato.",
     is_available: true,
+  },
+]
+
+export interface StoredOrderLine {
+  id?: string
+  order?: string
+  menu_item?: string
+  menu_item_name?: string
+  quantity: number
+  unit_price?: string
+  subtotal?: string
+  cost?: string
+  profit?: string
+}
+
+export interface StoredOrder {
+  order_id: string
+  client_uuid?: string | null
+  staff?: string | null
+  staff_name?: string
+  table_number?: string
+  guest_count?: number | null
+  service_type?: string
+  status: "pending" | "preparing" | "ready" | "completed" | "voided"
+  payment_method?: string
+  discount?: string
+  tax_amount?: string
+  service_fee?: string
+  subtotal?: string
+  total: string
+  cost?: string
+  profit?: string
+  profit_margin?: string | null
+  lines?: StoredOrderLine[]
+  created_at: string
+  completed_at?: string | null
+  synced_at?: string | null
+  void_reason?: string | null
+}
+
+export const SEED_ORDERS: StoredOrder[] = [
+  {
+    order_id: "ord-seed-001",
+    staff_name: "Jean Niyonzima",
+    table_number: "Table 4",
+    guest_count: 2,
+    service_type: "dine_in",
+    status: "completed",
+    payment_method: "momo",
+    subtotal: "24000.00",
+    total: "24000.00",
+    lines: [
+      { menu_item_name: "Grilled tilapia", quantity: 2, unit_price: "12000.00", subtotal: "24000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    completed_at: new Date(Date.now() - 3600000 * 1.5).toISOString(),
+  },
+  {
+    order_id: "ord-seed-002",
+    staff_name: "Grace Uwase",
+    table_number: "Table 2",
+    guest_count: 3,
+    service_type: "dine_in",
+    status: "completed",
+    payment_method: "card",
+    subtotal: "32000.00",
+    total: "32000.00",
+    lines: [
+      { menu_item_name: "Beef brochettes", quantity: 4, unit_price: "8000.00", subtotal: "32000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+    completed_at: new Date(Date.now() - 3600000 * 3.5).toISOString(),
+  },
+  {
+    order_id: "ord-seed-003",
+    staff_name: "Eric Habimana",
+    table_number: "Table 7",
+    guest_count: 2,
+    service_type: "dine_in",
+    status: "completed",
+    payment_method: "cash",
+    subtotal: "18000.00",
+    total: "18000.00",
+    lines: [
+      { menu_item_name: "Chicken & chips", quantity: 2, unit_price: "9000.00", subtotal: "18000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 6).toISOString(),
+    completed_at: new Date(Date.now() - 3600000 * 5.5).toISOString(),
+  },
+  {
+    order_id: "ord-seed-004",
+    staff_name: "Diane Keza",
+    table_number: "Table 1",
+    guest_count: 1,
+    service_type: "dine_in",
+    status: "voided",
+    payment_method: "cash",
+    subtotal: "8000.00",
+    total: "8000.00",
+    void_reason: "Customer changed mind",
+    lines: [
+      { menu_item_name: "Beef brochettes", quantity: 1, unit_price: "8000.00", subtotal: "8000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
+    completed_at: null,
   },
 ]
 
@@ -643,6 +749,15 @@ class OfflineStore {
   public deleteMenuItem(id: string): void {
     const items = this.getMenuItems()
     this.saveMenuItems(items.filter((i) => i.id !== id && i.menu_id !== id))
+  }
+
+  // --- ORDERS ---
+  public getOrders(): StoredOrder[] {
+    return this.getItem(STORAGE_KEYS.ORDERS, SEED_ORDERS)
+  }
+
+  public saveOrders(items: StoredOrder[]): void {
+    this.setItem(STORAGE_KEYS.ORDERS, items)
   }
 }
 

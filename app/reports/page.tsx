@@ -21,11 +21,13 @@ import {
   LogConsumableModal,
 } from "./_components"
 import { PlanUpgradeGate } from "@/components/plan-upgrade-gate"
+import { fetchDynamicReportData } from "./reports-api"
 
 export default function ReportsPage() {
   const { restaurant } = useRestaurant()
   const [period, setPeriod] = React.useState<ReportPeriod>("month")
   const [dateLabel, setDateLabel] = React.useState("1–30 September 2026")
+  const [customRange, setCustomRange] = React.useState<{ start: string; end: string } | undefined>(undefined)
   const [data, setData] = React.useState<PeriodReportData>(() =>
     getReportDataForPeriod("month")
   )
@@ -35,48 +37,75 @@ export default function ReportsPage() {
   const [showAuditModal, setShowAuditModal] = React.useState(false)
   const [showConsumableModal, setShowConsumableModal] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
-  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const showToast = (msg: string) => {
     setNotice(msg)
     setTimeout(() => setNotice(null), 3500)
   }
 
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [])
+  // Load real data from backend API endpoints
+  const loadReportData = React.useCallback(
+    async (
+      selectedPeriod: ReportPeriod,
+      labelToUse?: string,
+      customRangeParam?: { start: string; end: string }
+    ) => {
+      setIsLoading(true)
+      try {
+        const liveData = await fetchDynamicReportData(selectedPeriod, labelToUse, customRangeParam)
+        setData(liveData)
+      } catch (err) {
+        console.error("Failed to fetch live report data from API:", err)
+        setData(getReportDataForPeriod(selectedPeriod, labelToUse, customRangeParam))
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    []
+  )
 
-  // Range filter handler with realistic simulated data fetching & skeleton state
+  // Fetch real data on initial mount
+  React.useEffect(() => {
+    loadReportData(period, dateLabel, customRange)
+  }, [loadReportData])
+
+  // Range filter handler using real API endpoints
   const handlePeriodChange = React.useCallback(
-    (selectedPeriod: ReportPeriod, customLabel?: string) => {
+    (
+      selectedPeriod: ReportPeriod,
+      customLabel?: string,
+      newCustomRange?: { start: string; end: string }
+    ) => {
       setPeriod(selectedPeriod)
 
       let newLabel = dateLabel
       if (selectedPeriod === "today") {
         newLabel = "Today · 6 Oct 2026"
+        setCustomRange(undefined)
       } else if (selectedPeriod === "week") {
         newLabel = "This Week (28 Sep – 4 Oct 2026)"
+        setCustomRange(undefined)
       } else if (selectedPeriod === "month") {
         newLabel = "1–30 September 2026"
+        setCustomRange(undefined)
       } else if (selectedPeriod === "custom" && customLabel) {
         newLabel = customLabel
+        if (newCustomRange) {
+          setCustomRange(newCustomRange)
+        }
       } else if (selectedPeriod === "custom") {
         setShowDatePicker(true)
         return
       }
 
       setDateLabel(newLabel)
-      setIsLoading(true)
-
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => {
-        setData(getReportDataForPeriod(selectedPeriod, newLabel))
-        setIsLoading(false)
-      }, 300)
+      loadReportData(
+        selectedPeriod,
+        newLabel,
+        newCustomRange ?? (selectedPeriod === "custom" ? customRange : undefined)
+      )
     },
-    [dateLabel]
+    [dateLabel, customRange, loadReportData]
   )
 
   if (!restaurant.features?.canAccessReports && restaurant.plan === "basic") {
@@ -254,8 +283,8 @@ export default function ReportsPage() {
         initialStart="2026-09-01"
         initialEnd="2026-09-30"
         maxDate="2026-10-06"
-        onApply={(_start, _end, label) => {
-          handlePeriodChange("custom", label)
+        onApply={(start, end, label) => {
+          handlePeriodChange("custom", label, { start, end })
         }}
       />
 
@@ -277,7 +306,10 @@ export default function ReportsPage() {
       <LogConsumableModal
         isOpen={showConsumableModal}
         onClose={() => setShowConsumableModal(false)}
-        onSuccess={showToast}
+        onSuccess={(msg) => {
+          showToast(msg)
+          loadReportData(period, dateLabel, customRange)
+        }}
       />
 
       {notice && (
