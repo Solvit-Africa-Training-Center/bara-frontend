@@ -6,6 +6,11 @@ import { useAuth } from "@/components/auth-provider"
 import { applyRuntimeTheme } from "@/lib/runtime-theme"
 import { getTierFeatures, TierFeatures } from "@/lib/tier-features"
 
+export interface ScheduledDowngrade {
+  tier: "basic" | "pro" | "premium"
+  effectiveDate: string
+}
+
 export interface Restaurant {
   id: string
   name: string
@@ -26,6 +31,10 @@ export interface Restaurant {
   billing: "monthly" | "annual"
   status?: "active" | "grace" | "restricted" | "locked" | "archived"
   graceDaysLeft?: number
+  subscriptionStartsAt?: string | null
+  subscriptionEndsAt?: string | null
+  subscriptionStatus?: "pending_payment" | "active" | "expired" | "cancelled"
+  scheduledDowngrade?: ScheduledDowngrade | null
   brandColor: string
   logo?: string
   features: TierFeatures
@@ -77,6 +86,10 @@ export const DEFAULT_RESTAURANT: Restaurant = {
   plan: "premium",
   billing: "monthly",
   status: "active",
+  subscriptionStartsAt: "2026-10-01T00:00:00Z",
+  subscriptionEndsAt: "2026-10-31T23:59:59Z",
+  subscriptionStatus: "active",
+  scheduledDowngrade: null,
   brandColor: "#C85A24",
   logo: undefined,
   features: getTierFeatures("premium"),

@@ -86,7 +86,8 @@ export interface BillingPlansTabProps {
 }
 
 export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
-  const { restaurant, updateRestaurant } = useRestaurant()
+  const { restaurant, user, updateRestaurant } = useRestaurant()
+  const [plansCatalog, setPlansCatalog] = React.useState<SubscriptionPlanItem[]>(PLANS_CATALOG)
   const [isChangingPlan, setIsChangingPlan] = React.useState(false)
   const [paymentConfirmations, setPaymentConfirmations] = React.useState<PaymentConfirmation[]>([])
   const [showConfirmModal, setShowConfirmModal] = React.useState(false)
@@ -95,11 +96,77 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
   const isAnnual = restaurant.billing === "annual"
   const accountStatus = restaurant.status || "active"
 
+  const [activeSubId, setActiveSubId] = React.useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return (
+        window.localStorage.getItem("bara:active_subscription_id") ||
+        `sub-${currentPlanId}`
+      )
+    }
+    return `sub-${currentPlanId}`
+  })
+
+  // Load dynamic plans catalog from backend
+  React.useEffect(() => {
+    async function fetchPlans() {
+      try {
+        const livePlans = await subscriptionApi.getPlans()
+        if (Array.isArray(livePlans) && livePlans.length > 0) {
+          setPlansCatalog((prev) =>
+            prev.map((catalogPlan) => {
+              const live = livePlans.find((lp) => lp.tier === catalogPlan.id)
+              if (!live) return catalogPlan
+              return {
+                ...catalogPlan,
+                priceMonthly: live.price || catalogPlan.priceMonthly,
+                priceAnnual: Math.round((live.price || catalogPlan.priceMonthly) * 0.9),
+                features: live.features?.length ? live.features : catalogPlan.features,
+              }
+            })
+          )
+        }
+      } catch {
+        /* fallback to static catalog */
+      }
+    }
+    fetchPlans()
+  }, [])
+
   const activePlanDetails =
-    PLANS_CATALOG.find((p) => p.id === currentPlanId) || PLANS_CATALOG[1]
+    plansCatalog.find((p) => p.id === currentPlanId) || plansCatalog[1]
   const currentPlanPrice = isAnnual
     ? activePlanDetails.priceAnnual
     : activePlanDetails.priceMonthly
+
+  // Subscription lifecycle, start/end dates, and status
+  const subscriptionRecord = React.useMemo(() => {
+    return subscriptionApi.getCurrentSubscription()
+  }, [activeSubId])
+
+  const startsAt = subscriptionRecord?.starts_at || restaurant.subscriptionStartsAt || null
+  const endsAt = subscriptionRecord?.ends_at || restaurant.subscriptionEndsAt || null
+  const subStatus =
+    subscriptionRecord?.status ||
+    restaurant.subscriptionStatus ||
+    (accountStatus === "active" ? "active" : "pending_payment")
+
+  const now = new Date()
+  const startDate = startsAt ? new Date(startsAt) : null
+  const endDate = endsAt ? new Date(endsAt) : null
+
+  const hasStarted = Boolean(startDate && startDate <= now)
+  const hasEnded =
+    Boolean(endDate && endDate < now) ||
+    subStatus === "expired" ||
+    subStatus === "cancelled"
+  const isPending =
+    !hasStarted && (subStatus === "pending_payment" || !startDate)
+
+  const daysRemaining = React.useMemo(() => {
+    if (!endDate || hasEnded) return 0
+    const diffTime = endDate.getTime() - now.getTime()
+    return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
+  }, [endDate, hasEnded, now])
 
   // Load payment confirmations
   const loadConfirmations = React.useCallback(async () => {
@@ -115,17 +182,64 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
     loadConfirmations()
   }, [loadConfirmations])
 
+  const TIER_RANK: Record<string, number> = {
+    basic: 1,
+    pro: 2,
+    premium: 3,
+  }
+
   const handlePlanSelect = async (tier: "basic" | "pro" | "premium") => {
+    const isDowngrade = (TIER_RANK[tier] ?? 1) < (TIER_RANK[currentPlanId] ?? 1)
+    const tierName = tier.charAt(0).toUpperCase() + tier.slice(1)
+
+    // If downgrading while active time is still remaining, defer downgrade to cycle end
+    if (isDowngrade && hasStarted && !hasEnded && daysRemaining > 0) {
+      const effectiveDateStr =
+        endsAt || new Date(Date.now() + daysRemaining * 864e5).toISOString()
+      const formattedEndDate = endDate
+        ? endDate.toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+        : "the end of your billing cycle"
+
+      updateRestaurant({
+        scheduledDowngrade: {
+          tier,
+          effectiveDate: effectiveDateStr,
+        },
+      })
+
+      onSavedNotice(
+        `Downgrade scheduled! You retain full Bara ${activePlanDetails.name} features until your billing cycle ends on ${formattedEndDate}.`
+      )
+      return
+    }
+
+    // Upgrades or selection when previous plan has ended/pending
     setIsChangingPlan(true)
     try {
-      await subscriptionApi.selectPlan(tier)
+      const res = await subscriptionApi.selectPlan(tier)
+      if (res?.subscription?.id) {
+        setActiveSubId(res.subscription.id)
+      }
     } catch {
       // Offline fallback
     }
-    updateRestaurant({ plan: tier })
+    updateRestaurant({
+      plan: tier,
+      scheduledDowngrade: null, // clear any pending downgrade on upgrade
+    })
     setIsChangingPlan(false)
-    const tierName = tier.charAt(0).toUpperCase() + tier.slice(1)
     onSavedNotice(`Switched subscription to Bara ${tierName}! Workspace features updated.`)
+  }
+
+  const handleCancelDowngrade = () => {
+    updateRestaurant({ scheduledDowngrade: null })
+    onSavedNotice(
+      `Scheduled downgrade cancelled. You will continue on Bara ${activePlanDetails.name}.`
+    )
   }
 
   const handleBillingCycleToggle = (annual: boolean) => {
@@ -149,22 +263,55 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
                 Current Active Plan
               </span>
 
-              {accountStatus === "active" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                  <span className="size-1.5 rounded-full bg-emerald-500" />
-                  Active
+              {hasEnded ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#A83232]/10 border border-[#A83232]/30 px-2.5 py-0.5 text-xs font-bold text-[#A83232]">
+                  <XCircle className="size-3" />
+                  Subscription Ended
                 </span>
-              )}
-              {accountStatus === "grace" && (
+              ) : isPending ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-400">
+                  <Clock className="size-3" />
+                  Pending Payment Activation
+                </span>
+              ) : accountStatus === "grace" ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-400">
                   <AlertTriangle className="size-3" />
-                  Grace Period (5 days left)
+                  Grace Period ({daysRemaining || restaurant.graceDaysLeft || 5} days left)
                 </span>
-              )}
-              {accountStatus === "restricted" && (
+              ) : accountStatus === "restricted" ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#A83232]/10 border border-[#A83232]/30 px-2.5 py-0.5 text-xs font-bold text-[#A83232]">
                   <ShieldAlert className="size-3" />
                   Restricted (Read-Only)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Active {daysRemaining > 0 ? `(${daysRemaining} days left)` : ""}
+                </span>
+              )}
+
+              {/* Scheduled Downgrade Notice Badge */}
+              {restaurant.scheduledDowngrade && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300">
+                  <span>
+                    Scheduled to switch to Bara{" "}
+                    {restaurant.scheduledDowngrade.tier.charAt(0).toUpperCase() +
+                      restaurant.scheduledDowngrade.tier.slice(1)}{" "}
+                    on{" "}
+                    {new Date(
+                      restaurant.scheduledDowngrade.effectiveDate
+                    ).toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCancelDowngrade}
+                    className="ml-0.5 text-[10px] font-bold underline hover:opacity-80 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
                 </span>
               )}
             </div>
@@ -181,6 +328,45 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
             <p className="mt-1 text-xs text-muted-foreground">
               {activePlanDetails.blurb}
             </p>
+
+            {/* Subscription Start & End Dates Indicator */}
+            <div className="mt-3 flex items-center gap-3 text-xs flex-wrap">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="font-semibold text-foreground">Started:</span>
+                <span>
+                  {startDate
+                    ? startDate.toLocaleDateString("en-US", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "Not started (Pending activation)"}
+                </span>
+              </div>
+              <span className="text-border">•</span>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="font-semibold text-foreground">
+                  {hasEnded ? "Ended:" : "Ends / Renews:"}
+                </span>
+                <span
+                  className={cn(
+                    hasEnded
+                      ? "text-[#A83232] font-semibold"
+                      : daysRemaining <= 5 && daysRemaining > 0
+                      ? "text-amber-600 font-semibold"
+                      : ""
+                  )}
+                >
+                  {endDate
+                    ? endDate.toLocaleDateString("en-US", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "Pending payment confirmation"}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -228,23 +414,32 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
         {/* Section 4.3 Account Status Information */}
         <div className="mt-4 pt-3.5 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">
-            {accountStatus === "active" ? (
-              <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
-                <ShieldCheck className="size-4" />
-                <span>Account in good standing. All subscribed tier features are fully active.</span>
+            {hasEnded ? (
+              <span className="flex items-center gap-1.5 text-[#A83232] font-medium">
+                <XCircle className="size-4" />
+                <span>
+                  Subscription ended on {endDate ? endDate.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "previous cycle"}. Select a plan below to renew.
+                </span>
+              </span>
+            ) : isPending ? (
+              <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-medium">
+                <Clock className="size-4" />
+                <span>
+                  Subscription requested. Activates immediately once mobile money or bank payment is confirmed.
+                </span>
               </span>
             ) : accountStatus === "grace" ? (
               <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-medium">
                 <AlertTriangle className="size-4" />
                 <span>
-                  Grace period active ({restaurant.graceDaysLeft || 5} days remaining). Full access continues; submit payment to avoid service restrictions.
+                  Grace period active ({daysRemaining || restaurant.graceDaysLeft || 5} days remaining). Submit payment confirmation to avoid service interruption.
                 </span>
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-[#A83232] font-medium">
-                <ShieldAlert className="size-4" />
+              <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
+                <ShieldCheck className="size-4" />
                 <span>
-                  Account restricted (read-only mode). Data viewing is preserved; submit payment to restore editing.
+                  Subscription started {startDate ? startDate.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : ""} and ends on {endDate ? endDate.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : ""}.
                 </span>
               </span>
             )}
@@ -267,7 +462,7 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
         </div>
 
         <div className="grid gap-5 md:grid-cols-3 items-stretch">
-          {PLANS_CATALOG.map((plan) => {
+          {plansCatalog.map((plan) => {
             const isCurrent = currentPlanId === plan.id
             const price = isAnnual ? plan.priceAnnual : plan.priceMonthly
 
@@ -333,28 +528,44 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-border/60">
-                  <Button
-                    size="sm"
-                    disabled={isCurrent || isChangingPlan}
-                    onClick={() => handlePlanSelect(plan.id)}
-                    className={cn(
-                      "w-full h-8.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer",
-                      isCurrent
-                        ? "bg-muted text-muted-foreground cursor-default border border-border"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90"
-                    )}
-                  >
-                    {isCurrent ? (
-                      "Active Plan"
-                    ) : plan.id === "premium" ? (
-                      <span className="flex items-center justify-center gap-1.5">
-                        <Sparkles className="size-3.5 fill-current" />
-                        Upgrade to Premium
-                      </span>
-                    ) : (
-                      `Switch to ${plan.name}`
-                    )}
-                  </Button>
+                  {(() => {
+                    const isDowngrade = (TIER_RANK[plan.id] ?? 1) < (TIER_RANK[currentPlanId] ?? 1)
+                    const isScheduledThis = restaurant.scheduledDowngrade?.tier === plan.id
+
+                    return (
+                      <Button
+                        size="sm"
+                        disabled={isCurrent || isChangingPlan}
+                        onClick={() => handlePlanSelect(plan.id)}
+                        className={cn(
+                          "w-full h-8.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer",
+                          isCurrent
+                            ? "bg-muted text-muted-foreground cursor-default border border-border"
+                            : isScheduledThis
+                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25"
+                            : "bg-primary text-primary-foreground hover:bg-primary/90"
+                        )}
+                      >
+                        {isCurrent ? (
+                          "Active Plan"
+                        ) : isScheduledThis ? (
+                          <span className="flex items-center justify-center gap-1.5">
+                            <Clock className="size-3.5" />
+                            <span>Scheduled for Cycle End</span>
+                          </span>
+                        ) : plan.id === "premium" && currentPlanId !== "premium" ? (
+                          <span className="flex items-center justify-center gap-1.5">
+                            <Sparkles className="size-3.5 fill-current" />
+                            Upgrade to Premium
+                          </span>
+                        ) : isDowngrade && hasStarted && !hasEnded ? (
+                          `Downgrade at Cycle End`
+                        ) : (
+                          `Switch to ${plan.name}`
+                        )}
+                      </Button>
+                    )
+                  })()}
                 </div>
               </Card>
             )
@@ -371,7 +582,7 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
                 Payment Confirmations &amp; MoMo Verifications
               </CardTitle>
               <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold text-primary">
-                /api/payment-confirmations/
+                Mobile Money &amp; Bank
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -470,59 +681,71 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
             </p>
           </div>
           <span className="text-xs font-medium text-muted-foreground">
-            Payment: MTN MoMo Business •••• 9821
+            {paymentConfirmations.length > 0 && paymentConfirmations[0].payer_phone
+              ? `Payment: MoMo (${paymentConfirmations[0].payer_phone})`
+              : "Payment: Direct MoMo / Bank"}
           </span>
         </div>
 
         <div className="mt-3 divide-y divide-border/50 text-xs">
-          {[
-            {
-              ref: "INV-2026-09",
-              date: "Oct 5, 2026",
-              amount: `${currentPlanPrice.toLocaleString()} RWF`,
-              status: "Paid",
-            },
-            {
-              ref: "INV-2026-08",
-              date: "Sep 5, 2026",
-              amount: `${currentPlanPrice.toLocaleString()} RWF`,
-              status: "Paid",
-            },
-            {
-              ref: "INV-2026-07",
-              date: "Aug 5, 2026",
-              amount: `${currentPlanPrice.toLocaleString()} RWF`,
-              status: "Paid",
-            },
-          ].map((inv) => (
-            <div
-              key={inv.ref}
-              className="flex items-center justify-between py-3 hover:bg-muted/20 px-1 rounded-xl transition-colors"
-            >
-              <div>
-                <p className="font-bold text-foreground">{inv.ref}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {inv.date} • {activePlanDetails.name} Subscription
-                </p>
-              </div>
+          {paymentConfirmations.length === 0 ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">
+              No billing receipts yet. Invoices will generate automatically when payment confirmations are approved.
+            </p>
+          ) : (
+            paymentConfirmations.map((conf, idx) => {
+              const invoiceDate = new Date(conf.submitted_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+              const isPaid = conf.status === "paid"
+              const receiptNumber = `REC-${new Date(conf.submitted_at).getFullYear()}-${String(idx + 1).padStart(3, "0")}`
 
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-foreground">{inv.amount}</span>
-                <span className="rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2 py-0.5 text-[10px] font-bold">
-                  {inv.status}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onSavedNotice(`Downloaded invoice PDF for ${inv.ref}!`)}
-                  className="h-7 px-2.5 text-xs gap-1 text-muted-foreground hover:text-foreground"
+              return (
+                <div
+                  key={conf.id}
+                  className="flex items-center justify-between py-3 hover:bg-muted/20 px-1 rounded-xl transition-colors"
                 >
-                  <Download className="size-3.5" />
-                  <span>PDF</span>
-                </Button>
-              </div>
-            </div>
-          ))}
+                  <div>
+                    <p className="font-bold text-foreground">{receiptNumber}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {invoiceDate} • {activePlanDetails.name} Subscription • {conf.payer_name}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-foreground">
+                      {currentPlanPrice.toLocaleString()} RWF
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-md px-2 py-0.5 text-[10px] font-bold",
+                        isPaid
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : conf.status === "rejected"
+                          ? "bg-[#A83232]/10 text-[#A83232]"
+                          : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                      )}
+                    >
+                      {isPaid ? "Paid" : conf.status === "rejected" ? "Rejected" : "Pending"}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        onSavedNotice(`Downloaded receipt PDF for ${receiptNumber}!`)
+                      }
+                      className="h-7 px-2.5 text-xs gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <Download className="size-3.5" />
+                      <span>PDF</span>
+                    </Button>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       </Card>
 
@@ -530,9 +753,9 @@ export function BillingPlansTab({ onSavedNotice }: BillingPlansTabProps) {
       <PaymentConfirmationModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
-        subscriptionId={`sub-${currentPlanId}`}
-        defaultPayerName="Alex Rivera"
-        defaultPhone="0788123456"
+        subscriptionId={activeSubId}
+        defaultPayerName={user.name || "Alex Rivera"}
+        defaultPhone={restaurant.phone || "0788123456"}
         onSuccess={(msg) => {
           onSavedNotice(msg)
           loadConfirmations()
