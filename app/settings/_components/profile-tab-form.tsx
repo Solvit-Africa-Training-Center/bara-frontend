@@ -27,6 +27,7 @@ import {
   applyRuntimeTheme,
 } from "@/lib/runtime-theme"
 import { cn } from "@/lib/utils"
+import { restaurantSetupApi, userProfileApi } from "../settings-api"
 
 export interface ProfileTabFormProps {
   onSavedNotice: (msg: string) => void
@@ -34,6 +35,11 @@ export interface ProfileTabFormProps {
 
 export function ProfileTabForm({ onSavedNotice }: ProfileTabFormProps) {
   const { restaurant, user, updateRestaurant, updateUser } = useRestaurant()
+
+  // Track backend database IDs
+  const [setupId, setSetupId] = React.useState<string | null>(null)
+  const [profileId, setProfileId] = React.useState<string | null>(null)
+  const [isSaving, setIsSaving] = React.useState(false)
 
   // Basic Information
   const [restaurantName, setRestaurantName] = React.useState(restaurant.name)
@@ -52,6 +58,48 @@ export function ProfileTabForm({ onSavedNotice }: ProfileTabFormProps) {
   const [logoError, setLogoError] = React.useState<string | null>(null)
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
+
+  // Load real setup and user profile on mount
+  React.useEffect(() => {
+    let mounted = true
+    async function loadBackendData() {
+      try {
+        const [setup, profile] = await Promise.all([
+          restaurantSetupApi.getSetup(),
+          userProfileApi.getProfile(),
+        ])
+        if (!mounted) return
+        if (setup) {
+          setSetupId(setup.id)
+          if (setup.name) setRestaurantName(setup.name)
+          if (setup.trading_name) setTradingName(setup.trading_name)
+          if (setup.business_address) setAddress(setup.business_address)
+          if (setup.city) setCity(setup.city)
+          if (setup.phone) setPhone(setup.phone)
+          if (setup.primary_currency) setCurrency(setup.primary_currency)
+          if (setup.accent_color) {
+            setBrandColor(setup.accent_color)
+            setCustomHex(setup.accent_color)
+            applyRuntimeTheme(setup.accent_color)
+          }
+          if (setup.logo) setLogoData(setup.logo)
+        }
+        if (profile) {
+          setProfileId(profile.id)
+          const fullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+          if (fullName) setManagerName(fullName)
+          if (profile.email) setManagerEmail(profile.email)
+          if (profile.phone_number && !setup?.phone) setPhone(profile.phone_number)
+        }
+      } catch {
+        /* fallback smoothly to current state */
+      }
+    }
+    loadBackendData()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   // Compute contrast against daylight
   const contrastInfo = React.useMemo(() => {
@@ -110,8 +158,39 @@ export function ProfileTabForm({ onSavedNotice }: ProfileTabFormProps) {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
+
+    // 1. Persist to backend endpoints if available
+    try {
+      if (setupId) {
+        await restaurantSetupApi.updateSetup(setupId, {
+          trading_name: tradingName.trim(),
+          business_address: address.trim(),
+          city: city.trim(),
+          phone: phone.trim(),
+          primary_currency: currency,
+          accent_color: brandColor,
+        })
+      }
+      if (profileId) {
+        const nameParts = managerName.trim().split(" ")
+        const firstName = nameParts[0] || ""
+        const lastName = nameParts.slice(1).join(" ") || ""
+        await userProfileApi.updateProfile(profileId, {
+          first_name: firstName,
+          last_name: lastName,
+          email: managerEmail.trim(),
+        })
+      }
+    } catch (err) {
+      console.warn("Backend update failed, persisting locally:", err)
+    } finally {
+      setIsSaving(false)
+    }
+
+    // 2. Update local state and theme
     updateRestaurant({
       name: restaurantName.trim() || restaurant.name,
       tradingName: tradingName.trim() || restaurant.name,

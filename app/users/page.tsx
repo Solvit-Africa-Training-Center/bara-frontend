@@ -5,6 +5,8 @@ import {
   Check,
   Copy,
   Crown,
+  Eye,
+  EyeOff,
   HelpCircle,
   Info,
   KeyRound,
@@ -70,7 +72,7 @@ function normalizePhoneNumber(phone: string): string {
 
 export default function UsersPage() {
   const { restaurant } = useRestaurant()
-  const { user: authUser } = useAuth()
+  const { user: authUser, updateUser } = useAuth()
 
   // Staff members state with local persistence
   const [staffMembers, setStaffMembers] = React.useState<StaffMember[]>([])
@@ -123,7 +125,64 @@ export default function UsersPage() {
   const [isSubmittingEdit, setIsSubmittingEdit] = React.useState(false)
   const [editError, setEditError] = React.useState<string | null>(null)
 
+  // Modal 8: Reset Password for Managers
+  const [resetPasswordCandidate, setResetPasswordCandidate] = React.useState<StaffMember | null>(null)
+  const [resetPasswordValue, setResetPasswordValue] = React.useState("")
+  const [resetPasswordConfirm, setResetPasswordConfirm] = React.useState("")
+  const [showResetPassword, setShowResetPassword] = React.useState(false)
+  const [isResettingPassword, setIsResettingPassword] = React.useState(false)
+  const [resetPasswordError, setResetPasswordError] = React.useState<string | null>(null)
+
+  const openResetPasswordModal = (member: StaffMember) => {
+    if (member.isOwner) {
+      showToast("Owner password cannot be reset from this menu.")
+      return
+    }
+    setResetPasswordCandidate(member)
+    setResetPasswordValue("")
+    setResetPasswordConfirm("")
+    setShowResetPassword(false)
+    setResetPasswordError(null)
+  }
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetPasswordCandidate || resetPasswordCandidate.isOwner) return
+
+    if (!resetPasswordValue || resetPasswordValue.length < 8) {
+      setResetPasswordError("Password must be at least 8 characters long.")
+      return
+    }
+
+    if (resetPasswordValue !== resetPasswordConfirm) {
+      setResetPasswordError("Passwords do not match.")
+      return
+    }
+
+    setIsResettingPassword(true)
+    setResetPasswordError(null)
+
+    try {
+      const tokens = getStoredTokens()
+      if (tokens?.access && !resetPasswordCandidate.id.startsWith("staff-")) {
+        await accountApi.resetPassword(resetPasswordCandidate.id, resetPasswordValue)
+      }
+      showToast(`Password for ${resetPasswordCandidate.name} has been reset successfully!`)
+      setResetPasswordCandidate(null)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to reset password."
+      setResetPasswordError(msg)
+      showToast(msg)
+    } finally {
+      setIsResettingPassword(false)
+    }
+  }
+
   const openEditModal = (member: StaffMember) => {
+    if (member.isOwner && (authUser?.isOwner === false || authUser?.role === "Manager")) {
+      showToast("Only the restaurant Owner can edit owner information.")
+      return
+    }
     setEditMember(member)
     setEditName(member.name)
     setEditEmail(member.email || "")
@@ -142,15 +201,83 @@ export default function UsersPage() {
       if (Array.isArray(apiItems)) {
         const mapped = apiItems.map(mapApiStaffToStaffMember)
 
+        // Check if the currently authenticated user is in the hired staff roster
+        const authUserInStaff = mapped.find(
+          (m) =>
+            (authUser?.id && m.id === authUser.id) ||
+            (authUser?.email && m.email && m.email.toLowerCase() === authUser.email.toLowerCase())
+        )
+
+        // Self-heal: If authUser was erroneously tagged as owner in session, correct it
+        if (authUserInStaff && (authUser?.isOwner || authUser?.role === "Restaurant Owner")) {
+          updateUser({ role: "Manager", isOwner: false })
+        }
+
         setStaffMembers((prev) => {
-          const currentOwner =
-            prev.find((m) => m.isOwner) ||
-            createOwnerMember({
-              id: authUser?.id,
-              name: authUser?.name,
-              email: authUser?.email,
-              phone: authUser?.phone,
+          // Check if previous owner slot was accidentally overwritten with a hired staff member
+          let existingOwner = prev.find((m) => m.isOwner)
+          if (existingOwner) {
+            const ownerCandidate = existingOwner
+            const isOwnerActuallyStaff = mapped.some(
+              (m) =>
+                m.id === ownerCandidate.id ||
+                Boolean(
+                  m.email &&
+                    ownerCandidate.email &&
+                    m.email.toLowerCase() === ownerCandidate.email.toLowerCase()
+                )
+            )
+            if (isOwnerActuallyStaff) {
+              existingOwner = undefined
+            }
+          }
+
+          const isAuthOwner =
+            !authUserInStaff &&
+            authUser?.isOwner !== false &&
+            authUser?.role !== "Manager"
+
+          let currentOwner: StaffMember
+
+          if (isAuthOwner && authUser?.name) {
+            currentOwner = createOwnerMember({
+              id: authUser.id,
+              name: authUser.name,
+              email: authUser.email,
+              phone: authUser.phone,
             })
+            try {
+              localStorage.setItem(
+                "bara:restaurant_owner_record",
+                JSON.stringify(currentOwner)
+              )
+            } catch {}
+          } else if (existingOwner) {
+            currentOwner = existingOwner
+          } else {
+            // Retrieve cached owner record if available
+            let cachedOwner: StaffMember | null = null
+            try {
+              const raw = localStorage.getItem("bara:restaurant_owner_record")
+              if (raw) {
+                const parsed = JSON.parse(raw)
+                if (parsed?.name && !mapped.some((m) => m.id === parsed.id)) {
+                  cachedOwner = parsed
+                }
+              }
+            } catch {}
+
+            currentOwner =
+              cachedOwner ||
+              createOwnerMember({
+                id: "owner-primary",
+                name: "Restaurant Owner",
+                email: undefined,
+                phone: undefined,
+              })
+          }
+
+          // Non-owners include all mapped backend staff except the owner (if IDs ever clashed)
           const nonOwners = mapped.filter((m) => m.id !== currentOwner.id)
           const combined = [currentOwner, ...nonOwners]
           saveStaffMembers(combined)
@@ -162,15 +289,18 @@ export default function UsersPage() {
     } finally {
       setIsLoadingStaff(false)
     }
-  }, [authUser])
+  }, [authUser, updateUser])
 
   // Load from store on mount and sync with live backend
   React.useEffect(() => {
+    const isOwner = authUser?.isOwner !== false && authUser?.role !== "Manager"
     const list = loadStaffMembers({
       id: authUser?.id,
       name: authUser?.name,
       email: authUser?.email,
       phone: authUser?.phone,
+      isOwner,
+      role: authUser?.role,
     })
     setStaffMembers(list)
     setIsInitialized(true)
@@ -269,7 +399,7 @@ export default function UsersPage() {
         setAddRole("Cashier / Waiter")
         setAddError(null)
 
-        if (createdItem.generated_pin) {
+        if (addRole !== "Manager" && createdItem.generated_pin) {
           setHasCopiedPin(false)
           setRevealedPinMember({
             member: newStaff,
@@ -317,7 +447,7 @@ export default function UsersPage() {
       avatarInitials: initials,
       email: addEmail.trim() || undefined,
       phone: formattedPhone,
-      shiftPin: generatedPin,
+      shiftPin: addRole === "Manager" ? undefined : generatedPin,
       lastLogin: "Never logged in",
       failedPinAttempts: 0,
       createdAt: new Date().toISOString(),
@@ -407,6 +537,10 @@ export default function UsersPage() {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editMember) return
+    if (editMember.isOwner && (authUser?.isOwner === false || authUser?.role === "Manager")) {
+      setEditError("Only the restaurant Owner can edit owner information.")
+      return
+    }
     if (!editName.trim()) {
       setEditError("Staff name cannot be empty.")
       return
@@ -487,6 +621,11 @@ export default function UsersPage() {
     if (!statusToggleMember) return
     if (statusToggleMember.isOwner) {
       showToast("The restaurant must always have at least one active Owner.")
+      setStatusToggleMember(null)
+      return
+    }
+    if (statusToggleMember.id === authUser?.id) {
+      showToast("You cannot deactivate your own account.")
       setStatusToggleMember(null)
       return
     }
@@ -856,14 +995,16 @@ export default function UsersPage() {
                   <td className="py-3.5 pr-5 text-right">
                     {member.isOwner ? (
                       <div className="inline-flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEditModal(member)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer inline-flex items-center gap-1"
-                          title="Edit your contact info"
-                        >
-                          <Pencil className="size-3 text-primary" />
-                          <span>Edit info</span>
-                        </button>
+                        {authUser?.isOwner !== false && authUser?.role !== "Manager" && (
+                          <button
+                            onClick={() => openEditModal(member)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            title="Edit your contact info"
+                          >
+                            <Pencil className="size-3 text-primary" />
+                            <span>Edit info</span>
+                          </button>
+                        )}
                         <span className="inline-flex items-center gap-1 text-xs text-[#78716C] font-medium justify-end">
                           <Lock className="size-3.5 text-[#A8A29E]" />
                           <span>Protected</span>
@@ -871,13 +1012,22 @@ export default function UsersPage() {
                       </div>
                     ) : (
                       <div className="inline-flex items-center justify-end gap-1.5">
-                        {/* Quick action: Reset PIN */}
-                        <button
-                          onClick={() => setResetPinCandidate(member)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                        >
-                          Reset PIN
-                        </button>
+                        {/* Quick action: Reset Password for Managers, Reset PIN for POS Staff */}
+                        {member.role === "Manager" ? (
+                          <button
+                            onClick={() => openResetPasswordModal(member)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                          >
+                            Reset Password
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setResetPinCandidate(member)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                          >
+                            Reset PIN
+                          </button>
+                        )}
 
                         <DropdownMenu>
                           <DropdownMenuTrigger
@@ -910,13 +1060,23 @@ export default function UsersPage() {
                               <span>Change role</span>
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => setResetPinCandidate(member)}
-                              className="gap-2 cursor-pointer text-xs"
-                            >
-                              <KeyRound className="size-3.5 text-muted-foreground" />
-                              <span>Reset login PIN</span>
-                            </DropdownMenuItem>
+                            {member.role === "Manager" ? (
+                              <DropdownMenuItem
+                                onClick={() => openResetPasswordModal(member)}
+                                className="gap-2 cursor-pointer text-xs"
+                              >
+                                <KeyRound className="size-3.5 text-muted-foreground" />
+                                <span>Reset password</span>
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                onClick={() => setResetPinCandidate(member)}
+                                className="gap-2 cursor-pointer text-xs"
+                              >
+                                <KeyRound className="size-3.5 text-muted-foreground" />
+                                <span>Reset login PIN</span>
+                              </DropdownMenuItem>
+                            )}
 
                             <DropdownMenuSeparator />
 
@@ -1334,6 +1494,107 @@ export default function UsersPage() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 4b: Reset Manager Password */}
+      <Dialog
+        open={Boolean(resetPasswordCandidate)}
+        onOpenChange={(open) => {
+          if (!open && !isResettingPassword) setResetPasswordCandidate(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <div className="size-11 rounded-xl bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-400 mb-1.5">
+              <KeyRound className="size-5" />
+            </div>
+            <DialogTitle className="text-base font-bold">Reset Manager Password</DialogTitle>
+            <DialogDescription className="text-xs">
+              Set a new web dashboard login password for{" "}
+              <strong className="text-foreground">{resetPasswordCandidate?.name}</strong>
+              {resetPasswordCandidate?.email ? ` (${resetPasswordCandidate.email})` : ""}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleConfirmResetPassword} className="space-y-4 py-2">
+            {resetPasswordError && (
+              <div className="rounded-xl border border-rose-200/60 bg-rose-50/70 dark:bg-rose-950/30 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+                {resetPasswordError}
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-bold text-foreground">
+                New Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative mt-1">
+                <input
+                  type={showResetPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  placeholder="At least 8 characters"
+                  value={resetPasswordValue}
+                  onChange={(e) => setResetPasswordValue(e.target.value)}
+                  className="h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 pr-10 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowResetPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                  title={showResetPassword ? "Hide password" : "Show password"}
+                >
+                  {showResetPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-foreground">
+                Confirm New Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                type={showResetPassword ? "text" : "password"}
+                required
+                minLength={8}
+                placeholder="Re-enter new password"
+                value={resetPasswordConfirm}
+                onChange={(e) => setResetPasswordConfirm(e.target.value)}
+                className="mt-1 h-9.5 w-full rounded-xl bg-[#FAF8F5] dark:bg-muted/30 border border-[#E5E0D5] dark:border-border px-3 text-xs text-foreground placeholder:text-[#A8A29E] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              Managers sign in to the web dashboard using their email and password. They do not use
+              PINs.
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isResettingPassword}
+                onClick={() => setResetPasswordCandidate(null)}
+                className="h-9 rounded-xl text-xs cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isResettingPassword}
+                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold cursor-pointer disabled:opacity-50"
+              >
+                {isResettingPassword ? (
+                  <span className="flex items-center gap-1.5">
+                    <RefreshCw className="size-3.5 animate-spin" />
+                    <span>Updating...</span>
+                  </span>
+                ) : (
+                  "Update Password"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

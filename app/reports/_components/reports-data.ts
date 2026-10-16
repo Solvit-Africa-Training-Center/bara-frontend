@@ -258,16 +258,78 @@ export const WEEK_REPORT_DATA: PeriodReportData = {
 
 export function getReportDataForPeriod(
   period: ReportPeriod,
-  customLabel?: string
+  customLabel?: string,
+  customRange?: { start: string; end: string }
 ): PeriodReportData {
   if (period === "today") return TODAY_REPORT_DATA
   if (period === "week") return WEEK_REPORT_DATA
-  if (period === "custom" && customLabel) {
+  if (period === "custom") {
+    let days = 30
+    if (customRange?.start && customRange?.end) {
+      const s = new Date(customRange.start).getTime()
+      const e = new Date(customRange.end).getTime()
+      const diff = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1
+      if (diff > 0) days = diff
+    }
+
+    const ratio = days / 30
+    const scaledTotalSales = Math.round(MONTH_REPORT_DATA.kpis.totalSales * ratio)
+    const scaledOrders = Math.round(MONTH_REPORT_DATA.kpis.completedOrders * ratio)
+    const scaledConsumables = Math.round(432000 * ratio)
+
+    const pointCount = Math.min(days, 30)
+    const chartData = SEPTEMBER_DAILY_SALES.slice(0, pointCount).map((p, idx) => ({
+      index: idx + 1,
+      label: `Day ${idx + 1}`,
+      sales: Math.round(p.sales * (days < 7 ? 0.35 : 1)),
+    }))
+
     return {
       ...MONTH_REPORT_DATA,
       period: "custom",
-      dateLabel: customLabel,
-      durationBadge: "Custom",
+      dateLabel: customLabel || `${days} Days Selected`,
+      durationBadge: `${days} days`,
+      kpis: {
+        ...MONTH_REPORT_DATA.kpis,
+        totalSales: scaledTotalSales,
+        totalSalesFormatted: `RWF ${scaledTotalSales.toLocaleString()}`,
+        completedOrders: scaledOrders,
+        completedOrdersFormatted: scaledOrders.toLocaleString(),
+        consumablesSpendingFormatted: `RWF ${scaledConsumables.toLocaleString()}`,
+      },
+      chartData,
+      chartTicks: [1, Math.max(2, Math.round(pointCount / 2)), pointCount],
+      chartTickFormatter: (val: number) => {
+        if (val === 1) return customRange?.start ? customRange.start.slice(5) : "Start"
+        if (val === pointCount) return customRange?.end ? customRange.end.slice(5) : "End"
+        return `Day ${val}`
+      },
+      consumables: MONTH_REPORT_DATA.consumables.map((c) => ({
+        ...c,
+        amount: Math.round(c.amount * ratio),
+      })),
+      consumablesTotalFormatted: `RWF ${scaledConsumables.toLocaleString()}`,
+      topMenuItems: MONTH_REPORT_DATA.topMenuItems.map((item) => ({
+        ...item,
+        qty: Math.max(1, Math.round(item.qty * ratio)),
+        sales: Math.round(parseInt(item.sales.replace(/,/g, "")) * ratio).toLocaleString(),
+      })),
+      bottomMenuItems: MONTH_REPORT_DATA.bottomMenuItems.map((item) => ({
+        ...item,
+        qty: Math.max(1, Math.round(item.qty * ratio)),
+        sales: Math.round(parseInt(item.sales.replace(/,/g, "")) * ratio).toLocaleString(),
+      })),
+      staffPerformance: MONTH_REPORT_DATA.staffPerformance.map((s) => ({
+        ...s,
+        orders: Math.max(1, Math.round(s.orders * ratio)),
+        sales: Math.round(parseInt(s.sales.replace(/,/g, "")) * ratio).toLocaleString(),
+      })),
+      totalStaffOrdersFormatted: scaledOrders.toLocaleString(),
+      totalStaffSalesFormatted: scaledTotalSales.toLocaleString(),
+      voidedCount: Math.max(1, Math.round(12 * ratio)),
+      voidedAmountFormatted: `RWF ${Math.round(96000 * ratio).toLocaleString()}`,
+      refundedCount: Math.max(0, Math.round(8 * ratio)),
+      refundedAmountFormatted: `RWF ${Math.round(64000 * ratio).toLocaleString()}`,
     }
   }
   return MONTH_REPORT_DATA

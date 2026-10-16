@@ -112,24 +112,50 @@ export const subscriptionApi = {
     }
   },
 
+  getCurrentSubscription: (): SubscriptionRecord | null => {
+    if (typeof window === "undefined") return null
+    try {
+      const raw = window.localStorage.getItem("bara:current_subscription_record")
+      if (raw) return JSON.parse(raw)
+    } catch {
+      /* ignore */
+    }
+    return null
+  },
+
+  saveCurrentSubscription: (record: SubscriptionRecord): void => {
+    if (typeof window === "undefined") return
+    try {
+      window.localStorage.setItem("bara:current_subscription_record", JSON.stringify(record))
+      window.localStorage.setItem("bara:active_subscription_id", record.id)
+    } catch {
+      /* ignore */
+    }
+  },
+
   selectPlan: async (
-    tier: SubscriptionTier
+    tier: SubscriptionTier,
+    includeOnboarding = false
   ): Promise<{
     message: string
     subscription: SubscriptionRecord
   }> => {
     try {
-      return await apiRequest<{
+      const res = await apiRequest<{
         message: string
         subscription: SubscriptionRecord
       }>(
         "/api/restaurant/subscription-plans/select/",
         {
           method: "POST",
-          body: JSON.stringify({ tier }),
+          body: JSON.stringify({ tier, include_onboarding: includeOnboarding }),
         },
         true
       )
+      if (res?.subscription) {
+        subscriptionApi.saveCurrentSubscription(res.subscription)
+      }
+      return res
     } catch {
       const mockSub: SubscriptionRecord = {
         id: `sub-${Date.now()}`,
@@ -142,6 +168,7 @@ export const subscriptionApi = {
         starts_at: null,
         ends_at: null,
       }
+      subscriptionApi.saveCurrentSubscription(mockSub)
       return {
         message: "Plan selected successfully (Offline / Local Mode).",
         subscription: mockSub,
@@ -232,7 +259,193 @@ export const paymentConfirmationsApi = {
   },
 }
 
+// ==========================================
+// RESTAURANT SETUP & BUSINESS DETAILS API
+// ==========================================
+
+export interface BackendRestaurantSetup {
+  id: string
+  name: string
+  code: string
+  logo: string | null
+  tin: string
+  trading_name: string
+  phone: string
+  city: string
+  business_address: string
+  primary_currency: string
+  color_palette?: string
+  accent_color?: string
+  setup_completed?: boolean
+}
+
+export interface BackendRestaurantSetupUpdate {
+  tin?: string
+  trading_name?: string
+  phone?: string
+  city?: string
+  business_address?: string
+  primary_currency?: string
+  color_palette?: string
+  accent_color?: string
+  logo?: string | null
+}
+
+export const restaurantSetupApi = {
+  getSetup: async (): Promise<BackendRestaurantSetup | null> => {
+    try {
+      const res = await apiRequest<BackendRestaurantSetup | BackendRestaurantSetup[]>(
+        "/api/restaurant/setup/",
+        { method: "GET" },
+        true
+      )
+      if (Array.isArray(res)) {
+        return res[0] || null
+      }
+      return res || null
+    } catch {
+      return null
+    }
+  },
+
+  updateSetup: async (
+    id: string,
+    data: BackendRestaurantSetupUpdate
+  ): Promise<BackendRestaurantSetup | null> => {
+    try {
+      return await apiRequest<BackendRestaurantSetup>(
+        `/api/restaurant/setup/${id}/`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        },
+        true
+      )
+    } catch {
+      return null
+    }
+  },
+}
+
+// ==========================================
+// USER PROFILE & ACCOUNT API
+// ==========================================
+
+export interface BackendUserProfile {
+  id: string
+  first_name: string
+  last_name: string
+  email: string | null
+  phone_number?: string
+  role: string
+  restaurant: string
+}
+
+export interface BackendUserProfileUpdate {
+  first_name?: string
+  last_name?: string
+  email?: string
+  phone_number?: string
+}
+
+export const userProfileApi = {
+  getProfile: async (): Promise<BackendUserProfile | null> => {
+    try {
+      const res = await apiRequest<BackendUserProfile | BackendUserProfile[]>(
+        "/api/auth/profile/",
+        { method: "GET" },
+        true
+      )
+      if (Array.isArray(res)) {
+        return res[0] || null
+      }
+      return res || null
+    } catch {
+      return null
+    }
+  },
+
+  updateProfile: async (
+    id: string,
+    data: BackendUserProfileUpdate
+  ): Promise<BackendUserProfile | null> => {
+    try {
+      return await apiRequest<BackendUserProfile>(
+        `/api/auth/profile/${id}/`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        },
+        true
+      )
+    } catch {
+      return null
+    }
+  },
+}
+
+// ==========================================
+// ONBOARDING REQUESTS API
+// ==========================================
+
+export interface BackendOnboardingRequest {
+  id: string
+  restaurant_name: string
+  subscription?: string | null
+  fee: number
+  status: "requested" | "in_progress" | "completed" | "cancelled"
+  created_at: string
+  updated_at?: string
+}
+
+export const onboardingApi = {
+  list: async (): Promise<BackendOnboardingRequest[]> => {
+    try {
+      const res = await apiRequest<BackendOnboardingRequest[]>(
+        "/api/restaurant/onboarding-requests/",
+        { method: "GET" },
+        true
+      )
+      return Array.isArray(res) ? res : []
+    } catch {
+      return []
+    }
+  },
+
+  request: async (): Promise<BackendOnboardingRequest | null> => {
+    try {
+      return await apiRequest<BackendOnboardingRequest>(
+        "/api/restaurant/onboarding-requests/",
+        {
+          method: "POST",
+          body: JSON.stringify({}),
+        },
+        true
+      )
+    } catch {
+      return null
+    }
+  },
+
+  cancel: async (id: string): Promise<boolean> => {
+    try {
+      await apiRequest(
+        `/api/restaurant/onboarding-requests/${id}/cancel/`,
+        { method: "POST" },
+        true
+      )
+      return true
+    } catch {
+      return false
+    }
+  },
+}
+
 export const settingsApi = {
   subscription: subscriptionApi,
   paymentConfirmations: paymentConfirmationsApi,
+  restaurantSetup: restaurantSetupApi,
+  userProfile: userProfileApi,
+  onboarding: onboardingApi,
 }
+

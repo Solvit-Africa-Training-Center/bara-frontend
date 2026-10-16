@@ -30,22 +30,28 @@ export function MenuItemsCard({ title, subtitle, items }: MenuItemsCardProps) {
 
           {/* Rows */}
           <div className="divide-y divide-border/30">
-            {items.map((item) => (
-              <div
-                key={item.name}
-                className="grid grid-cols-12 py-2.5 text-xs items-center"
-              >
-                <span className="col-span-7 font-bold text-[#2C221E] dark:text-[#FAF5EE] truncate">
-                  {item.name}
-                </span>
-                <span className="col-span-2 text-right text-[#8C7D73] dark:text-muted-foreground font-medium">
-                  {item.qty}
-                </span>
-                <span className="col-span-3 text-right font-bold text-[#2C221E] dark:text-[#FAF5EE]">
-                  {item.sales}
-                </span>
+            {items.length > 0 ? (
+              items.map((item) => (
+                <div
+                  key={item.name}
+                  className="grid grid-cols-12 py-2.5 text-xs items-center"
+                >
+                  <span className="col-span-7 font-bold text-[#2C221E] dark:text-[#FAF5EE] truncate">
+                    {item.name}
+                  </span>
+                  <span className="col-span-2 text-right text-[#8C7D73] dark:text-muted-foreground font-medium">
+                    {item.qty}
+                  </span>
+                  <span className="col-span-3 text-right font-bold text-[#2C221E] dark:text-[#FAF5EE]">
+                    {item.sales}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                No menu sales recorded for this period.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

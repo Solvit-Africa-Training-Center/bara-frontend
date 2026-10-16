@@ -39,6 +39,7 @@ const STORAGE_KEYS = {
   CONSUMABLE_PURCHASES: "bara:offline:consumable_purchases_v1",
   PAYMENT_CONFIRMATIONS: "bara:offline:payment_confirmations_v1",
   MENU_ITEMS: "bara:offline:menu_items_v1",
+  ORDERS: "bara:offline:orders_v1",
   SYNC_QUEUE: "bara:offline:sync_queue_v1",
 }
 
@@ -142,6 +143,46 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     cost_per_unit: "9000.00",
     current_quantity: "6.40",
     created_at: new Date(Date.now() - 864e5 * 15).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "ing-seed-011",
+    name: "Lake Kivu Sambaza",
+    unit: "kg",
+    low_stock_threshold: "5.00",
+    cost_per_unit: "6000.00",
+    current_quantity: "12.00",
+    created_at: new Date(Date.now() - 864e5 * 10).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "ing-seed-012",
+    name: "Fresh Hass Avocado",
+    unit: "piece",
+    low_stock_threshold: "10.00",
+    cost_per_unit: "500.00",
+    current_quantity: "25.00",
+    created_at: new Date(Date.now() - 864e5 * 8).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "ing-seed-013",
+    name: "Ripe Mangoes",
+    unit: "piece",
+    low_stock_threshold: "10.00",
+    cost_per_unit: "600.00",
+    current_quantity: "20.00",
+    created_at: new Date(Date.now() - 864e5 * 8).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "ing-seed-014",
+    name: "Dark Belgian Chocolate (54%)",
+    unit: "kg",
+    low_stock_threshold: "3.00",
+    cost_per_unit: "14000.00",
+    current_quantity: "5.00",
+    created_at: new Date(Date.now() - 864e5 * 12).toISOString(),
     updated_at: new Date().toISOString(),
   },
 ]
@@ -295,6 +336,17 @@ export const SEED_MENU_ITEMS: BackendMenuItem[] = [
     price: "12000.00",
     description: "Lake Kivu whole fresh tilapia marinated in lemon, garlic, and fresh herbs.",
     is_available: true,
+    cost_per_serving: "3645.00",
+    food_cost_percent: "30.4",
+    gross_profit: "8355.00",
+    available_servings: "24",
+    recipe_lines: [
+      { id: "rl-seed-01-1", ingredient: "ing-seed-001", ingredient_name: "Tilapia fillet", quantity_used: "0.35", unit: "kg", waste_percent: "2" },
+      { id: "rl-seed-01-2", ingredient: "ing-seed-002", ingredient_name: "Cooking oil (Sunflower)", quantity_used: "0.03", unit: "L", waste_percent: "2" },
+      { id: "rl-seed-01-3", ingredient: "ing-seed-003", ingredient_name: "Fresh Lemon", quantity_used: "1", unit: "piece", waste_percent: "0" },
+      { id: "rl-seed-01-4", ingredient: "ing-seed-005", ingredient_name: "Mixed Vegetables (Carrot, Pepper, Courgette)", quantity_used: "0.08", unit: "kg", waste_percent: "0" },
+      { id: "rl-seed-01-5", ingredient: "ing-seed-004", ingredient_name: "Garlic cloves", quantity_used: "0.01", unit: "kg", waste_percent: "0" },
+    ],
   },
   {
     id: "item-seed-02",
@@ -303,6 +355,16 @@ export const SEED_MENU_ITEMS: BackendMenuItem[] = [
     price: "8500.00",
     description: "Tender skewered prime beef grilled over volcanic charcoal, served with pili-pili sauce.",
     is_available: true,
+    cost_per_serving: "2446.00",
+    food_cost_percent: "28.8",
+    gross_profit: "6054.00",
+    available_servings: "32",
+    recipe_lines: [
+      { id: "rl-seed-02-1", ingredient: "ing-seed-006", ingredient_name: "Beef Brochette Meat (AAA Grade)", quantity_used: "0.28", unit: "kg", waste_percent: "3" },
+      { id: "rl-seed-02-2", ingredient: "ing-seed-002", ingredient_name: "Cooking oil (Sunflower)", quantity_used: "0.02", unit: "L", waste_percent: "2" },
+      { id: "rl-seed-02-3", ingredient: "ing-seed-005", ingredient_name: "Mixed Vegetables (Carrot, Pepper, Courgette)", quantity_used: "0.06", unit: "kg", waste_percent: "0" },
+      { id: "rl-seed-02-4", ingredient: "ing-seed-004", ingredient_name: "Garlic cloves", quantity_used: "0.01", unit: "kg", waste_percent: "0" },
+    ],
   },
   {
     id: "item-seed-03",
@@ -311,6 +373,16 @@ export const SEED_MENU_ITEMS: BackendMenuItem[] = [
     price: "5000.00",
     description: "Crispy Lake Kivu sambaza dusted with spiced corn flour, served with lemon aioli.",
     is_available: true,
+    cost_per_serving: "1564.00",
+    food_cost_percent: "31.3",
+    gross_profit: "3436.00",
+    available_servings: "18",
+    recipe_lines: [
+      { id: "rl-seed-03-1", ingredient: "ing-seed-011", ingredient_name: "Lake Kivu Sambaza", quantity_used: "0.20", unit: "kg", waste_percent: "2" },
+      { id: "rl-seed-03-2", ingredient: "ing-seed-002", ingredient_name: "Cooking oil (Sunflower)", quantity_used: "0.04", unit: "L", waste_percent: "0" },
+      { id: "rl-seed-03-3", ingredient: "ing-seed-003", ingredient_name: "Fresh Lemon", quantity_used: "0.5", unit: "piece", waste_percent: "0" },
+      { id: "rl-seed-03-4", ingredient: "ing-seed-007", ingredient_name: "Cassava Flour (Kinazi Premium)", quantity_used: "0.04", unit: "kg", waste_percent: "0" },
+    ],
   },
   {
     id: "item-seed-04",
@@ -319,6 +391,16 @@ export const SEED_MENU_ITEMS: BackendMenuItem[] = [
     price: "4500.00",
     description: "Fresh Rwandan Hass avocado, ripe mango cubes, baby spinach and passion fruit vinaigrette.",
     is_available: true,
+    cost_per_serving: "1350.00",
+    food_cost_percent: "30.0",
+    gross_profit: "3150.00",
+    available_servings: "20",
+    recipe_lines: [
+      { id: "rl-seed-04-1", ingredient: "ing-seed-012", ingredient_name: "Fresh Hass Avocado", quantity_used: "1", unit: "piece", waste_percent: "0" },
+      { id: "rl-seed-04-2", ingredient: "ing-seed-013", ingredient_name: "Ripe Mangoes", quantity_used: "1", unit: "piece", waste_percent: "0" },
+      { id: "rl-seed-04-3", ingredient: "ing-seed-003", ingredient_name: "Fresh Lemon", quantity_used: "0.5", unit: "piece", waste_percent: "0" },
+      { id: "rl-seed-04-4", ingredient: "ing-seed-002", ingredient_name: "Cooking oil (Sunflower)", quantity_used: "0.025", unit: "L", waste_percent: "0" },
+    ],
   },
   {
     id: "item-seed-05",
@@ -327,6 +409,120 @@ export const SEED_MENU_ITEMS: BackendMenuItem[] = [
     price: "6000.00",
     description: "Rich dark chocolate fondant with a molten center, paired with vanilla bean gelato.",
     is_available: true,
+    cost_per_serving: "1858.00",
+    food_cost_percent: "31.0",
+    gross_profit: "4142.00",
+    available_servings: "15",
+    recipe_lines: [
+      { id: "rl-seed-05-1", ingredient: "ing-seed-014", ingredient_name: "Dark Belgian Chocolate (54%)", quantity_used: "0.10", unit: "kg", waste_percent: "0" },
+      { id: "rl-seed-05-2", ingredient: "ing-seed-010", ingredient_name: "Butter Unsalted", quantity_used: "0.04", unit: "kg", waste_percent: "0" },
+      { id: "rl-seed-05-3", ingredient: "ing-seed-007", ingredient_name: "Cassava Flour (Kinazi Premium)", quantity_used: "0.07", unit: "kg", waste_percent: "0" },
+    ],
+  },
+]
+
+export interface StoredOrderLine {
+  id?: string
+  order?: string
+  menu_item?: string
+  menu_item_name?: string
+  quantity: number
+  unit_price?: string
+  subtotal?: string
+  cost?: string
+  profit?: string
+}
+
+export interface StoredOrder {
+  order_id: string
+  client_uuid?: string | null
+  staff?: string | null
+  staff_name?: string
+  table_number?: string
+  guest_count?: number | null
+  service_type?: string
+  status: "pending" | "preparing" | "ready" | "completed" | "voided"
+  payment_method?: string
+  discount?: string
+  tax_amount?: string
+  service_fee?: string
+  subtotal?: string
+  total: string
+  cost?: string
+  profit?: string
+  profit_margin?: string | null
+  lines?: StoredOrderLine[]
+  created_at: string
+  completed_at?: string | null
+  synced_at?: string | null
+  void_reason?: string | null
+}
+
+export const SEED_ORDERS: StoredOrder[] = [
+  {
+    order_id: "ord-seed-001",
+    staff_name: "Jean Niyonzima",
+    table_number: "Table 4",
+    guest_count: 2,
+    service_type: "dine_in",
+    status: "completed",
+    payment_method: "momo",
+    subtotal: "24000.00",
+    total: "24000.00",
+    lines: [
+      { menu_item_name: "Grilled tilapia", quantity: 2, unit_price: "12000.00", subtotal: "24000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    completed_at: new Date(Date.now() - 3600000 * 1.5).toISOString(),
+  },
+  {
+    order_id: "ord-seed-002",
+    staff_name: "Grace Uwase",
+    table_number: "Table 2",
+    guest_count: 3,
+    service_type: "dine_in",
+    status: "completed",
+    payment_method: "card",
+    subtotal: "32000.00",
+    total: "32000.00",
+    lines: [
+      { menu_item_name: "Beef brochettes", quantity: 4, unit_price: "8000.00", subtotal: "32000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+    completed_at: new Date(Date.now() - 3600000 * 3.5).toISOString(),
+  },
+  {
+    order_id: "ord-seed-003",
+    staff_name: "Eric Habimana",
+    table_number: "Table 7",
+    guest_count: 2,
+    service_type: "dine_in",
+    status: "completed",
+    payment_method: "cash",
+    subtotal: "18000.00",
+    total: "18000.00",
+    lines: [
+      { menu_item_name: "Chicken & chips", quantity: 2, unit_price: "9000.00", subtotal: "18000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 6).toISOString(),
+    completed_at: new Date(Date.now() - 3600000 * 5.5).toISOString(),
+  },
+  {
+    order_id: "ord-seed-004",
+    staff_name: "Diane Keza",
+    table_number: "Table 1",
+    guest_count: 1,
+    service_type: "dine_in",
+    status: "voided",
+    payment_method: "cash",
+    subtotal: "8000.00",
+    total: "8000.00",
+    void_reason: "Customer changed mind",
+    lines: [
+      { menu_item_name: "Beef brochettes", quantity: 1, unit_price: "8000.00", subtotal: "8000.00" },
+    ],
+    created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
+    completed_at: null,
   },
 ]
 
@@ -603,7 +799,32 @@ class OfflineStore {
 
   // --- MENU ITEMS ---
   public getMenuItems(): BackendMenuItem[] {
-    return this.getItem(STORAGE_KEYS.MENU_ITEMS, SEED_MENU_ITEMS)
+    const items = this.getItem(STORAGE_KEYS.MENU_ITEMS, SEED_MENU_ITEMS)
+    if (!Array.isArray(items)) return SEED_MENU_ITEMS
+    return items.map((item) => {
+      const seed = SEED_MENU_ITEMS.find(
+        (s) =>
+          s.id === item.id ||
+          s.name.toLowerCase().trim() === (item.name || "").toLowerCase().trim()
+      )
+      if (
+        seed &&
+        (!item.recipe_lines || item.recipe_lines.length === 0 || !item.cost_per_serving)
+      ) {
+        return {
+          ...item,
+          cost_per_serving: item.cost_per_serving || seed.cost_per_serving,
+          food_cost_percent: item.food_cost_percent || seed.food_cost_percent,
+          gross_profit: item.gross_profit || seed.gross_profit,
+          available_servings: item.available_servings ?? seed.available_servings,
+          recipe_lines:
+            item.recipe_lines && item.recipe_lines.length > 0
+              ? item.recipe_lines
+              : seed.recipe_lines,
+        }
+      }
+      return item
+    })
   }
 
   public saveMenuItems(items: BackendMenuItem[]): void {
@@ -643,6 +864,15 @@ class OfflineStore {
   public deleteMenuItem(id: string): void {
     const items = this.getMenuItems()
     this.saveMenuItems(items.filter((i) => i.id !== id && i.menu_id !== id))
+  }
+
+  // --- ORDERS ---
+  public getOrders(): StoredOrder[] {
+    return this.getItem(STORAGE_KEYS.ORDERS, SEED_ORDERS)
+  }
+
+  public saveOrders(items: StoredOrder[]): void {
+    this.setItem(STORAGE_KEYS.ORDERS, items)
   }
 }
 

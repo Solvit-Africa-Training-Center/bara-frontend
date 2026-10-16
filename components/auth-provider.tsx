@@ -13,6 +13,24 @@ export interface AuthUser {
   initials: string
   restaurantName?: string
   phone?: string
+  isOwner?: boolean
+}
+
+export function parseUserRole(rawRole?: string): { role: string; isOwner: boolean } {
+  const norm = (rawRole || "").toLowerCase().trim()
+  if (norm === "manager") {
+    return { role: "Manager", isOwner: false }
+  }
+  if (norm === "cashier") {
+    return { role: "Cashier / Waiter", isOwner: false }
+  }
+  if (norm === "kitchen") {
+    return { role: "Kitchen / Stock", isOwner: false }
+  }
+  if (norm === "owner" || norm === "restaurant owner" || norm === "super_admin" || norm === "superadmin") {
+    return { role: "Restaurant Owner", isOwner: true }
+  }
+  return { role: "Restaurant Owner", isOwner: true }
 }
 
 export interface LoginCredentials {
@@ -116,6 +134,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const persisted = getPersistedUser()
     setUser(persisted)
     setIsLoading(false)
+
+    // Revalidate & sync profile from backend in background to guarantee role accuracy
+    if (persisted) {
+      authApi
+        .getProfile()
+        .then((profile) => {
+          if (profile) {
+            const { role, isOwner } = parseUserRole(profile.role)
+            setUser((curr) => {
+              if (!curr) return null
+              if (
+                curr.role === role &&
+                curr.isOwner === isOwner &&
+                (!profile.phone_number || curr.phone === profile.phone_number)
+              ) {
+                return curr
+              }
+              const updated: AuthUser = {
+                ...curr,
+                role,
+                isOwner,
+                phone: profile.phone_number || curr.phone,
+              }
+              persistSession(updated)
+              return updated
+            })
+          }
+        })
+        .catch(() => {})
+    }
   }, [])
 
   // Listen for session expiration events from api-client
@@ -149,18 +197,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const fullName =
           `${apiRes.user.first_name || ""} ${apiRes.user.last_name || ""}`.trim() ||
           apiRes.user.email
+        const { role, isOwner } = parseUserRole(apiRes.user.role)
         const authenticatedUser: AuthUser = {
           id: apiRes.user.id,
           name: fullName,
           email: apiRes.user.email,
+          phone: apiRes.user.phone_number,
           initials: getInitials(fullName),
-          role: "Restaurant Owner",
+          role,
+          isOwner,
           avatar: "",
           restaurantName:
             apiRes.user.restaurant?.name || "Bara Bistro & Grill",
         }
         setUser(authenticatedUser)
         persistSession(authenticatedUser, credentials.keepSignedIn ?? true)
+
+        // If the authenticated user is the owner, cache their owner profile so managers can see who the owner is
+        if (isOwner) {
+          try {
+            window.localStorage.setItem(
+              "bara:restaurant_owner_record",
+              JSON.stringify({
+                id: authenticatedUser.id,
+                name: authenticatedUser.name,
+                email: authenticatedUser.email,
+                phone: authenticatedUser.phone,
+                role: "Owner",
+                status: "Active",
+                platformAccess: "App + Web",
+                avatarInitials: authenticatedUser.initials,
+                isOwner: true,
+                lastLogin: "Active now",
+                createdAt: new Date().toISOString(),
+              })
+            )
+          } catch {}
+        }
+
         return { success: true }
       }
       return {
@@ -197,8 +271,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: signupRes.user.id,
         name: fullName,
         email: signupRes.user.email,
+        phone: signupRes.user.phone_number,
         initials: getInitials(fullName),
         role: "Restaurant Owner",
+        isOwner: true,
         avatar: "",
         restaurantName:
           signupRes.user.restaurant?.name || data.restaurantName.trim() || "My Restaurant",
@@ -211,6 +287,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(newUser)
       persistSession(newUser, true)
+
+      try {
+        window.localStorage.setItem(
+          "bara:restaurant_owner_record",
+          JSON.stringify({
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone,
+            role: "Owner",
+            status: "Active",
+            platformAccess: "App + Web",
+            avatarInitials: newUser.initials,
+            isOwner: true,
+            lastLogin: "Active now",
+            createdAt: new Date().toISOString(),
+          })
+        )
+      } catch {}
+
       return { success: true }
     } catch (err: unknown) {
       const message =

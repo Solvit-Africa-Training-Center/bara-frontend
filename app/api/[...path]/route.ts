@@ -81,6 +81,24 @@ async function proxyRequest(
 
     const data = await backendRes.arrayBuffer()
 
+    if (backendRes.status >= 400) {
+      try {
+        const decoded = new TextDecoder().decode(data)
+        console.warn(`[Backend ${backendRes.status}] ${targetUrl}:`, decoded)
+        try {
+          const fs = await import("fs")
+          fs.appendFileSync(
+            "backend_debug.log",
+            `${new Date().toISOString()} [${backendRes.status}] ${targetUrl} Auth:${Boolean(headers.get("authorization"))}\nBody: ${decoded}\n\n`
+          )
+        } catch {
+          // ignore fs errors
+        }
+      } catch {
+        // ignore decoding errors
+      }
+    }
+
     return new NextResponse(data, {
       status: backendRes.status,
       statusText: backendRes.statusText,

@@ -53,35 +53,35 @@ export function BaraLogo({
   logoUrl?: string
   accentColor?: string
 }) {
-  if (logoUrl) {
-    return (
-      <div
-        className={cn(
-          "flex items-center gap-2.5",
-          collapsed && "justify-center gap-0",
-          className
-        )}
-      >
-        <div className="relative size-8.5 shrink-0 overflow-hidden rounded-xl border border-border/80 bg-card p-1 shadow-xs flex items-center justify-center">
-          <img
-            src={logoUrl}
-            alt={subtitle || "Restaurant Logo"}
-            className={cn("h-full w-full object-contain rounded-lg", imageClassName)}
-          />
-        </div>
-        {!collapsed && (
-          <div className="flex min-w-0 flex-col text-left leading-tight">
-            <span className="text-sm font-black tracking-tight text-foreground truncate max-w-[150px]">
-              {subtitle || "Bara"}
-            </span>
-            <span className="text-[10px] font-bold tracking-wider text-[#C1440E] uppercase">
-              Bara Workspace
-            </span>
-          </div>
-        )}
-      </div>
-    )
-  }
+  // if (logoUrl) {
+  //   return (
+  //     <div
+  //       className={cn(
+  //         "flex items-center gap-2.5",
+  //         collapsed && "justify-center gap-0",
+  //         className
+  //       )}
+  //     >
+  //       <div className="relative size-8.5 shrink-0 overflow-hidden rounded-xl border border-border/80 bg-card p-1 shadow-xs flex items-center justify-center">
+  //         <img
+  //           src={logoUrl}
+  //           alt={subtitle || "Restaurant Logo"}
+  //           className={cn("h-full w-full object-contain rounded-lg", imageClassName)}
+  //         />
+  //       </div>
+  //       {!collapsed && (
+  //         <div className="flex min-w-0 flex-col text-left leading-tight">
+  //           <span className="text-sm font-black tracking-tight text-foreground truncate max-w-[150px]">
+  //             {subtitle || "Bara"}
+  //           </span>
+  //           <span className="text-[10px] font-bold tracking-wider text-[#C1440E] uppercase">
+  //             Bara Workspace
+  //           </span>
+  //         </div>
+  //       )}
+  //     </div>
+  //   )
+  // }
 
   if (useSvgFile) {
     return (

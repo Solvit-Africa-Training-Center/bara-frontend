@@ -40,33 +40,40 @@ export function ConsumablesSpendCard({
         </div>
 
         <div className="mt-4 space-y-3.5">
-          {categories.map((cat) => (
-            <div key={cat.id} className="space-y-1.5 min-w-0">
-              <div className="flex items-center justify-between text-xs gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={`size-2.5 rounded-full shrink-0 ${cat.dotColor}`} />
-                  <span className="font-semibold text-foreground truncate">
-                    {cat.name}
-                  </span>
+          {categories.length > 0 ? (
+            categories.map((cat) => (
+              <div key={cat.id} className="space-y-1.5 min-w-0">
+                <div className="flex items-center justify-between text-xs gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`size-2.5 rounded-full shrink-0 ${cat.dotColor}`} />
+                    <span className="font-semibold text-foreground truncate">
+                      {cat.name}
+                    </span>
+                  </div>
+                  <div className="text-right text-xs shrink-0 whitespace-nowrap">
+                    <span className="font-bold text-foreground">
+                      {cat.percentage}%
+                    </span>
+                    <span className="text-muted-foreground ml-1 font-medium">
+                      ({cat.amountFormatted})
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right text-xs shrink-0 whitespace-nowrap">
-                  <span className="font-bold text-foreground">
-                    {cat.percentage}%
-                  </span>
-                  <span className="text-muted-foreground ml-1 font-medium">
-                    ({cat.amountFormatted})
-                  </span>
-                </div>
-              </div>
 
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className={`h-full rounded-full ${cat.barColor}`}
-                  style={{ width: `${cat.percentage}%` }}
-                />
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full rounded-full ${cat.barColor}`}
+                    style={{ width: `${cat.percentage}%` }}
+                  />
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="py-6 text-center text-xs text-muted-foreground">
+              <p className="font-semibold text-foreground">No Consumables Logged</p>
+              <p className="mt-1">Log non-food operational purchases to track ongoing supplies spend.</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 

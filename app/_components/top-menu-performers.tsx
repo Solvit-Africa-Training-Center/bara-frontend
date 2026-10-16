@@ -35,47 +35,54 @@ export function TopMenuPerformers({ performers }: TopMenuPerformersProps) {
       </div>
 
       <div className="mt-3 divide-y divide-border/50">
-        {performers.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center justify-between py-3 hover:bg-muted/30 px-1 rounded-xl transition-colors gap-2 min-w-0"
-          >
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <Image
-                src={item.image}
-                alt={item.name}
-                width={48}
-                height={48}
-                unoptimized
-                className="size-11 sm:size-12 rounded-xl object-cover border border-border/80 shadow-2xs shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-bold text-foreground truncate">
-                    {item.name}
-                  </h3>
-                  <span
-                    className={`rounded-md border px-1.5 py-0.2 text-[10px] font-bold shrink-0 ${item.badgeColor}`}
-                  >
-                    {item.badge}
-                  </span>
+        {performers.length > 0 ? (
+          performers.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between py-3 hover:bg-muted/30 px-1 rounded-xl transition-colors gap-2 min-w-0"
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  width={48}
+                  height={48}
+                  unoptimized
+                  className="size-11 sm:size-12 rounded-xl object-cover border border-border/80 shadow-2xs shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-bold text-foreground truncate">
+                      {item.name}
+                    </h3>
+                    <span
+                      className={`rounded-md border px-1.5 py-0.2 text-[10px] font-bold shrink-0 ${item.badgeColor}`}
+                    >
+                      {item.badge}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {item.orders} {item.ordersUnit || "orders"} • Avg prep: {item.avgPrep}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {item.orders} {item.ordersUnit || "orders"} • Avg prep: {item.avgPrep}
+              </div>
+
+              <div className="text-right shrink-0 pl-2">
+                <span className="text-sm font-extrabold text-primary whitespace-nowrap">
+                  {item.revenueFormatted}
+                </span>
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap">
+                  ↑ {item.profitPercent}% Profit
                 </p>
               </div>
             </div>
-
-            <div className="text-right shrink-0 pl-2">
-              <span className="text-sm font-extrabold text-primary whitespace-nowrap">
-                {item.revenueFormatted}
-              </span>
-              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap">
-                ↑ {item.profitPercent}% Profit
-              </p>
-            </div>
+          ))
+        ) : (
+          <div className="py-8 text-center text-xs text-muted-foreground">
+            <p className="font-semibold text-foreground">No menu performance data yet</p>
+            <p className="mt-1">Dishes will be ranked by sales and profit margin as orders are taken.</p>
           </div>
-        ))}
+        )}
       </div>
     </Card>
   )

@@ -54,25 +54,87 @@ export function MenuEditor({
   const [availableLibrary, setAvailableLibrary] = React.useState(INVENTORY_INGREDIENTS_LIBRARY)
   const idCounterRef = React.useRef(1)
 
+  // Keep state in sync if parent updates activeItem (e.g. navigation or backend detail hydration)
   React.useEffect(() => {
-    ingredientsApi.list().then((live) => {
-      if (!live || live.length === 0) return
-      const mapped = live.map((ing) => ({
-        id: ing.id,
-        name: ing.name,
-        stock: `${ing.current_quantity ?? 0} ${ing.unit} in stock`,
-        unit: ing.unit,
-        costPerUnit: parseFloat(ing.cost_per_unit) || 10,
-        defaultWaste: 0,
-      }))
-      const merged = [...mapped]
-      INVENTORY_INGREDIENTS_LIBRARY.forEach((seed) => {
-        if (!merged.some((m) => m.name.toLowerCase() === seed.name.toLowerCase())) {
-          merged.push(seed)
+    setItem(initialItem)
+  }, [initialItem])
+
+  React.useEffect(() => {
+    let isMounted = true
+
+    async function loadInventory() {
+      try {
+        const [liveIngs, stockLevels] = await Promise.allSettled([
+          ingredientsApi.list(),
+          ingredientsApi.getStockLevels(),
+        ])
+
+        const live =
+          stockLevels.status === "fulfilled" && Array.isArray(stockLevels.value) && stockLevels.value.length > 0
+            ? stockLevels.value
+            : liveIngs.status === "fulfilled" && Array.isArray(liveIngs.value)
+            ? liveIngs.value
+            : []
+
+        if (!isMounted) return
+
+        if (live.length > 0) {
+          const mapped = live.map((ing) => ({
+            id: ing.id,
+            name: ing.name,
+            stock: `${ing.current_quantity ?? 0} ${ing.unit} in stock`,
+            unit: ing.unit,
+            costPerUnit: parseFloat(ing.cost_per_unit) || 10,
+            defaultWaste: 0,
+          }))
+          const merged = [...mapped]
+          INVENTORY_INGREDIENTS_LIBRARY.forEach((seed) => {
+            if (!merged.some((m) => m.name.toLowerCase() === seed.name.toLowerCase())) {
+              merged.push(seed)
+            }
+          })
+          setAvailableLibrary(merged)
+
+          // Hydrate any recipe ingredients that have missing or zero costs
+          setItem((prev) => {
+            let hasChanges = false
+            const enriched = prev.ingredients.map((ing) => {
+              if (ing.costPerUnit > 0) return ing
+              const match = merged.find(
+                (m) =>
+                  (ing.ingredientId && m.id === ing.ingredientId) ||
+                  m.id === ing.id ||
+                  m.name.toLowerCase() === ing.name.toLowerCase()
+              )
+              if (match) {
+                hasChanges = true
+                const costPerUnit = match.costPerUnit
+                const newLineCost = Math.round(
+                  ing.quantity * costPerUnit * (1 + (ing.wastePercent || 0) / 100)
+                )
+                return {
+                  ...ing,
+                  ingredientId: match.id,
+                  costPerUnit,
+                  lineCost: newLineCost,
+                  stockQuantity: match.stock,
+                }
+              }
+              return ing
+            })
+            return hasChanges ? { ...prev, ingredients: enriched } : prev
+          })
         }
-      })
-      setAvailableLibrary(merged)
-    })
+      } catch (err) {
+        console.error("Failed to load inventory for menu editor:", err)
+      }
+    }
+
+    loadInventory()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   // Calculations
@@ -134,6 +196,7 @@ export function MenuEditor({
     const newIngId = `r-${invItem.id}-${idCounterRef.current++}`
     const newIng: RecipeIngredient = {
       id: newIngId,
+      ingredientId: invItem.id,
       name: invItem.name,
       stockQuantity: invItem.stock,
       quantity: defaultQty,
@@ -525,7 +588,7 @@ export function MenuEditor({
                   className="h-10 w-full rounded-xl border border-[#E4D6C4] bg-background pl-9 pr-24 text-xs text-[#2C221E] dark:text-[#FAF5EE] font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all dark:border-[#3D3028]"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#8C7D73] pointer-events-none">
-                  238 available
+                  {availableLibrary.length} available
                 </span>
 
                 {/* Dropdown inventory picker */}
