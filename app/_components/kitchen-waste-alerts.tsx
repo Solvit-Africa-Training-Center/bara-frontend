@@ -42,66 +42,73 @@ export function KitchenWasteAlerts({
         </div>
 
         <div className="mt-4 space-y-3.5">
-          {alerts.map((item) => {
-            const isPromo = item.actionType === "promo"
-            const isDone = completedActions[item.id]
+          {alerts.length > 0 ? (
+            alerts.map((item) => {
+              const isPromo = item.actionType === "promo"
+              const isDone = completedActions[item.id]
 
-            return (
-              <div
-                key={item.id}
-                className={
-                  isPromo
-                    ? "rounded-xl border border-rose-200/60 bg-rose-50/40 dark:bg-rose-950/20 p-3.5"
-                    : "rounded-xl border border-amber-200/60 bg-amber-50/40 dark:bg-amber-950/20 p-3.5"
-                }
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className="text-sm font-bold text-[#2C221E] dark:text-foreground">
-                    {item.title}
-                  </h4>
-                  <span
-                    className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                      isPromo
-                        ? "bg-[#C53030] text-white"
-                        : "bg-[#7A6126] text-white"
-                    }`}
-                  >
-                    {item.wasteBadge}
-                  </span>
+              return (
+                <div
+                  key={item.id}
+                  className={
+                    isPromo
+                      ? "rounded-xl border border-rose-200/60 bg-rose-50/40 dark:bg-rose-950/20 p-3.5"
+                      : "rounded-xl border border-amber-200/60 bg-amber-50/40 dark:bg-amber-950/20 p-3.5"
+                  }
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="text-sm font-bold text-[#2C221E] dark:text-foreground">
+                      {item.title}
+                    </h4>
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        isPromo
+                          ? "bg-[#C53030] text-white"
+                          : "bg-[#7A6126] text-white"
+                      }`}
+                    >
+                      {item.wasteBadge}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {item.meta}
+                  </p>
+
+                  <div className="mt-2.5 flex items-center justify-between gap-2 pt-1">
+                    <span
+                      className={`text-xs font-semibold ${
+                        isPromo
+                          ? "text-[#C53030] dark:text-rose-400"
+                          : "text-[#8C7D73] dark:text-muted-foreground"
+                      }`}
+                    >
+                      {item.callout}
+                    </span>
+
+                    <Button
+                      size="sm"
+                      variant={isPromo ? "default" : "outline"}
+                      disabled={isDone}
+                      onClick={() => onActionClick(item)}
+                      className={
+                        isPromo
+                          ? "h-7.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 shadow-2xs"
+                          : "h-7.5 rounded-lg text-xs font-semibold px-3 border-border"
+                      }
+                    >
+                      {isDone ? "Applied" : item.actionLabel}
+                    </Button>
+                  </div>
                 </div>
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {item.meta}
-                </p>
-
-                <div className="mt-2.5 flex items-center justify-between gap-2 pt-1">
-                  <span
-                    className={`text-xs font-semibold ${
-                      isPromo
-                        ? "text-[#C53030] dark:text-rose-400"
-                        : "text-[#8C7D73] dark:text-muted-foreground"
-                    }`}
-                  >
-                    {item.callout}
-                  </span>
-
-                  <Button
-                    size="sm"
-                    variant={isPromo ? "default" : "outline"}
-                    disabled={isDone}
-                    onClick={() => onActionClick(item)}
-                    className={
-                      isPromo
-                        ? "h-7.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 shadow-2xs"
-                        : "h-7.5 rounded-lg text-xs font-semibold px-3 border-border"
-                    }
-                  >
-                    {isDone ? "Applied" : item.actionLabel}
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
+              )
+            })
+          ) : (
+            <div className="py-6 text-center text-xs text-muted-foreground">
+              <p className="font-semibold text-emerald-600 dark:text-emerald-400">Zero Waste Incidents Logged</p>
+              <p className="mt-1">No wasted ingredients reported for this period. Great kitchen control!</p>
+            </div>
+          )}
         </div>
       </div>
 

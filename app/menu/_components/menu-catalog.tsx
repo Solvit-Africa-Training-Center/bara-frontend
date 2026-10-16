@@ -309,6 +309,8 @@ export function MenuCatalog({
           <span className="text-xs text-[#78716C] dark:text-muted-foreground truncate">
             {firstIncompleteItem
               ? `Add ingredients to ${firstIncompleteItem.name}`
+              : totalItemsCount === 0
+              ? "No items created yet"
               : "All recipes fully configured"}
           </span>
         </div>
@@ -464,12 +466,25 @@ export function MenuCatalog({
             <tbody className="divide-y divide-[#F2EEE6] dark:divide-border/40">
               {paginatedItems.map((item) => {
                 const totalRecipeCost = item.ingredients.reduce(
-                  (sum, ing) => sum + ing.lineCost,
+                  (sum, ing) =>
+                    sum +
+                    (ing.lineCost > 0
+                      ? ing.lineCost
+                      : Math.round(ing.quantity * (ing.costPerUnit || 0) * (1 + (ing.wastePercent || 0) / 100))),
                   0
                 )
+                const effectiveCost =
+                  totalRecipeCost > 0
+                    ? totalRecipeCost
+                    : item.costPerServing && item.costPerServing > 0
+                    ? item.costPerServing
+                    : 0
+
                 const foodCostPercent =
-                  item.price > 0 && totalRecipeCost > 0
-                    ? ((totalRecipeCost / item.price) * 100).toFixed(1)
+                  item.price > 0 && effectiveCost > 0
+                    ? ((effectiveCost / item.price) * 100).toFixed(1)
+                    : item.foodCostPercent
+                    ? String(item.foodCostPercent)
                     : null
                 const isChecked = selectedIds.includes(item.id)
 
@@ -514,13 +529,13 @@ export function MenuCatalog({
 
                     {/* Recipe Cost */}
                     <td className="py-3.5 px-4">
-                      {(item.ingredients.length > 0 && totalRecipeCost > 0) || (item.costPerServing && item.costPerServing > 0) ? (
+                      {effectiveCost > 0 ? (
                         <div>
                           <div className="font-semibold text-xs text-[#1C1917] dark:text-foreground">
-                            {currency} {Math.round(totalRecipeCost > 0 ? totalRecipeCost : (item.costPerServing || 0)).toLocaleString()}
+                            {currency} {Math.round(effectiveCost).toLocaleString()}
                           </div>
                           <div className="text-[11px] text-[#78716C] dark:text-muted-foreground mt-0.5">
-                            {foodCostPercent ? `${foodCostPercent}% food cost` : item.foodCostPercent ? `${item.foodCostPercent}% food cost` : "Calculated"}
+                            {foodCostPercent ? `${foodCostPercent}% food cost` : "Calculated"}
                           </div>
                         </div>
                       ) : (
@@ -658,7 +673,29 @@ export function MenuCatalog({
                 )
               })}
 
-              {filteredItems.length === 0 && (
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                      <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
+                        <UtensilsCrossed className="size-5" />
+                      </div>
+                      <p className="font-semibold text-foreground text-sm">No menu items yet</p>
+                      <p className="text-xs text-muted-foreground mt-1 mb-4 leading-relaxed">
+                        Start building your menu by adding dishes and linking recipe ingredients to track food costs and auto-deduct stock.
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={onNewItem}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-4 h-8 gap-1.5"
+                      >
+                        <Plus className="size-3.5" />
+                        Create Menu Item
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-xs text-muted-foreground">
                     No menu items found matching your filters.
@@ -679,7 +716,7 @@ export function MenuCatalog({
                     </div>
                   </td>
                 </tr>
-              )}
+              ) : null}
             </tbody>
           </table>
         </div>

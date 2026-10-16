@@ -62,10 +62,10 @@ export const MENU_CATEGORIES = [
 ]
 
 export const INITIAL_MENU_ITEMS: MenuItemWithRecipe[] = [
-  // 1. Grilled tilapia (Main dishes)
+  // 1. Grilled Whole Tilapia (Main dishes)
   {
     id: "item-tilapia",
-    name: "Grilled tilapia",
+    name: "Grilled Whole Tilapia",
     category: "Main dishes",
     price: 12000,
     description: "Char-grilled fresh tilapia, seasonal market vegetables, lemon herb butter.",
@@ -88,12 +88,12 @@ export const INITIAL_MENU_ITEMS: MenuItemWithRecipe[] = [
     ],
   },
 
-  // 2. Beef brochettes (Main dishes)
+  // 2. Classic Beef Brochettes (Main dishes)
   {
     id: "item-beef-brochettes",
-    name: "Beef brochettes",
+    name: "Classic Beef Brochettes",
     category: "Main dishes",
-    price: 8000,
+    price: 8500,
     description: "Tender beef cubes marinated with pili pili spices and grilled over acacia charcoal.",
     iconType: "beef",
     available: true,
@@ -194,13 +194,13 @@ export const INITIAL_MENU_ITEMS: MenuItemWithRecipe[] = [
     ],
   },
 
-  // 6. Garden salad (Starters, Recipe Needed)
+  // 6. Avocado & Mango Salad (Starters)
   {
     id: "item-garden-salad",
-    name: "Garden salad",
+    name: "Avocado & Mango Salad",
     category: "Starters",
-    price: 4000,
-    description: "Crisp local greens, vine ripe tomatoes, cucumber ribbons, and tangy house dressing.",
+    price: 4500,
+    description: "Fresh Rwandan Hass avocado, ripe mango cubes, baby spinach and passion fruit vinaigrette.",
     iconType: "salad",
     available: true,
     channels: {
@@ -208,9 +208,14 @@ export const INITIAL_MENU_ITEMS: MenuItemWithRecipe[] = [
       takeaway: true,
       delivery: true,
     },
-    recipeStatus: "draft",
-    lastSavedText: "No recipe configured yet",
-    ingredients: [],
+    recipeStatus: "complete",
+    lastSavedText: "Last saved 1 hour ago",
+    ingredients: [
+      { id: "s-1", name: "Fresh Hass Avocado", stockQuantity: "25 pcs in stock", quantity: 1, unit: "pc", costPerUnit: 500, lineCost: 500, wastePercent: 0 },
+      { id: "s-2", name: "Ripe Mangoes", stockQuantity: "20 pcs in stock", quantity: 1, unit: "pc", costPerUnit: 600, lineCost: 600, wastePercent: 0 },
+      { id: "s-3", name: "Fresh Lemon", stockQuantity: "32 pcs in stock", quantity: 0.5, unit: "pc", costPerUnit: 300, lineCost: 150, wastePercent: 0 },
+      { id: "s-4", name: "Cooking oil (Sunflower)", stockQuantity: "4.5 L in stock", quantity: 25, unit: "ml", costPerUnit: 3.8, lineCost: 95, wastePercent: 0 },
+    ],
   },
 
   // 7. Pork chops grilled (Main dishes - Page 2)
@@ -238,13 +243,13 @@ export const INITIAL_MENU_ITEMS: MenuItemWithRecipe[] = [
     ],
   },
 
-  // 8. Sambaza lake fritters (Starters - Page 2)
+  // 8. Crispy Sambaza Bites (Starters - Page 2)
   {
     id: "item-sambaza",
-    name: "Lake Kivu sambaza fritters",
+    name: "Crispy Sambaza Bites",
     category: "Starters",
-    price: 5500,
-    description: "Crispy battered Lake Kivu small fish served with spicy peri-peri mayo and lime.",
+    price: 5000,
+    description: "Crispy Lake Kivu sambaza dusted with spiced corn flour, served with lemon aioli.",
     iconType: "fish",
     available: true,
     channels: {
@@ -287,12 +292,12 @@ export const INITIAL_MENU_ITEMS: MenuItemWithRecipe[] = [
     ],
   },
 
-  // 10. Chocolate lava cake (Desserts - Page 2)
+  // 10. Warm Belgian Chocolate Lava Cake (Desserts - Page 2)
   {
     id: "item-choco-cake",
-    name: "Warm chocolate lava cake",
+    name: "Warm Belgian Chocolate Lava Cake",
     category: "Desserts",
-    price: 6500,
+    price: 6000,
     description: "Rich dark Belgian chocolate cake with molten heart, served with vanilla bean cream.",
     iconType: "dessert",
     available: true,

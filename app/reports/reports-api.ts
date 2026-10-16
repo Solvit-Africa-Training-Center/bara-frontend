@@ -540,15 +540,33 @@ export async function fetchDynamicReportData(
       }
     }
 
-    // When 0 completed orders from API (e.g. 403 or empty account), return period-appropriate fallback with real consumables
+    // When 0 completed orders from API (e.g. 403 or fresh account), return real consumables spend and real zeroed metrics
     return {
       ...fallback,
+      chartData: fallback.chartData.map((d) => ({ ...d, sales: 0 })),
       consumables: consumablesItems,
       consumablesTotalFormatted: `RWF ${Math.round(totalConsumables).toLocaleString()}`,
+      consumablesPct: 0,
       kpis: {
-        ...fallback.kpis,
+        totalSales: 0,
+        totalSalesFormatted: "RWF 0",
+        salesGrowthPct: 0,
+        previousPeriodName: fallback.kpis.previousPeriodName,
+        previousPeriodSalesFormatted: "RWF 0",
+        completedOrders: 0,
+        completedOrdersFormatted: "0",
+        averageOrderValueFormatted: "RWF 0",
         consumablesSpendingFormatted: `RWF ${Math.round(totalConsumables).toLocaleString()}`,
+        consumablesPct: 0,
       },
+      topMenuItems: [],
+      bottomMenuItems: [],
+      staffPerformance: [],
+      totalStaffOrdersFormatted: "0",
+      totalStaffSalesFormatted: "0",
+      voidedCount: 0,
+      voidedAmountFormatted: "RWF 0",
+      auditEntries: [],
     }
   } catch (err) {
     console.error("fetchDynamicReportData error:", err)

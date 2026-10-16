@@ -36,7 +36,7 @@ export const menuApi = {
   list: async (): Promise<BackendMenuItem[]> => {
     try {
       const items = await apiRequest<BackendMenuItem[]>("/api/menu/", { method: "GET" }, true)
-      if (Array.isArray(items) && items.length > 0) {
+      if (Array.isArray(items)) {
         offlineStore.saveMenuItems(items)
         return items
       }

@@ -34,22 +34,28 @@ export function StaffPerformanceCard({
 
           {/* Rows */}
           <div className="divide-y divide-border/30">
-            {staffList.map((staff) => (
-              <div
-                key={staff.name}
-                className="grid grid-cols-12 py-2.5 text-xs items-center"
-              >
-                <span className="col-span-6 font-bold text-[#2C221E] dark:text-[#FAF5EE] truncate">
-                  {staff.name}
-                </span>
-                <span className="col-span-2 text-right text-[#8C7D73] dark:text-muted-foreground font-medium">
-                  {staff.orders}
-                </span>
-                <span className="col-span-4 text-right font-bold text-[#2C221E] dark:text-[#FAF5EE]">
-                  {staff.sales}
-                </span>
+            {staffList.length > 0 ? (
+              staffList.map((staff) => (
+                <div
+                  key={staff.name}
+                  className="grid grid-cols-12 py-2.5 text-xs items-center"
+                >
+                  <span className="col-span-6 font-bold text-[#2C221E] dark:text-[#FAF5EE] truncate">
+                    {staff.name}
+                  </span>
+                  <span className="col-span-2 text-right text-[#8C7D73] dark:text-muted-foreground font-medium">
+                    {staff.orders}
+                  </span>
+                  <span className="col-span-4 text-right font-bold text-[#2C221E] dark:text-[#FAF5EE]">
+                    {staff.sales}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                No orders attributed to staff for this period.
               </div>
-            ))}
+            )}
           </div>
 
           {/* Total row matching Figma */}
