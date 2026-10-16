@@ -376,9 +376,30 @@ export async function apiRequest<T>(
 
         const refreshCt = refreshRes.headers.get("content-type") || ""
         if (refreshRes.ok && refreshCt.includes("application/json")) {
-          const newTokens: AuthTokens = await refreshRes.json()
-          saveStoredTokens(newTokens)
-          headers["Authorization"] = `Bearer ${newTokens.access}`
+          let refreshText = ""
+          try {
+            refreshText = await refreshRes.text()
+            if (!refreshText || refreshText.trim() === "") {
+              handleSessionExpired()
+              throw new ApiError("Empty token refresh response", refreshRes.status)
+            }
+            const newTokens: AuthTokens = JSON.parse(refreshText)
+            saveStoredTokens(newTokens)
+            headers["Authorization"] = `Bearer ${newTokens.access}`
+          } catch (parseErr) {
+            console.error('Token Refresh JSON Parse Error:', {
+              status: refreshRes.status,
+              contentType: refreshCt,
+              textLength: refreshText?.length,
+              textPreview: refreshText?.substring(0, 500),
+              parseError: parseErr instanceof Error ? parseErr.message : 'Unknown error'
+            })
+            handleSessionExpired()
+            throw new ApiError(
+              `Failed to parse token refresh response: ${parseErr instanceof Error ? parseErr.message : 'Unknown error'}`,
+              refreshRes.status
+            )
+          }
 
           const retryTimeout = createTimeoutSignal(timeoutMs, externalSignal)
           let retryRes: Response
@@ -413,11 +434,30 @@ export async function apiRequest<T>(
           if (retryRes.status === 204) return {} as T
 
           const retryCt = retryRes.headers.get("content-type") || ""
+          const rawRetryText = await retryRes.text()
+
           if (retryCt.includes("application/json")) {
-            return (await retryRes.json()) as T
+            try {
+              if (!rawRetryText || rawRetryText.trim() === "") {
+                return {} as T
+              }
+              return JSON.parse(rawRetryText) as T
+            } catch (parseErr) {
+              console.error('Retry JSON Parse Error:', {
+                status: retryRes.status,
+                contentType: retryCt,
+                textLength: rawRetryText?.length,
+                textPreview: rawRetryText?.substring(0, 500),
+                parseError: parseErr instanceof Error ? parseErr.message : 'Unknown error'
+              })
+              throw new ApiError(
+                `Failed to parse JSON response: ${parseErr instanceof Error ? parseErr.message : 'Unknown error'}`,
+                retryRes.status,
+                { contentType: retryCt, responsePreview: rawRetryText?.substring(0, 200) }
+              )
+            }
           }
 
-          const rawRetryText = await retryRes.text()
           if (rawRetryText.trim().startsWith("<") || rawRetryText.includes("<!DOCTYPE")) {
             throw new ApiError(
               "Backend server returned an HTML page instead of JSON. The backend or ngrok tunnel may be offline.",
@@ -427,6 +467,9 @@ export async function apiRequest<T>(
           }
 
           try {
+            if (!rawRetryText || rawRetryText.trim() === "") {
+              return {} as T
+            }
             return JSON.parse(rawRetryText) as T
           } catch {
             return rawRetryText as unknown as T
@@ -448,7 +491,10 @@ export async function apiRequest<T>(
     try {
       const ct = response.headers.get("content-type") || ""
       if (ct.includes("application/json")) {
-        errorData = await response.json()
+        const text = await response.text()
+        if (text && text.trim() !== "") {
+          errorData = JSON.parse(text)
+        }
       } else {
         errorData = await response.text()
       }
@@ -465,11 +511,30 @@ export async function apiRequest<T>(
   }
 
   const contentType = response.headers.get("content-type") || ""
+  const rawText = await response.text()
+
   if (contentType.includes("application/json")) {
-    return (await response.json()) as T
+    try {
+      if (!rawText || rawText.trim() === "") {
+        return {} as T
+      }
+      return JSON.parse(rawText) as T
+    } catch (parseErr) {
+      console.error('JSON Parse Error:', {
+        status: response.status,
+        contentType,
+        textLength: rawText?.length,
+        textPreview: rawText?.substring(0, 500),
+        parseError: parseErr instanceof Error ? parseErr.message : 'Unknown error'
+      })
+      throw new ApiError(
+        `Failed to parse JSON response: ${parseErr instanceof Error ? parseErr.message : 'Unknown error'}`,
+        response.status,
+        { contentType, responsePreview: rawText?.substring(0, 200) }
+      )
+    }
   }
 
-  const rawText = await response.text()
   if (rawText.trim().startsWith("<") || rawText.includes("<!DOCTYPE")) {
     throw new ApiError(
       "Backend server returned an HTML page instead of JSON. The backend or ngrok tunnel may be offline.",
@@ -479,6 +544,9 @@ export async function apiRequest<T>(
   }
 
   try {
+    if (!rawText || rawText.trim() === "") {
+      return {} as T
+    }
     return JSON.parse(rawText) as T
   } catch {
     return rawText as unknown as T

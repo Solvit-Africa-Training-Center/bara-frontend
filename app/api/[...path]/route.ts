@@ -4,6 +4,20 @@ const BACKEND_URL = (
   process.env.NEXT_PUBLIC_API_URL || "https://shirt-shady-daisy.ngrok-free.dev"
 ).replace(/\/+$/, "")
 
+// Hop-by-hop and encoding/length headers that must not be forwarded from upstream
+const HOP_BY_HOP_HEADERS = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+  "content-encoding",
+  "content-length",
+])
+
 async function proxyRequest(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> }
@@ -19,7 +33,12 @@ async function proxyRequest(
   const headers = new Headers()
   request.headers.forEach((value, key) => {
     const lower = key.toLowerCase()
-    if (lower !== "host" && lower !== "connection") {
+    if (
+      lower !== "host" &&
+      lower !== "connection" &&
+      lower !== "content-length" &&
+      lower !== "accept-encoding"
+    ) {
       headers.set(key, value)
     }
   })
@@ -46,21 +65,32 @@ async function proxyRequest(
     const responseHeaders = new Headers()
     backendRes.headers.forEach((value, key) => {
       const lower = key.toLowerCase()
-      if (
-        lower !== "content-encoding" &&
-        lower !== "transfer-encoding"
-      ) {
+      if (!HOP_BY_HOP_HEADERS.has(lower)) {
         responseHeaders.set(key, value)
       }
     })
 
+    // Forward cookies properly if backend sets cookies
+    const setCookies = backendRes.headers.getSetCookie?.()
+    if (setCookies && setCookies.length > 0) {
+      responseHeaders.delete("set-cookie")
+      for (const cookie of setCookies) {
+        responseHeaders.append("set-cookie", cookie)
+      }
+    }
+
     const data = await backendRes.arrayBuffer()
+
     return new NextResponse(data, {
       status: backendRes.status,
       statusText: backendRes.statusText,
       headers: responseHeaders,
     })
   } catch (err: unknown) {
+    console.error("Proxy Error:", {
+      url: targetUrl,
+      error: err instanceof Error ? err.message : "Unknown error",
+    })
     return NextResponse.json(
       {
         detail:
